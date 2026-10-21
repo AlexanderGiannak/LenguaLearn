@@ -10,6 +10,8 @@ export const ENGINE_CONFIG = {
     // Off so scheduling is reproducible in tests and the simulator.
     enableFuzz: false,
     maximumIntervalDays: 36500,
+    /** Logged with every answer; bump when parameters are fitted to real data. */
+    paramsVersion: "fsrs6-default",
   },
 
   /** The production card is created once recognition stability reaches this (days). */

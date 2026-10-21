@@ -40,6 +40,8 @@ export type AnswerCheckResult = {
   reason: AnswerReason;
   /** One line for the feedback screen, or null. */
   note: string | null;
+  /** The same line in parts, with the Spanish words marked so screens can set lang="es". */
+  noteParts: NotePart[] | null;
   /** The correct spelling, always shown. */
   correctAnswer: string;
 };
@@ -50,6 +52,16 @@ const ARTICLES: Record<"el" | "la" | "el/la", readonly string[]> = {
   "el/la": ["el", "la", "un", "una"],
 };
 const ANY_ARTICLE = new Set(["el", "la", "un", "una"]);
+
+export type NotePart = { text: string; lang?: "es" };
+type Note = { text: string; parts: NotePart[] };
+
+/** Builds a note from English text and Spanish words (wrapped in es()). */
+function note(...segments: (string | NotePart)[]): Note {
+  const parts = segments.map((s) => (typeof s === "string" ? { text: s } : s));
+  return { text: parts.map((p) => p.text).join(""), parts };
+}
+const es = (text: string): NotePart => ({ text, lang: "es" });
 
 export function normalizeAnswer(s: string): string {
   return s
@@ -96,10 +108,11 @@ export function editDistance(a: string, b: string): number {
 export function checkTypedAnswer(input: AnswerCheckInput): AnswerCheckResult {
   const { expected, article, mode } = input;
   const correctAnswer = mode === "word" && article ? `${article} ${expected}` : expected;
-  const result = (grade: AnswerGrade, reason: AnswerReason, note: string | null = null) => ({
+  const result = (grade: AnswerGrade, reason: AnswerReason, n: Note | null = null) => ({
     grade,
     reason,
-    note,
+    note: n?.text ?? null,
+    noteParts: n?.parts ?? null,
     correctAnswer,
   });
 
@@ -115,10 +128,10 @@ export function checkTypedAnswer(input: AnswerCheckInput): AnswerCheckResult {
       body = rest.join(" ");
     }
   }
-  const genderNote = `Right word, it's ${correctAnswer}.`;
+  const genderNote = note("Right word, it's ", es(correctAnswer), ".");
   // A right word with the wrong article is Hard whatever else was right about it.
-  const rightWord = (grade: AnswerGrade, reason: AnswerReason, note: string | null = null) =>
-    wrongArticle ? result("hard", "article", genderNote) : result(grade, reason, note);
+  const rightWord = (grade: AnswerGrade, reason: AnswerReason, n: Note | null = null) =>
+    wrongArticle ? result("hard", "article", genderNote) : result(grade, reason, n);
 
   const target = normalizeAnswer(expected);
   if (body === target) return rightWord("correct", "exact");
@@ -130,18 +143,18 @@ export function checkTypedAnswer(input: AnswerCheckInput): AnswerCheckResult {
       return result(
         "wrong",
         "accent_meaning",
-        `The accent changes the meaning: ${expected}, not ${body}`,
+        note("The accent changes the meaning: ", es(expected), ", not ", es(body)),
       );
     }
-    const note = `Watch the accent: ${expected}`;
+    const accentNote = note("Watch the accent: ", es(expected));
     return input.productionStabilityDays < accentHardFromDays
-      ? rightWord("correct", "accent_ignored", note)
-      : rightWord("hard", "accent", note);
+      ? rightWord("correct", "accent_ignored", accentNote)
+      : rightWord("hard", "accent", accentNote);
   }
 
   // n for ñ changes the word (año, ano), so it is never a typo or an accent slip.
   if (foldEnye(body) === foldEnye(target)) {
-    return result("wrong", "enye", `ñ is a different letter: ${expected}`);
+    return result("wrong", "enye", note(es("ñ"), " is a different letter: ", es(expected)));
   }
 
   if (
@@ -149,7 +162,7 @@ export function checkTypedAnswer(input: AnswerCheckInput): AnswerCheckResult {
     input.dictionaryForm &&
     foldAccents(body) === foldAccents(normalizeAnswer(input.dictionaryForm))
   ) {
-    return result("hard", "form", `Right word, wrong form: ${expected}`);
+    return result("hard", "form", note("Right word, wrong form: ", es(expected)));
   }
 
   if (
@@ -157,7 +170,7 @@ export function checkTypedAnswer(input: AnswerCheckInput): AnswerCheckResult {
     editDistance(foldAccents(body), foldAccents(target)) === 1 &&
     !input.isOtherWord(body)
   ) {
-    return rightWord("hard", "typo", `Almost: ${expected}`);
+    return rightWord("hard", "typo", note("Almost: ", es(expected)));
   }
 
   return result("wrong", "wrong");

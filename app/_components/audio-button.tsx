@@ -6,6 +6,20 @@ import { useState } from "react";
 // the file fails to load, it falls back to the browser's own Spanish voice. Only content
 // text is spoken; it never includes anything about the student.
 
+/** Plays a recording, falling back to the browser's Spanish voice. False if neither works. */
+export function playAudio(src: string | null, text: string, onUnavailable?: () => void): void {
+  const fallback = () => {
+    if (!speak(text)) onUnavailable?.();
+  };
+  if (src) new Audio(src).play().catch(fallback);
+  else fallback();
+}
+
+/** True if this browser can speak Spanish text aloud. */
+export function canSpeak(): boolean {
+  return typeof window !== "undefined" && "speechSynthesis" in window;
+}
+
 function speak(text: string): boolean {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) return false;
   const voices = window.speechSynthesis.getVoices().filter((v) => v.lang.startsWith("es"));
@@ -35,16 +49,7 @@ export function AudioButton({
 }) {
   const [unavailable, setUnavailable] = useState(false);
 
-  function play() {
-    const fallback = () => {
-      if (!speak(text)) setUnavailable(true);
-    };
-    if (src) {
-      new Audio(src).play().catch(fallback);
-    } else {
-      fallback();
-    }
-  }
+  const play = () => playAudio(src, text, () => setUnavailable(true));
 
   return (
     <button

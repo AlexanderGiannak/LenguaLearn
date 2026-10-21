@@ -12,5 +12,6 @@
 
 ## Current phase
 
-Phases run back to back (owner, 2026-10-21). Phase 2 (engine) merged via auto-merge; Phase 3 (training
-UI) is next. Stop only for blockers or privacy, grading or money choices; batch questions when stopping.
+Phases run back to back (owner, 2026-10-21). Phase 3 (training UI) in review: PR from
+`phase-3/training`. Phase 4 (accounts) is next. Stop only for blockers or privacy, grading or money
+choices; batch questions when stopping.

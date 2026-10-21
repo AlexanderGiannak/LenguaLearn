@@ -9,7 +9,7 @@ import {
   splitAtOffsets,
 } from "@/lib/content/display";
 import type { WordPageData } from "@/lib/content/word-page";
-import { AudioButton } from "./audio-button";
+import { AudioButton } from "@/app/_components/audio-button";
 
 // Sections in the spec's order. The first five form the intro screen; the rest sit behind
 // "More about this word". A section with no content is left out.

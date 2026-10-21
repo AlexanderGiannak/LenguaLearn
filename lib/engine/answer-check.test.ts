@@ -284,6 +284,15 @@ describe("checkTypedAnswer", () => {
     expect(result).toMatchObject(expected);
   });
 
+  it("marks the Spanish words in a note, so screens can set lang", () => {
+    const r = checkTypedAnswer({ ...base, typed: "el casa", expected: "casa", article: "la" });
+    expect(r.noteParts).toEqual([
+      { text: "Right word, it's " },
+      { text: "la casa", lang: "es" },
+      { text: "." },
+    ]);
+  });
+
   it("always returns the correct spelling to show", () => {
     expect(checkTypedAnswer({ ...base, typed: "fácil", expected: "Difícil" }).correctAnswer).toBe(
       "Difícil",
