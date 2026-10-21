@@ -33,6 +33,8 @@ export function applyReview(
   kind: CardKind,
   rating: Grade,
   now: Date,
+  /** Overrides the unlock threshold; the simulator uses Infinity to model one card per sense. */
+  productionUnlockStabilityDays: number = ENGINE_CONFIG.productionUnlockStabilityDays,
 ): { memory: SenseMemory; unlockedProduction: boolean } {
   const card = memory[kind];
   if (!card) throw new Error(`no ${kind} card yet`);
@@ -45,8 +47,7 @@ export function applyReview(
   }
 
   const unlockedProduction =
-    next.production === null &&
-    next.recognition.stability >= ENGINE_CONFIG.productionUnlockStabilityDays;
+    next.production === null && next.recognition.stability >= productionUnlockStabilityDays;
   if (unlockedProduction) next.production = createEmptyCard(now);
 
   return { memory: next, unlockedProduction };

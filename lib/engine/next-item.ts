@@ -53,16 +53,16 @@ export function isGateOpen(args: {
   );
 }
 
-type CardEntry = { senseId: number; card: CardKind; due: number; recall: number };
+type CardEntry = { senseId: number; card: CardKind; due: number };
 
-function studiedCards(memories: ReadonlyMap<number, SenseMemory>, now: Date): CardEntry[] {
+function studiedCards(memories: ReadonlyMap<number, SenseMemory>): CardEntry[] {
   const out: CardEntry[] = [];
   for (const [senseId, m] of memories) {
     for (const card of ["recognition", "production"] as const) {
       const c = m[card];
       // A production card that exists but was never asked counts as due right away.
       if (!c || (c.state === State.New && card === "recognition")) continue;
-      out.push({ senseId, card, due: c.due.getTime(), recall: recall(c, now) });
+      out.push({ senseId, card, due: c.due.getTime() });
     }
   }
   return out;
@@ -70,7 +70,8 @@ function studiedCards(memories: ReadonlyMap<number, SenseMemory>, now: Date): Ca
 
 /** Reviews due now, counting each card separately. */
 export function countOverdue(memories: ReadonlyMap<number, SenseMemory>, now: Date): number {
-  return studiedCards(memories, now).filter((c) => c.due <= now.getTime()).length;
+  const t = now.getTime();
+  return studiedCards(memories).filter((c) => c.due <= t).length;
 }
 
 export function chooseNextItem(args: {
@@ -99,17 +100,27 @@ export function chooseNextItem(args: {
     ...session.pendingMisses.map((p) => p.senseId),
     ...session.pendingSecondChecks.map((p) => p.senseId),
   ]);
-  const cards = studiedCards(memories, now).filter((c) => !waiting.has(c.senseId));
+  const all = studiedCards(memories);
+  const t = now.getTime();
+  const overdue = all.filter((c) => c.due <= t).length;
+  const cards = all.filter((c) => !waiting.has(c.senseId));
   const notLast = cards.filter((c) => c.senseId !== session.lastSenseId);
   const pool = notLast.length > 0 ? notLast : cards;
 
-  const due = pool.filter((c) => c.due <= now.getTime()).sort((a, b) => a.recall - b.recall)[0];
+  // Recall is computed only for due cards; it is the expensive part.
+  let due: CardEntry | undefined;
+  let lowest = Infinity;
+  for (const c of pool) {
+    if (c.due > t) continue;
+    const r = recall(memories.get(c.senseId)![c.card]!, now);
+    if (r < lowest) [due, lowest] = [c, r];
+  }
   if (due) return { kind: "review", senseId: due.senseId, card: due.card };
 
   const fresh = args.newWords.find((id) => !memories.has(id));
   const gateOpen = isGateOpen({
     recentCorrect: args.recentCorrect,
-    overdue: countOverdue(memories, now),
+    overdue,
     newThisSession: session.newIntroduced,
   });
   if (fresh !== undefined && gateOpen) return { kind: "new", senseId: fresh };

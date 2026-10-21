@@ -21,7 +21,8 @@
     "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mts",
     "test:db": "vitest run --config vitest.db.config.mts",
     "seed:fixtures": "node --env-file-if-exists=.env.local scripts/seed-fixtures.mts",
-    "admin:token": "node scripts/admin-token.mts"
+    "admin:token": "node scripts/admin-token.mts",
+    "simulate": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/simulate.mts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.4",
