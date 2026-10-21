@@ -29,6 +29,9 @@ Decisions that go beyond [SPEC.md](SPEC.md), newest last. One line of reason eac
 | 2026-10-21 | Playwright runs two projects: Chromebook (1366×768) and phone (390px wide), Chromium only | The spec's two target devices; Chromebooks run Chrome |
 | 2026-10-21 | Railway config lives in `.railway/railway.ts` (IaC), not `railway.json` | `railway.json` is deprecated and stops being read on 2026-12-01 |
 | 2026-10-21 | Markdown is excluded from Prettier | Keeps hand-formatted docs and SPEC.md tables from being rewritten |
+| 2026-10-21 | Railway deploys a commit only after GitHub CI passes (`checkSuites: true`) | A broken build or failing test never reaches production or a preview |
+| 2026-10-21 | Railway hard spending limit: $15/month for the workspace | Owner's choice; caps surprise bills (Railway stops services above it) |
+| 2026-10-21 | Production uses Railway's generated `*.up.railway.app` domain until a domain is bought. Generated domains stay out of `.railway/railway.ts` | No domain yet; Railway's IaC rules say not to commit generated domains |
 
 ## Open questions
 

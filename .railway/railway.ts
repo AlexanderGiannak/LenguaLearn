@@ -11,7 +11,8 @@ export default defineRailway(() => {
   const db = postgres("postgres");
 
   const web = service("web", {
-    source: github("AlexanderGiannak/LenguaLearn", { branch: "main" }),
+    // checkSuites: Railway waits for GitHub CI to pass before deploying a commit.
+    source: github("AlexanderGiannak/LenguaLearn", { branch: "main", checkSuites: true }),
     build: "npm run build",
     // Runs inside the private network before the new version takes traffic.
     preDeploy: "npm run db:migrate",
