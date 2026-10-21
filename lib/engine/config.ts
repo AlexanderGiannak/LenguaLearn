@@ -18,6 +18,11 @@ export const ENGINE_CONFIG = {
   /** Question bands by the tested card's stability (days): under low, low..high, over high. */
   bands: { lowDays: 2, highDays: 10 },
 
+  questions: {
+    /** Chance of a contrast question for a "commonly confused" pair, when one is possible. */
+    contrastRate: 0.1,
+  },
+
   /** Learned: passed a recognition review after a gap of at least this many days... */
   learnedMinIntervalDays: 7,
   /** ...and current predicted recall is at least this. */
