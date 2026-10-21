@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" role="img" aria-hidden="true">
+  <!-- Test fixture image (original drawing, MIT). Real images come from the Phase 9 pipeline. -->
+  <rect x="0" y="136" width="200" height="24" fill="#7cb76b"/>
+  <rect x="44" y="70" width="112" height="68" fill="#f3e3c3" stroke="#5b4a3a" stroke-width="3"/>
+  <polygon points="32,74 100,22 168,74" fill="#c8483b" stroke="#5b4a3a" stroke-width="3" stroke-linejoin="round"/>
+  <rect x="88" y="98" width="24" height="40" fill="#8a5a3b" stroke="#5b4a3a" stroke-width="3"/>
+  <circle cx="106" cy="119" r="2.5" fill="#f3d35b"/>
+  <rect x="56" y="86" width="22" height="20" fill="#9fd3ef" stroke="#5b4a3a" stroke-width="3"/>
+  <rect x="122" y="86" width="22" height="20" fill="#9fd3ef" stroke="#5b4a3a" stroke-width="3"/>
+  <rect x="128" y="34" width="14" height="24" fill="#8a5a3b" stroke="#5b4a3a" stroke-width="3"/>
+</svg>

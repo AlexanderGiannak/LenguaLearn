@@ -1,0 +1,2085 @@
+{
+  "fixture": true,
+  "note": "AI-written TEST FIXTURES for local development, CI and PR previews only. Not reviewed content; the import endpoint refuses them in production.",
+  "lemmas": [
+    {
+      "key": "casa#noun",
+      "headword": "casa",
+      "partOfSpeech": "noun",
+      "gender": "f",
+      "frequencyRank": 90,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "casa#noun#1",
+          "gloss": "house, home",
+          "definition": "A building where a person or family lives.",
+          "frequencyRank": 90,
+          "themes": ["home"],
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "concrete",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Mi casa tiene un jardín pequeño.",
+              "surfaceForm": "casa",
+              "start": 3,
+              "end": 7,
+              "translation": "My house has a small garden.",
+              "distractors": ["mesa", "calle", "playa"],
+              "source": "ai"
+            },
+            {
+              "text": "Después de clase, voy a casa.",
+              "surfaceForm": "casa",
+              "start": 24,
+              "end": 28,
+              "translation": "After class, I'm going home.",
+              "distractors": ["cama", "silla", "mesa"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "family",
+              "text": "casita"
+            },
+            {
+              "type": "family",
+              "text": "casero"
+            },
+            {
+              "type": "collocation",
+              "text": "en casa"
+            }
+          ],
+          "images": [
+            {
+              "fileKey": "fixtures/casa.svg",
+              "alt": "A small house with a red roof, a door and two windows",
+              "source": "Original drawing for LenguaLearn test fixtures",
+              "license": "MIT",
+              "attribution": "LenguaLearn contributors"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "perro#noun",
+      "headword": "perro",
+      "partOfSpeech": "noun",
+      "gender": "m",
+      "frequencyRank": 420,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "perro#noun#1",
+          "gloss": "dog",
+          "definition": "A common pet animal that barks.",
+          "frequencyRank": 420,
+          "themes": ["animals"],
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "concrete",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "El perro de mi vecino ladra mucho.",
+              "surfaceForm": "perro",
+              "start": 3,
+              "end": 8,
+              "translation": "My neighbor's dog barks a lot.",
+              "distractors": ["libro", "coche", "árbol"],
+              "source": "ai"
+            },
+            {
+              "text": "Saco a pasear al perro cada mañana.",
+              "surfaceForm": "perro",
+              "start": 17,
+              "end": 22,
+              "translation": "I take the dog for a walk every morning.",
+              "distractors": ["libro", "coche", "árbol"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "family",
+              "text": "perrito"
+            },
+            {
+              "type": "family",
+              "text": "perra"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "estudiante#noun",
+      "headword": "estudiante",
+      "partOfSpeech": "noun",
+      "gender": "both",
+      "frequencyRank": 380,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "estudiante#noun#1",
+          "gloss": "student",
+          "definition": "A person who studies at a school or university.",
+          "frequencyRank": 380,
+          "themes": ["school"],
+          "register": "neutral",
+          "cognate": "true_cognate",
+          "cognateEnglish": "student",
+          "concreteness": "concrete",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "La estudiante nueva se sienta a mi lado.",
+              "surfaceForm": "estudiante",
+              "start": 3,
+              "end": 13,
+              "translation": "The new student sits next to me.",
+              "distractors": ["ventana", "comida", "pregunta"],
+              "source": "ai"
+            },
+            {
+              "text": "Cada estudiante necesita un cuaderno.",
+              "surfaceForm": "estudiante",
+              "start": 5,
+              "end": 15,
+              "translation": "Every student needs a notebook.",
+              "distractors": ["ventana", "silla", "puerta"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "family",
+              "text": "estudiar"
+            },
+            {
+              "type": "family",
+              "text": "estudio"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "agua#noun",
+      "headword": "agua",
+      "partOfSpeech": "noun",
+      "gender": "f",
+      "articleOverride": "el",
+      "frequencyRank": 150,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "agua#noun#1",
+          "gloss": "water",
+          "definition": "The clear liquid that falls as rain and that people drink.",
+          "frequencyRank": 150,
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "concrete",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "¿Me das un vaso de agua, por favor?",
+              "surfaceForm": "agua",
+              "start": 19,
+              "end": 23,
+              "translation": "Can you give me a glass of water, please?",
+              "distractors": ["mesa", "libro", "pared"],
+              "source": "ai"
+            },
+            {
+              "text": "El agua del río está muy fría.",
+              "surfaceForm": "agua",
+              "start": 3,
+              "end": 7,
+              "translation": "The river water is very cold.",
+              "distractors": ["papel", "lápiz", "zapato"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "family",
+              "text": "aguacero"
+            },
+            {
+              "type": "collocation",
+              "text": "agua potable"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "lápiz#noun",
+      "headword": "lápiz",
+      "partOfSpeech": "noun",
+      "gender": "m",
+      "plural": "lápices",
+      "frequencyRank": 1450,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "lápiz#noun#1",
+          "gloss": "pencil",
+          "definition": "A thin wooden tool with gray lead inside, used for writing.",
+          "frequencyRank": 1450,
+          "themes": ["school"],
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "concrete",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Necesito un lápiz para el examen.",
+              "surfaceForm": "lápiz",
+              "start": 12,
+              "end": 17,
+              "translation": "I need a pencil for the exam.",
+              "distractors": ["perro", "árbol", "río"],
+              "source": "ai"
+            },
+            {
+              "text": "Mi lápiz no tiene punta.",
+              "surfaceForm": "lápiz",
+              "start": 3,
+              "end": 8,
+              "translation": "My pencil doesn't have a point.",
+              "distractors": ["perro", "río", "cielo"],
+              "source": "ai"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "quejarse#verb",
+      "headword": "quejarse",
+      "partOfSpeech": "verb",
+      "formsNote": "me quejo, te quejas, se queja",
+      "frequencyRank": 1900,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "quejarse#verb#1",
+          "gloss": "to complain",
+          "definition": "To say that you are unhappy or annoyed about something.",
+          "frequencyRank": 1900,
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Mi hermano siempre se queja de la comida.",
+              "surfaceForm": "queja",
+              "start": 22,
+              "end": 27,
+              "translation": "My brother always complains about the food.",
+              "distractors": ["peina", "viste", "sienta"],
+              "source": "ai"
+            },
+            {
+              "text": "No te quejes tanto.",
+              "surfaceForm": "quejes",
+              "start": 6,
+              "end": 12,
+              "translation": "Don't complain so much.",
+              "distractors": ["peines", "vistas", "duches"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "family",
+              "text": "la queja"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "tener#verb",
+      "headword": "tener",
+      "partOfSpeech": "verb",
+      "formsNote": "tengo, tienes, tiene; tuve; tendré",
+      "frequencyRank": 15,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "tener#verb#1",
+          "gloss": "to have",
+          "definition": "To own, hold or possess something.",
+          "frequencyRank": 15,
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Tengo dos hermanos y una hermana.",
+              "surfaceForm": "Tengo",
+              "start": 0,
+              "end": 5,
+              "translation": "I have two brothers and a sister.",
+              "distractors": ["Como", "Leo", "Bebo"],
+              "source": "ai"
+            },
+            {
+              "text": "¿Cuántos años tienes?",
+              "surfaceForm": "tienes",
+              "start": 14,
+              "end": 20,
+              "translation": "How old are you?",
+              "distractors": ["comes", "lees", "bebes"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "collocation",
+              "text": "tener hambre"
+            },
+            {
+              "type": "collocation",
+              "text": "tener que"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ir#verb",
+      "headword": "ir",
+      "partOfSpeech": "verb",
+      "formsNote": "voy, vas, va; fui; iré",
+      "frequencyRank": 30,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "ir#verb#1",
+          "gloss": "to go",
+          "definition": "To move or travel from one place to another.",
+          "frequencyRank": 30,
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Mañana vamos a la playa.",
+              "surfaceForm": "vamos",
+              "start": 7,
+              "end": 12,
+              "translation": "Tomorrow we're going to the beach.",
+              "distractors": ["comemos", "leemos", "dormimos"],
+              "source": "ai"
+            },
+            {
+              "text": "Ayer fui al cine con mis amigos.",
+              "surfaceForm": "fui",
+              "start": 5,
+              "end": 8,
+              "translation": "Yesterday I went to the movies with my friends.",
+              "distractors": ["comí", "leí", "bebí"],
+              "source": "ai"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "grande#adjective",
+      "headword": "grande",
+      "partOfSpeech": "adjective",
+      "formsNote": "gran before a singular noun: un gran día",
+      "frequencyRank": 70,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "grande#adjective#1",
+          "gloss": "big, large",
+          "definition": "Of more than the usual size or amount.",
+          "frequencyRank": 70,
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Vivimos en una ciudad muy grande.",
+              "surfaceForm": "grande",
+              "start": 26,
+              "end": 32,
+              "translation": "We live in a very big city.",
+              "distractors": ["ayer", "nunca", "debajo"],
+              "source": "ai"
+            },
+            {
+              "text": "Mi perro es grande pero muy tranquilo.",
+              "surfaceForm": "grande",
+              "start": 12,
+              "end": 18,
+              "translation": "My dog is big but very calm.",
+              "distractors": ["ayer", "nunca", "debajo"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "antonym",
+              "text": "pequeño",
+              "targetKey": "pequeño#adjective#1"
+            },
+            {
+              "type": "family",
+              "text": "grandeza"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "pequeño#adjective",
+      "headword": "pequeño",
+      "partOfSpeech": "adjective",
+      "frequencyRank": 230,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "pequeño#adjective#1",
+          "gloss": "small, little",
+          "definition": "Of less than the usual size or amount.",
+          "frequencyRank": 230,
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Tengo un cuarto pequeño con una ventana.",
+              "surfaceForm": "pequeño",
+              "start": 16,
+              "end": 23,
+              "translation": "I have a small room with a window.",
+              "distractors": ["ayer", "mucho", "siempre"],
+              "source": "ai"
+            },
+            {
+              "text": "Cuando era pequeño, vivía en el campo.",
+              "surfaceForm": "pequeño",
+              "start": 11,
+              "end": 18,
+              "translation": "When I was little, I lived in the countryside.",
+              "distractors": ["ayer", "siempre", "aquí"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "antonym",
+              "text": "grande",
+              "targetKey": "grande#adjective#1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "español#adjective",
+      "headword": "español",
+      "partOfSpeech": "adjective",
+      "feminine": "española",
+      "frequencyRank": 600,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "español#adjective#1",
+          "gloss": "Spanish",
+          "definition": "From Spain, or related to Spain or its language.",
+          "frequencyRank": 600,
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Mi profesora es española, de Sevilla.",
+              "surfaceForm": "española",
+              "start": 16,
+              "end": 24,
+              "translation": "My teacher is Spanish, from Seville.",
+              "distractors": ["ayer", "lejos", "nunca"],
+              "source": "ai"
+            },
+            {
+              "text": "Me gusta mucho la comida española.",
+              "surfaceForm": "española",
+              "start": 25,
+              "end": 33,
+              "translation": "I really like Spanish food.",
+              "distractors": ["ayer", "lejos", "nunca"],
+              "source": "ai"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "librería#noun",
+      "headword": "librería",
+      "partOfSpeech": "noun",
+      "gender": "f",
+      "frequencyRank": 3100,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "librería#noun#1",
+          "gloss": "bookstore",
+          "definition": "A store that sells books.",
+          "frequencyRank": 3100,
+          "themes": ["school"],
+          "register": "neutral",
+          "cognate": "false_friend",
+          "cognateEnglish": "library",
+          "concreteness": "concrete",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Compré este libro en la librería del centro.",
+              "surfaceForm": "librería",
+              "start": 24,
+              "end": 32,
+              "translation": "I bought this book at the bookstore downtown.",
+              "distractors": ["nube", "lluvia", "sopa"],
+              "source": "ai"
+            },
+            {
+              "text": "La librería cierra a las ocho.",
+              "surfaceForm": "librería",
+              "start": 3,
+              "end": 11,
+              "translation": "The bookstore closes at eight.",
+              "distractors": ["nube", "lluvia", "sopa"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "confused_with",
+              "text": "biblioteca",
+              "targetKey": "biblioteca#noun#1"
+            },
+            {
+              "type": "family",
+              "text": "libro"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "biblioteca#noun",
+      "headword": "biblioteca",
+      "partOfSpeech": "noun",
+      "gender": "f",
+      "frequencyRank": 1200,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "biblioteca#noun#1",
+          "gloss": "library",
+          "definition": "A place where people can read or borrow books.",
+          "frequencyRank": 1200,
+          "themes": ["school"],
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "concrete",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Estudio en la biblioteca después de clase.",
+              "surfaceForm": "biblioteca",
+              "start": 14,
+              "end": 24,
+              "translation": "I study at the library after class.",
+              "distractors": ["nube", "lluvia", "sopa"],
+              "source": "ai"
+            },
+            {
+              "text": "En la biblioteca hay que hablar en voz baja.",
+              "surfaceForm": "biblioteca",
+              "start": 6,
+              "end": 16,
+              "translation": "In the library you have to speak quietly.",
+              "distractors": ["nube", "lluvia", "sopa"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "confused_with",
+              "text": "librería",
+              "targetKey": "librería#noun#1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "éxito#noun",
+      "headword": "éxito",
+      "partOfSpeech": "noun",
+      "gender": "m",
+      "frequencyRank": 900,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "éxito#noun#1",
+          "gloss": "success",
+          "definition": "A good result, or reaching what you wanted.",
+          "frequencyRank": 900,
+          "register": "neutral",
+          "cognate": "false_friend",
+          "cognateEnglish": "exit",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "La fiesta fue un éxito total.",
+              "surfaceForm": "éxito",
+              "start": 17,
+              "end": 22,
+              "translation": "The party was a total success.",
+              "distractors": ["árbol", "zapato", "plato"],
+              "source": "ai"
+            },
+            {
+              "text": "Te deseo mucho éxito en tu nuevo trabajo.",
+              "surfaceForm": "éxito",
+              "start": 15,
+              "end": 20,
+              "translation": "I wish you a lot of success in your new job.",
+              "distractors": ["árbol", "zapato", "plato"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "family",
+              "text": "exitoso"
+            },
+            {
+              "type": "confused_with",
+              "text": "salida"
+            },
+            {
+              "type": "collocation",
+              "text": "tener éxito"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "actual#adjective",
+      "headword": "actual",
+      "partOfSpeech": "adjective",
+      "frequencyRank": 1300,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "actual#adjective#1",
+          "gloss": "current, present-day",
+          "definition": "Happening or existing now.",
+          "frequencyRank": 1300,
+          "register": "neutral",
+          "cognate": "false_friend",
+          "cognateEnglish": "actual",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "La situación actual es difícil.",
+              "surfaceForm": "actual",
+              "start": 13,
+              "end": 19,
+              "translation": "The current situation is difficult.",
+              "distractors": ["ayer", "nunca", "debajo"],
+              "source": "ai"
+            },
+            {
+              "text": "El presidente actual vive en la capital.",
+              "surfaceForm": "actual",
+              "start": 14,
+              "end": 20,
+              "translation": "The current president lives in the capital.",
+              "distractors": ["ayer", "nunca", "debajo"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "family",
+              "text": "actualmente"
+            },
+            {
+              "type": "confused_with",
+              "text": "real"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "importante#adjective",
+      "headword": "importante",
+      "partOfSpeech": "adjective",
+      "frequencyRank": 180,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "importante#adjective#1",
+          "gloss": "important",
+          "definition": "Having great value or effect.",
+          "frequencyRank": 180,
+          "register": "neutral",
+          "cognate": "true_cognate",
+          "cognateEnglish": "important",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Es importante dormir bien antes de un examen.",
+              "surfaceForm": "importante",
+              "start": 3,
+              "end": 13,
+              "translation": "It's important to sleep well before a test.",
+              "distractors": ["ayer", "nunca", "encima"],
+              "source": "ai"
+            },
+            {
+              "text": "Tengo una reunión muy importante mañana.",
+              "surfaceForm": "importante",
+              "start": 22,
+              "end": 32,
+              "translation": "I have a very important meeting tomorrow.",
+              "distractors": ["ayer", "nunca", "encima"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "family",
+              "text": "importancia"
+            },
+            {
+              "type": "family",
+              "text": "importar"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "animal#noun",
+      "headword": "animal",
+      "partOfSpeech": "noun",
+      "gender": "m",
+      "frequencyRank": 700,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "animal#noun#1",
+          "gloss": "animal",
+          "definition": "A living creature that can move, such as a dog or a bird.",
+          "frequencyRank": 700,
+          "themes": ["animals"],
+          "register": "neutral",
+          "cognate": "true_cognate",
+          "cognateEnglish": "animal",
+          "concreteness": "concrete",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Mi animal favorito es el caballo.",
+              "surfaceForm": "animal",
+              "start": 3,
+              "end": 9,
+              "translation": "My favorite animal is the horse.",
+              "distractors": ["zapato", "lápiz", "plato"],
+              "source": "ai"
+            },
+            {
+              "text": "El zoológico tiene más de cien animales.",
+              "surfaceForm": "animales",
+              "start": 31,
+              "end": 39,
+              "translation": "The zoo has more than a hundred animals.",
+              "distractors": ["zapatos", "lápices", "platos"],
+              "source": "ai"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "hospital#noun",
+      "headword": "hospital",
+      "partOfSpeech": "noun",
+      "gender": "m",
+      "frequencyRank": 800,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "hospital#noun#1",
+          "gloss": "hospital",
+          "definition": "A place where sick or injured people get medical care.",
+          "frequencyRank": 800,
+          "themes": ["health"],
+          "register": "neutral",
+          "cognate": "true_cognate",
+          "cognateEnglish": "hospital",
+          "concreteness": "concrete",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Mi madre trabaja en un hospital.",
+              "surfaceForm": "hospital",
+              "start": 23,
+              "end": 31,
+              "translation": "My mother works in a hospital.",
+              "distractors": ["zapato", "lápiz", "plato"],
+              "source": "ai"
+            },
+            {
+              "text": "Llevaron al herido al hospital.",
+              "surfaceForm": "hospital",
+              "start": 22,
+              "end": 30,
+              "translation": "They took the injured man to the hospital.",
+              "distractors": ["zapato", "lápiz", "plato"],
+              "source": "ai"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "familia#noun",
+      "headword": "familia",
+      "partOfSpeech": "noun",
+      "gender": "f",
+      "frequencyRank": 160,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "familia#noun#1",
+          "gloss": "family",
+          "definition": "A group of people related to each other, such as parents and children.",
+          "frequencyRank": 160,
+          "themes": ["family"],
+          "register": "neutral",
+          "cognate": "true_cognate",
+          "cognateEnglish": "family",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Mi familia es muy grande.",
+              "surfaceForm": "familia",
+              "start": 3,
+              "end": 10,
+              "translation": "My family is very big.",
+              "distractors": ["nube", "lluvia", "sopa"],
+              "source": "ai"
+            },
+            {
+              "text": "Paso los domingos con mi familia.",
+              "surfaceForm": "familia",
+              "start": 25,
+              "end": 32,
+              "translation": "I spend Sundays with my family.",
+              "distractors": ["nube", "lluvia", "sopa"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "family",
+              "text": "familiar"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "cuenta#noun",
+      "headword": "cuenta",
+      "partOfSpeech": "noun",
+      "gender": "f",
+      "frequencyRank": 700,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "cuenta#noun#1",
+          "gloss": "bill, check",
+          "definition": "The paper that shows how much you must pay at a restaurant or store.",
+          "frequencyRank": 700,
+          "themes": ["food"],
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "concrete",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Camarero, la cuenta, por favor.",
+              "surfaceForm": "cuenta",
+              "start": 13,
+              "end": 19,
+              "translation": "Waiter, the check, please.",
+              "distractors": ["nube", "lluvia", "semana"],
+              "source": "ai"
+            },
+            {
+              "text": "Pagamos la cuenta y salimos del restaurante.",
+              "surfaceForm": "cuenta",
+              "start": 11,
+              "end": 17,
+              "translation": "We paid the bill and left the restaurant.",
+              "distractors": ["nube", "lluvia", "semana"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "family",
+              "text": "contar"
+            }
+          ]
+        },
+        {
+          "key": "cuenta#noun#2",
+          "gloss": "account",
+          "definition": "An arrangement to keep money in a bank, or to use a website.",
+          "frequencyRank": 1500,
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Abrí una cuenta en el banco.",
+              "surfaceForm": "cuenta",
+              "start": 9,
+              "end": 15,
+              "translation": "I opened an account at the bank.",
+              "distractors": ["nube", "lluvia", "sopa"],
+              "source": "ai"
+            },
+            {
+              "text": "Necesito la contraseña de mi cuenta.",
+              "surfaceForm": "cuenta",
+              "start": 29,
+              "end": 35,
+              "translation": "I need the password for my account.",
+              "distractors": ["nube", "lluvia", "sopa"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "collocation",
+              "text": "cuenta bancaria"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "realizar#verb",
+      "headword": "realizar",
+      "partOfSpeech": "verb",
+      "formsNote": "realicé (z becomes c before e)",
+      "frequencyRank": 1100,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "realizar#verb#1",
+          "gloss": "to carry out, to do",
+          "definition": "To do or complete a task, plan or activity.",
+          "frequencyRank": 1100,
+          "register": "neutral",
+          "cognate": "false_friend",
+          "cognateEnglish": "realize",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "La escuela va a realizar una feria de ciencias.",
+              "surfaceForm": "realizar",
+              "start": 16,
+              "end": 24,
+              "translation": "The school is going to hold a science fair.",
+              "distractors": ["dormir", "llover", "caer"],
+              "source": "ai"
+            },
+            {
+              "text": "Los científicos realizaron varios experimentos.",
+              "surfaceForm": "realizaron",
+              "start": 16,
+              "end": 26,
+              "translation": "The scientists carried out several experiments.",
+              "distractors": ["durmieron", "nacieron", "cayeron"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "confused_with",
+              "text": "darse cuenta",
+              "targetKey": "darse-cuenta#verb#1"
+            },
+            {
+              "type": "collocation",
+              "text": "realizar un sueño"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "darse-cuenta#verb",
+      "headword": "darse cuenta",
+      "partOfSpeech": "verb",
+      "formsNote": "me doy cuenta, te das cuenta; me di cuenta",
+      "frequencyRank": 1000,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "darse-cuenta#verb#1",
+          "gloss": "to realize, to notice",
+          "definition": "To understand or notice something that you did not know before.",
+          "frequencyRank": 1000,
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "De repente me di cuenta de que era tarde.",
+              "surfaceForm": "di cuenta",
+              "start": 14,
+              "end": 23,
+              "translation": "Suddenly I realized that it was late.",
+              "distractors": ["di prisa", "di miedo", "di frío"],
+              "source": "ai"
+            },
+            {
+              "text": "¿Te diste cuenta del error?",
+              "surfaceForm": "diste cuenta",
+              "start": 4,
+              "end": 16,
+              "translation": "Did you notice the mistake?",
+              "distractors": ["diste prisa", "diste miedo", "diste frío"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "confused_with",
+              "text": "realizar",
+              "targetKey": "realizar#verb#1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "inolvidable#adjective",
+      "headword": "inolvidable",
+      "partOfSpeech": "adjective",
+      "frequencyRank": 4100,
+      "status": "ai_checked",
+      "wordParts": [
+        {
+          "kind": "prefix",
+          "text": "in-",
+          "meaning": "not"
+        },
+        {
+          "kind": "root",
+          "text": "olvid",
+          "meaning": "forget (olvidar)"
+        },
+        {
+          "kind": "suffix",
+          "text": "-able",
+          "meaning": "able to be"
+        }
+      ],
+      "senses": [
+        {
+          "key": "inolvidable#adjective#1",
+          "gloss": "unforgettable",
+          "definition": "So good or so strong that you cannot forget it.",
+          "frequencyRank": 4100,
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Fue un viaje inolvidable.",
+              "surfaceForm": "inolvidable",
+              "start": 13,
+              "end": 24,
+              "translation": "It was an unforgettable trip.",
+              "distractors": ["ayer", "nunca", "debajo"],
+              "source": "ai"
+            },
+            {
+              "text": "Esa noche fue inolvidable para todos.",
+              "surfaceForm": "inolvidable",
+              "start": 14,
+              "end": 25,
+              "translation": "That night was unforgettable for everyone.",
+              "distractors": ["ayer", "nunca", "debajo"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "family",
+              "text": "olvidar"
+            },
+            {
+              "type": "family",
+              "text": "olvido"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "imprescindible#adjective",
+      "headword": "imprescindible",
+      "partOfSpeech": "adjective",
+      "frequencyRank": 4600,
+      "status": "ai_checked",
+      "wordParts": [
+        {
+          "kind": "prefix",
+          "text": "im-",
+          "meaning": "not"
+        },
+        {
+          "kind": "root",
+          "text": "prescind",
+          "meaning": "do without (prescindir)"
+        },
+        {
+          "kind": "suffix",
+          "text": "-ible",
+          "meaning": "able to be"
+        }
+      ],
+      "senses": [
+        {
+          "key": "imprescindible#adjective#1",
+          "gloss": "essential, indispensable",
+          "definition": "So necessary that you cannot do without it.",
+          "frequencyRank": 4600,
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "El agua es imprescindible para la vida.",
+              "surfaceForm": "imprescindible",
+              "start": 11,
+              "end": 25,
+              "translation": "Water is essential for life.",
+              "distractors": ["ayer", "nunca", "debajo"],
+              "source": "ai"
+            },
+            {
+              "text": "Un buen diccionario es imprescindible para traducir.",
+              "surfaceForm": "imprescindible",
+              "start": 23,
+              "end": 37,
+              "translation": "A good dictionary is essential for translating.",
+              "distractors": ["ayer", "nunca", "debajo"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "synonym",
+              "text": "necesario"
+            },
+            {
+              "type": "family",
+              "text": "prescindir"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "deshacer#verb",
+      "headword": "deshacer",
+      "partOfSpeech": "verb",
+      "formsNote": "deshago, deshaces; deshice (like hacer)",
+      "frequencyRank": 3500,
+      "status": "ai_checked",
+      "wordParts": [
+        {
+          "kind": "prefix",
+          "text": "des-",
+          "meaning": "undo, reverse"
+        },
+        {
+          "kind": "root",
+          "text": "hacer",
+          "meaning": "do, make"
+        }
+      ],
+      "senses": [
+        {
+          "key": "deshacer#verb#1",
+          "gloss": "to undo, to unpack",
+          "definition": "To reverse something that was done, such as a knot or a suitcase.",
+          "frequencyRank": 3500,
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Tengo que deshacer la maleta.",
+              "surfaceForm": "deshacer",
+              "start": 10,
+              "end": 18,
+              "translation": "I have to unpack my suitcase.",
+              "distractors": ["dormir", "llover", "nacer"],
+              "source": "ai"
+            },
+            {
+              "text": "Ella deshizo el nudo con cuidado.",
+              "surfaceForm": "deshizo",
+              "start": 5,
+              "end": 12,
+              "translation": "She undid the knot carefully.",
+              "distractors": ["durmió", "llovió", "nació"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "family",
+              "text": "hacer"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "aprovechar#verb",
+      "headword": "aprovechar",
+      "partOfSpeech": "verb",
+      "frequencyRank": 1700,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "aprovechar#verb#1",
+          "gloss": "to make the most of",
+          "definition": "To use a chance or a resource well.",
+          "frequencyRank": 1700,
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Hay que aprovechar el buen tiempo.",
+              "surfaceForm": "aprovechar",
+              "start": 8,
+              "end": 18,
+              "translation": "We have to make the most of the good weather.",
+              "distractors": ["dormir", "nacer", "caer"],
+              "source": "ai"
+            },
+            {
+              "text": "Aproveché el viaje para visitar a mi abuela.",
+              "surfaceForm": "Aproveché",
+              "start": 0,
+              "end": 9,
+              "translation": "I took advantage of the trip to visit my grandmother.",
+              "distractors": ["Dormí", "Nací", "Caí"],
+              "source": "ai"
+            }
+          ],
+          "hooks": [
+            {
+              "kind": "etymology",
+              "text": "From provecho, “benefit”, which comes from Latin profectus, “progress”.",
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "family",
+              "text": "provecho"
+            },
+            {
+              "type": "family",
+              "text": "aprovechable"
+            },
+            {
+              "type": "collocation",
+              "text": "aprovechar el tiempo"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "platicar#verb",
+      "headword": "platicar",
+      "partOfSpeech": "verb",
+      "formsNote": "platiqué (c becomes qu before e)",
+      "frequencyRank": 2600,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "platicar#verb#1",
+          "gloss": "to chat, to talk",
+          "definition": "To have a relaxed conversation with someone.",
+          "frequencyRank": 2600,
+          "register": "regional",
+          "region": "Mexico and Central America",
+          "cognate": "none",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Nos gusta platicar después de comer.",
+              "surfaceForm": "platicar",
+              "start": 10,
+              "end": 18,
+              "translation": "We like to chat after eating.",
+              "distractors": ["llover", "nacer", "caer"],
+              "source": "ai"
+            },
+            {
+              "text": "Ayer platiqué con mi tía por teléfono.",
+              "surfaceForm": "platiqué",
+              "start": 5,
+              "end": 13,
+              "translation": "Yesterday I chatted with my aunt on the phone.",
+              "distractors": ["nací", "caí", "crecí"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "synonym",
+              "text": "charlar"
+            },
+            {
+              "type": "synonym",
+              "text": "conversar"
+            },
+            {
+              "type": "family",
+              "text": "plática"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "solicitar#verb",
+      "headword": "solicitar",
+      "partOfSpeech": "verb",
+      "frequencyRank": 2200,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "solicitar#verb#1",
+          "gloss": "to request, to apply for",
+          "definition": "To ask for something in a formal way, often in writing.",
+          "frequencyRank": 2200,
+          "register": "formal",
+          "cognate": "none",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Quiero solicitar una beca para la universidad.",
+              "surfaceForm": "solicitar",
+              "start": 7,
+              "end": 16,
+              "translation": "I want to apply for a scholarship for college.",
+              "distractors": ["llover", "nacer", "caer"],
+              "source": "ai"
+            },
+            {
+              "text": "El cliente solicitó más información.",
+              "surfaceForm": "solicitó",
+              "start": 11,
+              "end": 19,
+              "translation": "The customer requested more information.",
+              "distractors": ["llovió", "nació", "cayó"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "synonym",
+              "text": "pedir"
+            },
+            {
+              "type": "family",
+              "text": "solicitud"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "tomar#verb",
+      "headword": "tomar",
+      "partOfSpeech": "verb",
+      "frequencyRank": 110,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "tomar#verb#1",
+          "gloss": "to take, to drink",
+          "definition": "To get hold of something, to use transport, or to drink.",
+          "frequencyRank": 110,
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Siempre tomo el autobús para ir a la escuela.",
+              "surfaceForm": "tomo",
+              "start": 8,
+              "end": 12,
+              "translation": "I always take the bus to go to school.",
+              "distractors": ["duermo", "nazco", "caigo"],
+              "source": "ai"
+            },
+            {
+              "text": "¿Quieres tomar un café?",
+              "surfaceForm": "tomar",
+              "start": 9,
+              "end": 14,
+              "translation": "Do you want to have a coffee?",
+              "distractors": ["dormir", "nacer", "caer"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "collocation",
+              "text": "tomar una decisión",
+              "targetKey": "decisión#noun#1"
+            },
+            {
+              "type": "collocation",
+              "text": "tomar el sol"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "decisión#noun",
+      "headword": "decisión",
+      "partOfSpeech": "noun",
+      "gender": "f",
+      "plural": "decisiones",
+      "frequencyRank": 650,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "decisión#noun#1",
+          "gloss": "decision",
+          "definition": "A choice that you make after thinking about it.",
+          "frequencyRank": 650,
+          "register": "neutral",
+          "cognate": "true_cognate",
+          "cognateEnglish": "decision",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Fue una decisión muy difícil.",
+              "surfaceForm": "decisión",
+              "start": 8,
+              "end": 16,
+              "translation": "It was a very difficult decision.",
+              "distractors": ["nube", "lluvia", "sopa"],
+              "source": "ai"
+            },
+            {
+              "text": "Tenemos que tomar una decisión hoy.",
+              "surfaceForm": "decisión",
+              "start": 22,
+              "end": 30,
+              "translation": "We have to make a decision today.",
+              "distractors": ["nube", "lluvia", "sopa"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "collocation",
+              "text": "tomar una decisión",
+              "targetKey": "tomar#verb#1"
+            },
+            {
+              "type": "family",
+              "text": "decidir"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "empezar#verb",
+      "headword": "empezar",
+      "partOfSpeech": "verb",
+      "formsNote": "empiezo, empiezas; empecé",
+      "frequencyRank": 140,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "empezar#verb#1",
+          "gloss": "to begin, to start",
+          "definition": "To do the first part of something.",
+          "frequencyRank": 140,
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "La clase empieza a las ocho.",
+              "surfaceForm": "empieza",
+              "start": 9,
+              "end": 16,
+              "translation": "Class starts at eight.",
+              "distractors": ["duerme", "nace", "cae"],
+              "source": "ai"
+            },
+            {
+              "text": "Mañana empiezo un trabajo nuevo.",
+              "surfaceForm": "empiezo",
+              "start": 7,
+              "end": 14,
+              "translation": "Tomorrow I start a new job.",
+              "distractors": ["duermo", "nazco", "caigo"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "synonym",
+              "text": "comenzar",
+              "targetKey": "comenzar#verb#1"
+            },
+            {
+              "type": "antonym",
+              "text": "terminar"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "comenzar#verb",
+      "headword": "comenzar",
+      "partOfSpeech": "verb",
+      "formsNote": "comienzo, comienzas; comencé",
+      "frequencyRank": 450,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "comenzar#verb#1",
+          "gloss": "to begin, to start",
+          "definition": "To do the first part of something.",
+          "frequencyRank": 450,
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "El partido va a comenzar pronto.",
+              "surfaceForm": "comenzar",
+              "start": 16,
+              "end": 24,
+              "translation": "The game is going to start soon.",
+              "distractors": ["dormir", "nacer", "caber"],
+              "source": "ai"
+            },
+            {
+              "text": "La película comenzó tarde.",
+              "surfaceForm": "comenzó",
+              "start": 12,
+              "end": 19,
+              "translation": "The movie started late.",
+              "distractors": ["durmió", "nació", "cupo"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "synonym",
+              "text": "empezar",
+              "targetKey": "empezar#verb#1"
+            },
+            {
+              "type": "family",
+              "text": "comienzo"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "abrir#verb",
+      "headword": "abrir",
+      "partOfSpeech": "verb",
+      "formsNote": "past participle: abierto",
+      "frequencyRank": 260,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "abrir#verb#1",
+          "gloss": "to open",
+          "definition": "To move something so that it is no longer closed.",
+          "frequencyRank": 260,
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "¿Puedes abrir la ventana?",
+              "surfaceForm": "abrir",
+              "start": 8,
+              "end": 13,
+              "translation": "Can you open the window?",
+              "distractors": ["dormir", "nacer", "caber"],
+              "source": "ai"
+            },
+            {
+              "text": "La tienda abre a las nueve.",
+              "surfaceForm": "abre",
+              "start": 10,
+              "end": 14,
+              "translation": "The store opens at nine.",
+              "distractors": ["duerme", "nace", "cabe"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "antonym",
+              "text": "cerrar",
+              "targetKey": "cerrar#verb#1"
+            },
+            {
+              "type": "family",
+              "text": "abierto"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "cerrar#verb",
+      "headword": "cerrar",
+      "partOfSpeech": "verb",
+      "formsNote": "cierro, cierras, cierra",
+      "frequencyRank": 400,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "cerrar#verb#1",
+          "gloss": "to close, to shut",
+          "definition": "To move something so that it is no longer open.",
+          "frequencyRank": 400,
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Por favor, cierra la puerta.",
+              "surfaceForm": "cierra",
+              "start": 11,
+              "end": 17,
+              "translation": "Please close the door.",
+              "distractors": ["duerme", "nace", "cabe"],
+              "source": "ai"
+            },
+            {
+              "text": "El banco cierra a las tres.",
+              "surfaceForm": "cierra",
+              "start": 9,
+              "end": 15,
+              "translation": "The bank closes at three.",
+              "distractors": ["duerme", "nace", "cabe"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "antonym",
+              "text": "abrir",
+              "targetKey": "abrir#verb#1"
+            },
+            {
+              "type": "family",
+              "text": "cerrado"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "dinero#noun",
+      "headword": "dinero",
+      "partOfSpeech": "noun",
+      "gender": "m",
+      "frequencyRank": 240,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "dinero#noun#1",
+          "gloss": "money",
+          "definition": "Coins and bills that people use to buy things.",
+          "frequencyRank": 240,
+          "themes": ["money"],
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "concrete",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "No tengo dinero para el cine.",
+              "surfaceForm": "dinero",
+              "start": 9,
+              "end": 15,
+              "translation": "I don't have money for the movies.",
+              "distractors": ["cielo", "río", "sol"],
+              "source": "ai"
+            },
+            {
+              "text": "Ahorro dinero para comprar una bicicleta.",
+              "surfaceForm": "dinero",
+              "start": 7,
+              "end": 13,
+              "translation": "I'm saving money to buy a bicycle.",
+              "distractors": ["cielo", "río", "sol"],
+              "source": "ai"
+            }
+          ],
+          "hooks": [
+            {
+              "kind": "mnemonic",
+              "text": "Mnemonic: you need dinero to pay for dinner.",
+              "source": "ai"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "mesa#noun",
+      "headword": "mesa",
+      "partOfSpeech": "noun",
+      "gender": "f",
+      "frequencyRank": 350,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "mesa#noun#1",
+          "gloss": "table",
+          "definition": "A piece of furniture with a flat top and legs.",
+          "frequencyRank": 350,
+          "themes": ["home"],
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "concrete",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Pon los platos en la mesa.",
+              "surfaceForm": "mesa",
+              "start": 21,
+              "end": 25,
+              "translation": "Put the plates on the table.",
+              "distractors": ["nube", "lluvia", "semana"],
+              "source": "ai"
+            },
+            {
+              "text": "La mesa de la cocina es de madera.",
+              "surfaceForm": "mesa",
+              "start": 3,
+              "end": 7,
+              "translation": "The kitchen table is made of wood.",
+              "distractors": ["nube", "lluvia", "semana"],
+              "source": "ai"
+            }
+          ],
+          "hooks": [
+            {
+              "kind": "mnemonic",
+              "text": "Mnemonic: picture a messy table covered in books.",
+              "source": "ai"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "hermano#noun",
+      "headword": "hermano",
+      "partOfSpeech": "noun",
+      "gender": "m",
+      "frequencyRank": 320,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "hermano#noun#1",
+          "gloss": "brother",
+          "definition": "A boy or man who has the same parents as you.",
+          "frequencyRank": 320,
+          "themes": ["family"],
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Mi hermano mayor estudia medicina.",
+              "surfaceForm": "hermano",
+              "start": 3,
+              "end": 10,
+              "translation": "My older brother studies medicine.",
+              "distractors": ["cielo", "río", "sol"],
+              "source": "ai"
+            },
+            {
+              "text": "Juego al fútbol con mi hermano.",
+              "surfaceForm": "hermano",
+              "start": 23,
+              "end": 30,
+              "translation": "I play soccer with my brother.",
+              "distractors": ["cielo", "río", "sol"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "family",
+              "text": "hermana"
+            },
+            {
+              "type": "family",
+              "text": "hermanos"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "rápido#adjective",
+      "headword": "rápido",
+      "partOfSpeech": "adjective",
+      "frequencyRank": 520,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "rápido#adjective#1",
+          "gloss": "fast, quick",
+          "definition": "Moving or happening at high speed.",
+          "frequencyRank": 520,
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Mi hermano es muy rápido en las carreras.",
+              "surfaceForm": "rápido",
+              "start": 18,
+              "end": 24,
+              "translation": "My brother is very fast in races.",
+              "distractors": ["ayer", "nunca", "debajo"],
+              "source": "ai"
+            },
+            {
+              "text": "El tren rápido llega en una hora.",
+              "surfaceForm": "rápido",
+              "start": 8,
+              "end": 14,
+              "translation": "The fast train arrives in an hour.",
+              "distractors": ["ayer", "nunca", "debajo"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "antonym",
+              "text": "lento"
+            },
+            {
+              "type": "family",
+              "text": "rapidez"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "bien#adverb",
+      "headword": "bien",
+      "partOfSpeech": "adverb",
+      "frequencyRank": 50,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "bien#adverb#1",
+          "gloss": "well",
+          "definition": "In a good or correct way.",
+          "frequencyRank": 50,
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Hoy me siento muy bien.",
+              "surfaceForm": "bien",
+              "start": 18,
+              "end": 22,
+              "translation": "I feel very good today.",
+              "distractors": ["mesa", "perro", "libro"],
+              "source": "ai"
+            },
+            {
+              "text": "Ella canta muy bien.",
+              "surfaceForm": "bien",
+              "start": 15,
+              "end": 19,
+              "translation": "She sings very well.",
+              "distractors": ["mesa", "perro", "libro"],
+              "source": "ai"
+            }
+          ],
+          "relations": [
+            {
+              "type": "antonym",
+              "text": "mal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ojalá#interjection",
+      "headword": "ojalá",
+      "partOfSpeech": "interjection",
+      "frequencyRank": 2400,
+      "status": "ai_checked",
+      "senses": [
+        {
+          "key": "ojalá#interjection#1",
+          "gloss": "hopefully, I hope so",
+          "definition": "Used to say that you really want something to happen.",
+          "frequencyRank": 2400,
+          "register": "neutral",
+          "cognate": "none",
+          "concreteness": "abstract",
+          "status": "ai_checked",
+          "examples": [
+            {
+              "text": "Ojalá haga sol mañana.",
+              "surfaceForm": "Ojalá",
+              "start": 0,
+              "end": 5,
+              "translation": "I hope it's sunny tomorrow.",
+              "distractors": ["Debajo", "Ayer", "Encima"],
+              "source": "ai"
+            },
+            {
+              "text": "Ojalá que ganemos el partido.",
+              "surfaceForm": "Ojalá",
+              "start": 0,
+              "end": 5,
+              "translation": "Hopefully we win the game.",
+              "distractors": ["Debajo", "Ayer", "Encima"],
+              "source": "ai"
+            }
+          ],
+          "hooks": [
+            {
+              "kind": "etymology",
+              "text": "From Andalusian Arabic law šá lláh, “if God wills”.",
+              "source": "ai"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "lists": [
+    {
+      "key": "fixture-level-1",
+      "name": "Fixture: level 1 words",
+      "status": "ai_checked",
+      "senseKeys": [
+        "casa#noun#1",
+        "perro#noun#1",
+        "estudiante#noun#1",
+        "agua#noun#1",
+        "tener#verb#1",
+        "ir#verb#1",
+        "grande#adjective#1",
+        "pequeño#adjective#1",
+        "importante#adjective#1",
+        "familia#noun#1",
+        "tomar#verb#1",
+        "empezar#verb#1",
+        "comenzar#verb#1",
+        "abrir#verb#1",
+        "cerrar#verb#1",
+        "dinero#noun#1",
+        "mesa#noun#1",
+        "hermano#noun#1",
+        "bien#adverb#1"
+      ]
+    }
+  ]
+}
