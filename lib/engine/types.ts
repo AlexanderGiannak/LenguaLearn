@@ -30,6 +30,12 @@ export type EngineSense = {
   familyIds: readonly number[];
   confusedIds: readonly number[];
   examples: readonly EngineExample[];
+  /**
+   * Reviewed sentences that misuse the word, for "which sentence uses it correctly"
+   * questions. Generated misuses can accidentally be correct Spanish, so this type is
+   * asked only when at least two reviewed ones exist.
+   */
+  misuses: readonly string[];
 };
 
 /** A random number generator returning values in [0, 1). Injected so tests are repeatable. */

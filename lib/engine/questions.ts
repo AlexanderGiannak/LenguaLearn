@@ -1,6 +1,6 @@
 import type { CardKind } from "./cards.ts";
 import { ENGINE_CONFIG } from "./config.ts";
-import { areRelated, pickDistractors } from "./distractors.ts";
+import { pickDistractors } from "./distractors.ts";
 import type { AnswerMode } from "./rating.ts";
 import type { EngineExample, EngineSense, Rng } from "./types.ts";
 import { shuffle } from "./types.ts";
@@ -64,13 +64,7 @@ function fits(
     case "listen_cloze_typed":
       return sense.examples.length > 0;
     case "usage_choice":
-      return (
-        sense.examples.length > 0 &&
-        (!ctx.pool ||
-          ctx.pool.filter(
-            (s) => s.examples.length > 0 && !areRelated(s, sense) && s.id !== sense.id,
-          ).length >= 2)
-      );
+      return sense.examples.length > 0 && sense.misuses.length >= 2;
     case "relation_choice":
       return relatedInPool(sense, ctx.pool).length > 0;
     case "gender_choice":
@@ -104,7 +98,8 @@ export function chooseQuestionType(args: {
   if (
     card === "production" &&
     band !== "low" &&
-    args.contrastPartners.length > 0 &&
+    sense.examples.length > 0 &&
+    args.contrastPartners.some((id) => !args.pool || args.pool.some((s) => s.id === id)) &&
     lastType !== "contrast_choice" &&
     rng() < ENGINE_CONFIG.questions.contrastRate
   ) {
@@ -296,25 +291,9 @@ export function buildQuestion(args: {
       };
 
     case "usage_choice": {
-      // Misuses: other words' example sentences with this word swapped in.
-      const donors = shuffle(
-        pool.filter((s) => s.id !== sense.id && s.examples.length > 0 && !areRelated(s, sense)),
-        rng,
-      )
-        .sort(
-          (a, b) =>
-            Number(b.partOfSpeech === sense.partOfSpeech) -
-            Number(a.partOfSpeech === sense.partOfSpeech),
-        )
-        .slice(0, 2);
-      const misuses = donors.map((d) => {
-        const ex = d.examples[0]!;
-        return {
-          text: ex.text.slice(0, ex.start) + example!.surfaceForm + ex.text.slice(ex.end),
-          lang: "es" as const,
-          senseId: null,
-        };
-      });
+      const misuses = shuffle(sense.misuses, rng)
+        .slice(0, 2)
+        .map((text) => ({ text, lang: "es" as const, senseId: null }));
       return {
         ...base,
         instruction: "Which sentence uses the word correctly?",

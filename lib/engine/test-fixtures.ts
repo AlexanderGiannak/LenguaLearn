@@ -33,6 +33,7 @@ export function fixtureSense(over: Partial<EngineSense> & Pick<EngineSense, "id"
     familyIds: [],
     confusedIds: [],
     examples: [],
+    misuses: [],
     ...over,
   };
 }
@@ -49,6 +50,7 @@ export const casa = fixtureSense({
     example("Mi casa es pequeña.", "casa", ["mesa", "calle", "playa"]),
     example("Vamos a tu casa.", "casa"),
   ],
+  misuses: ["Mi perro casa en el jardín.", "Hoy casa mucho calor."],
 });
 export const casita = fixtureSense({ id: 2, headword: "casita", gloss: "little house" });
 export const caza = fixtureSense({ id: 3, headword: "caza", gloss: "hunt" });

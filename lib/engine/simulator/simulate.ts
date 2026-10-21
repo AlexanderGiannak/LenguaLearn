@@ -106,6 +106,8 @@ export function buildBank(size: number, seed: number): EngineSense[] {
       familyIds: [],
       confusedIds: [],
       examples,
+      // Assumes the content pipeline supplies reviewed misuse sentences for every word.
+      misuses: ["m1", "m2"],
     });
   }
   return bank;
