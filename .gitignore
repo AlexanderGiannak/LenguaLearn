@@ -27,3 +27,6 @@ content/raw/
 *.log
 npm-debug.log*
 .vercel
+
+# keys
+*.pem

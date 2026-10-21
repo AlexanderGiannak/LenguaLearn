@@ -1,0 +1,9 @@
+# Docs are hand-formatted markdown; Prettier would realign every table.
+*.md
+drizzle/
+.next/
+node_modules/
+package-lock.json
+playwright-report/
+test-results/
+coverage/
