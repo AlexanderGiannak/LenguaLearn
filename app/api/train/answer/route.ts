@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { handleTraining, parse } from "@/lib/train/http";
+import { handle, parse } from "@/lib/http/handler";
+import { TRAINING_ROLES } from "@/lib/train/roles";
 import { answerQuestion } from "@/lib/train/service";
 
 const schema = z
@@ -22,5 +23,7 @@ const schema = z
   );
 
 export async function POST(request: Request) {
-  return handleTraining(request, (userId, body) => answerQuestion(userId, parse(schema, body)));
+  return handle(request, { roles: TRAINING_ROLES }, ({ user, body }) =>
+    answerQuestion(user.id, parse(schema, body)),
+  );
 }

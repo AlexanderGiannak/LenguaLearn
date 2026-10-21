@@ -6,7 +6,7 @@ import { importContent } from "@/lib/content/import";
 import { importPayloadSchema } from "@/lib/content/import-schema";
 import { applyStatusChanges } from "@/lib/content/status-changes";
 import { getDb, getSql } from "@/lib/db/client";
-import { answerEvent, card, issuedQuestion, studySession } from "@/lib/db/schema";
+import { answerEvent, card, issuedQuestion, studySession, user } from "@/lib/db/schema";
 import { clearTrainingContentCache } from "./content";
 import { answerQuestion, chooseIntro, endSession, startSession } from "./service";
 import type { IssuedPayload, Screen } from "./types";
@@ -28,6 +28,15 @@ beforeAll(async () => {
   if (changes.length) await applyStatusChanges(getDb(), changes);
   clearTrainingContentCache();
 });
+
+/** A learner account to train with (learner data must belong to a real user). */
+async function testUser(): Promise<string> {
+  const id = `test-${randomUUID()}`;
+  await getDb()
+    .insert(user)
+    .values({ id, name: id, email: `${id}@learners.invalid`, role: "learner" });
+  return id;
+}
 
 afterAll(async () => {
   await getSql().end();
@@ -54,7 +63,7 @@ async function answerRight(userId: string, screen: Extract<Screen, { kind: "ques
 
 describe("training service", () => {
   it("starts with a new word and walks through the intro to its first card", async () => {
-    const userId = `test-${randomUUID()}`;
+    const userId = await testUser();
     const { screen } = await startSession(userId, { audio: false });
     let current = screen;
     if (current.kind === "question") {
@@ -85,7 +94,7 @@ describe("training service", () => {
   });
 
   it("logs every graded answer and replays a retried answer without counting it twice", async () => {
-    const userId = `test-${randomUUID()}`;
+    const userId = await testUser();
     let { screen } = await startSession(userId, { audio: false });
     while (screen.kind === "intro") {
       screen = (
@@ -115,7 +124,7 @@ describe("training service", () => {
   });
 
   it("ends the session after the current question once time is up, with a summary", async () => {
-    const userId = `test-${randomUUID()}`;
+    const userId = await testUser();
     const start = await startSession(userId, { audio: false, minutes: 1 });
     let screen = start.screen;
     let steps = 0;
@@ -146,7 +155,7 @@ describe("training service", () => {
   });
 
   it("caps each screen's counted time", async () => {
-    const userId = `test-${randomUUID()}`;
+    const userId = await testUser();
     const { screen } = await startSession(userId, { audio: false });
     const res =
       screen.kind === "intro"
@@ -156,11 +165,11 @@ describe("training service", () => {
   });
 
   it("refuses another user's question", async () => {
-    const owner = `test-${randomUUID()}`;
+    const owner = await testUser();
     const { screen } = await startSession(owner, { audio: false });
     if (screen.kind === "done") throw new Error("expected a screen");
     await expect(
-      chooseIntro(`test-${randomUUID()}`, { questionId: screen.id, choice: "got_it", activeMs: 0 }),
+      chooseIntro(await testUser(), { questionId: screen.id, choice: "got_it", activeMs: 0 }),
     ).rejects.toThrow("not found");
   });
 
