@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { handleTraining, parse } from "@/lib/train/http";
+import { handle, parse } from "@/lib/http/handler";
+import { TRAINING_ROLES } from "@/lib/train/roles";
 import { endSession } from "@/lib/train/service";
 
 const schema = z.strictObject({
@@ -9,8 +10,8 @@ const schema = z.strictObject({
 });
 
 export async function POST(request: Request) {
-  return handleTraining(request, (userId, body) => {
+  return handle(request, { roles: TRAINING_ROLES }, ({ user, body }) => {
     const { sessionId, activeMs } = parse(schema, body);
-    return endSession(userId, sessionId, activeMs);
+    return endSession(user.id, sessionId, activeMs);
   });
 }

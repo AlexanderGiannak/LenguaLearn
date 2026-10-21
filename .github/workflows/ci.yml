@@ -44,8 +44,6 @@ jobs:
           --health-retries 15
     env:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/lengualearn
-      # Training runs as a dev user until accounts exist (Phase 4). Never set in production.
-      ENABLE_DEV_USER: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -54,8 +52,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      # A fresh admin token pair per run, for the seed step and the admin API tests.
+      # Fresh secrets per run: the admin token pair (seed step, admin API tests) and the
+      # Better Auth secret that signs session cookies.
       - run: node scripts/admin-token.mts >> "$GITHUB_ENV"
+      - run: echo "BETTER_AUTH_SECRET=$(openssl rand -base64 32)" >> "$GITHUB_ENV"
       - run: npm run db:migrate
       - run: npm run test:db
       - run: npm run build

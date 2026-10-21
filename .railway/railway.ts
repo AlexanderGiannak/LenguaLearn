@@ -28,6 +28,7 @@ export default defineRailway(() => {
       DATABASE_URL: db.env.DATABASE_URL,
       // Set by hand with `railway variables`, never written in source (see .env.example).
       ADMIN_API_TOKEN_HASH: preserve(),
+      BETTER_AUTH_SECRET: preserve(),
     },
   });
 

@@ -1,13 +1,10 @@
-import { randomUUID } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
+import { signUpLearner } from "./helpers";
 
-// Training with the dev user (Phase 3). Each test gets its own dev user through the
-// dev-user cookie, so the device projects can run side by side.
+// Training as a freshly signed-up independent learner, one per test.
 
-test.beforeEach(async ({ context, baseURL }) => {
-  await context.addCookies([
-    { name: "dev-user", value: `e2e-${randomUUID().slice(0, 8)}`, url: baseURL! },
-  ]);
+test.beforeEach(async ({ page }) => {
+  await signUpLearner(page);
 });
 
 /** Moves through whatever screen is showing. Returns which kind it was. */
