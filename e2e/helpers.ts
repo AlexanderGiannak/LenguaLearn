@@ -18,7 +18,7 @@ async function post(page: Page, url: string, data: unknown) {
   return res;
 }
 
-export async function signUpLearner(page: Page) {
+export async function signUpLearner(page: Page, opts: { placed?: boolean } = { placed: true }) {
   const username = `e2e${uniq()}`;
   await post(page, "/api/account/sign-up", {
     role: "learner",
@@ -26,6 +26,8 @@ export async function signUpLearner(page: Page) {
     password: "learner-password",
     ageConfirmed: true,
   });
+  // Learners place before training; most tests start as total beginners.
+  if (opts.placed) await post(page, "/api/placement/start", { mode: "beginner" });
   return username;
 }
 

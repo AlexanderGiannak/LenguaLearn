@@ -39,7 +39,8 @@ test("a teacher creates a class and a student joins with a seat code", async ({
   const handle = (await s.locator("p.font-mono").textContent())!.trim();
   expect(handle).toMatch(/^[a-z]+-[a-z]+-\d{2}$/);
   await s.getByRole("button", { name: "Start training" }).click();
-  await expect(s.getByRole("button", { name: "Start training" })).toBeVisible();
+  // New class students find their level first (the teacher hasn't set one).
+  await expect(s.getByRole("heading", { name: "Find your level" })).toBeVisible();
   await student.close();
 
   // The teacher now sees the handle in place of the code.
