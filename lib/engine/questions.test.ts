@@ -238,7 +238,43 @@ describe("buildQuestion", () => {
     expect(q.options![q.correctIndex!]!.text).toBe(
       casa.examples[q.exampleId === casa.examples[0]!.id ? 0 : 1]!.text,
     );
-    expect(q.options!.every((o) => o.text.includes("casa"))).toBe(true);
+    expect(q.options!.map((o) => o.text)).toEqual(expect.arrayContaining([...casa.misuses]));
+  });
+
+  it("asks usage questions only with at least two reviewed misuses", () => {
+    const pick = (sense: typeof casa) =>
+      new Set(
+        Array.from({ length: 40 }, (_, i) =>
+          chooseQuestionType({
+            sense,
+            card: "recognition",
+            stability: 30,
+            lastType: null,
+            audio: false,
+            contrastPartners: [],
+            rng: seededRng(i),
+          }),
+        ),
+      );
+    expect(pick(casa).has("usage_choice")).toBe(true);
+    expect(pick({ ...casa, misuses: ["Mi perro casa en el jardín."] }).has("usage_choice")).toBe(
+      false,
+    );
+  });
+
+  it("never picks a contrast question for a word without an example sentence", () => {
+    for (let i = 0; i < 200; i++) {
+      const type = chooseQuestionType({
+        sense: { ...casa, examples: [] },
+        card: "production",
+        stability: 5,
+        lastType: null,
+        audio: true,
+        contrastPartners: [caza.id],
+        rng: seededRng(i),
+      });
+      expect(type).not.toBe("contrast_choice");
+    }
   });
 
   it("typed cloze expects the surface form and knows the dictionary form", () => {

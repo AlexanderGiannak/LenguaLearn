@@ -25,9 +25,9 @@ weekly minutes goal. Teachers see attentive minutes, accuracy, words learned and
 
 ## How to work
 
-- **One phase at a time** (see "Build phases" in SPEC.md). Stop at the end of each phase with the report:
-  summary, manual test steps, what was skipped or uncertain, recommended spec changes. Do not start the next
-  phase until the owner says so.
+- **One phase at a time** (see "Build phases" in SPEC.md), in order. End each phase with the report:
+  summary, manual test steps, what was skipped or uncertain, recommended spec changes. The owner now
+  runs phases back to back (2026-10-21): post the report, then continue unless blocked.
 - **Tests first for logic.** The engine, answer checker, integrity rules, rate limits and authorization checks
   get tests before any UI is built on them. A phase with failing tests is not done.
 - **Spec defaults are decisions.** If one looks wrong, say why and wait. Never quietly substitute a choice.
@@ -48,7 +48,10 @@ weekly minutes goal. Teachers see attentive minutes, accuracy, words learned and
   (`phase-0/setup`, `phase-2/answer-checker`), open a PR, and let CI and the Codex review run.
 - Small commits with clear, imperative messages. Never commit secrets (`.env` is ignored; `.env.example` is committed).
 - **No `Co-Authored-By` trailers and no AI attribution lines** in commit messages or PR descriptions.
-- Codex reviews PRs automatically. Address its findings with a fix or a reply. The owner merges.
+- Codex reviews PRs automatically. Address its findings with a fix or a reply, then turn on auto-merge
+  (`gh pr merge <n> --auto --merge`): GitHub merges once the required CI checks pass. Since 2026-10-21 the
+  owner has asked for phases to run back to back: finish a phase, give the report in the PR, and
+  continue. Stop only for real blockers (credentials, accounts, money) or a privacy or grading choice.
 
 ## Commands
 
