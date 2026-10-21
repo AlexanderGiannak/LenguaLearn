@@ -12,33 +12,197 @@
   }
 }
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Two palettes: "ink", a cool neutral for text, lines and surfaces, and "brand", the
+   indigo-violet for actions and progress. Green and red stay for right and wrong. */
+@theme {
+  --color-ink-50: #f7f8fb;
+  --color-ink-100: #eef0f5;
+  --color-ink-200: #dfe2ea;
+  --color-ink-300: #c6cbd7;
+  --color-ink-400: #9aa1b2;
+  --color-ink-500: #6e7588;
+  --color-ink-600: #535a6c;
+  --color-ink-700: #3e4454;
+  --color-ink-800: #2a2f3c;
+  --color-ink-900: #1a1e28;
+  --color-ink-950: #0f121a;
+
+  --color-brand-50: #f1f0ff;
+  --color-brand-100: #e4e1ff;
+  --color-brand-200: #cbc5ff;
+  --color-brand-300: #a99eff;
+  --color-brand-400: #8b7cfa;
+  --color-brand-500: #6f5cf1;
+  --color-brand-600: #5b45e0;
+  --color-brand-700: #4b37bf;
+  --color-brand-800: #3d2f98;
+  --color-brand-900: #2f2675;
+  --color-brand-950: #1c1647;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-figtree);
+}
+
+/* Semantic colors. The shared pieces below use these, so dark mode is one switch here. */
+:root {
+  --background: #ffffff;
+  --foreground: var(--color-ink-900);
+  --surface: #ffffff;
+  --line: var(--color-ink-200);
+  --line-strong: var(--color-ink-300);
+  --muted: var(--color-ink-600);
+  --primary: var(--color-brand-600);
+  --primary-hover: var(--color-brand-700);
+  --primary-edge: var(--color-brand-800);
+  --primary-soft: var(--color-brand-50);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: var(--color-ink-950);
+    --foreground: var(--color-ink-100);
+    --surface: var(--color-ink-900);
+    --line: var(--color-ink-800);
+    --line-strong: var(--color-ink-700);
+    --muted: var(--color-ink-400);
+    --primary: var(--color-brand-500);
+    --primary-hover: var(--color-brand-600);
+    --primary-edge: var(--color-brand-700);
+    --primary-soft: rgb(111 92 241 / 0.16);
   }
 }
 
 :root[data-theme="dark"] {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  --background: var(--color-ink-950);
+  --foreground: var(--color-ink-100);
+  --surface: var(--color-ink-900);
+  --line: var(--color-ink-800);
+  --line-strong: var(--color-ink-700);
+  --muted: var(--color-ink-400);
+  --primary: var(--color-brand-500);
+  --primary-hover: var(--color-brand-600);
+  --primary-edge: var(--color-brand-700);
+  --primary-soft: rgb(111 92 241 / 0.16);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Chunky buttons: a solid lower edge that the button presses into. Size (height, padding,
+   text size) comes from the call site; these set shape, color and the press. */
+@utility btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding-inline: 1.25rem;
+  border-radius: 0.875rem;
+  font-weight: 700;
+  transition:
+    transform 80ms ease-out,
+    box-shadow 80ms ease-out,
+    background-color 120ms;
+  &:active:not(:disabled) {
+    transform: translateY(2px);
+  }
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+@utility btn-primary {
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 4px 0 var(--primary-edge);
+  &:hover:not(:disabled) {
+    background: var(--primary-hover);
+  }
+  &:active:not(:disabled) {
+    box-shadow: 0 2px 0 var(--primary-edge);
+  }
+}
+
+@utility btn-secondary {
+  background: var(--surface);
+  color: var(--foreground);
+  border: 2px solid var(--line);
+  box-shadow: 0 4px 0 var(--line);
+  &:hover:not(:disabled) {
+    border-color: var(--line-strong);
+    box-shadow: 0 4px 0 var(--line-strong);
+  }
+  &:active:not(:disabled) {
+    box-shadow: 0 2px 0 var(--line-strong);
+  }
+}
+
+@utility btn-danger {
+  background: var(--color-red-700);
+  color: #ffffff;
+  box-shadow: 0 4px 0 var(--color-red-900);
+  &:hover:not(:disabled) {
+    background: var(--color-red-800);
+  }
+}
+
+/* A raised panel. */
+@utility card {
+  background: var(--surface);
+  border: 2px solid var(--line);
+  border-radius: 1.25rem;
+}
+
+/* A multiple-choice answer: a card that lifts toward the brand color on hover. */
+@utility choice {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  border: 2px solid var(--line);
+  border-radius: 1rem;
+  box-shadow: 0 4px 0 var(--line);
+  transition:
+    transform 80ms ease-out,
+    box-shadow 80ms ease-out,
+    border-color 120ms,
+    background-color 120ms;
+  &:hover:not(:disabled) {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+    box-shadow: 0 4px 0 var(--primary);
+  }
+  &:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 var(--primary);
+  }
+  &:disabled {
+    opacity: 0.6;
+  }
+}
+
+/* Text inputs. */
+@utility field {
+  min-height: 2.75rem;
+  background: var(--surface);
+  border: 2px solid var(--line);
+  border-radius: 0.875rem;
+  padding-inline: 0.875rem;
+  &:hover {
+    border-color: var(--line-strong);
+  }
+  &:focus {
+    border-color: var(--primary);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

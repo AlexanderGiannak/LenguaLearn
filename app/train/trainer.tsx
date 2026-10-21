@@ -340,14 +340,14 @@ export function Trainer() {
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={Math.min(100, Math.round((100 * shownMs) / planned))}
-            className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800"
+            className="h-3 w-full overflow-hidden rounded-full bg-ink-100 dark:bg-ink-800"
           >
             <div
-              className="h-full bg-zinc-900 transition-[width] dark:bg-zinc-100"
+              className="h-full rounded-full bg-brand-500 transition-[width]"
               style={{ width: `${Math.min(100, (100 * shownMs) / planned)}%` }}
             />
           </div>
-          <div className="flex items-center justify-between text-sm text-zinc-600 dark:text-zinc-400">
+          <div className="flex items-center justify-between text-sm font-semibold text-ink-600 dark:text-ink-400">
             <span>{minutesLeft === 0 ? "Last question" : `${minutesLeft} min left`}</span>
             <button
               type="button"
@@ -366,10 +366,10 @@ export function Trainer() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="paused-title"
-          className="fixed inset-0 z-10 flex items-center justify-center bg-white/90 p-4 dark:bg-zinc-950/90"
+          className="fixed inset-0 z-10 flex items-center justify-center bg-ink-50/90 p-4 dark:bg-ink-950/90"
         >
-          <div className="flex max-w-sm flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-6 shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
-            <h2 id="paused-title" className="text-2xl font-semibold">
+          <div className="card flex max-w-sm flex-col gap-4 p-6 shadow-xl">
+            <h2 id="paused-title" className="text-2xl font-extrabold">
               {paused === "idle" ? "Still there?" : "Paused"}
             </h2>
             <p>
@@ -404,16 +404,16 @@ export function Trainer() {
       {reconnecting && (
         <p
           role="status"
-          className="mb-4 rounded-md bg-amber-50 p-3 text-amber-900 dark:bg-amber-950 dark:text-amber-100"
+          className="mb-4 rounded-xl bg-amber-100 p-3 text-amber-900 dark:bg-amber-950 dark:text-amber-100"
         >
           Reconnecting… your answer is saved and will be sent.
         </p>
       )}
 
       {view.kind === "start" && (
-        <section className="flex flex-1 flex-col justify-center gap-6">
-          <h1 className="text-3xl font-semibold tracking-tight">Ready to train?</h1>
-          <p className="text-lg text-zinc-600 dark:text-zinc-400">
+        <section className="card flex flex-col gap-6 self-center p-8 sm:my-auto sm:w-full">
+          <h1 className="text-3xl font-extrabold tracking-tight">Ready to train?</h1>
+          <p className="text-lg text-ink-600 dark:text-ink-400">
             A short session of new words and reviews.
           </p>
           <button

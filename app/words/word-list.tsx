@@ -14,8 +14,8 @@ type Word = {
 };
 
 const CHIP: Record<Word["state"], [string, string]> = {
-  new: ["New", "bg-blue-100 text-blue-900 dark:bg-blue-950 dark:text-blue-100"],
-  learning: ["Learning", "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100"],
+  new: ["New", "bg-brand-100 text-brand-900 dark:bg-brand-950 dark:text-brand-100"],
+  learning: ["Learning", "bg-ink-100 text-ink-800 dark:bg-ink-800 dark:text-ink-100"],
   learned: ["Learned", "bg-green-100 text-green-900 dark:bg-green-950 dark:text-green-100"],
   due: ["Due", "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-100"],
 };
@@ -30,12 +30,9 @@ function Meter({ label, value }: { label: string; value: number }) {
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={value}
-        className="h-2 w-20 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800"
+        className="h-2 w-20 overflow-hidden rounded-full bg-ink-200 dark:bg-ink-800"
       >
-        <span
-          className="block h-full bg-zinc-900 dark:bg-zinc-100"
-          style={{ width: `${value}%` }}
-        />
+        <span className="block h-full bg-brand-500" style={{ width: `${value}%` }} />
       </span>
     </span>
   );
@@ -63,14 +60,14 @@ export function WordList({ words }: { words: Word[] }) {
           type="search"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          className={`min-h-11 rounded-lg border border-zinc-300 bg-transparent px-3 dark:border-zinc-700 ${focusRing}`}
+          className={`min-h-11 field ${focusRing}`}
         />
       </label>
       <p className={`text-sm ${muted}`}>
         {shown.length} of {words.length} words. Opening a word shows its page without affecting your
         reviews.
       </p>
-      <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
+      <ul className="divide-y divide-ink-200 dark:divide-ink-800">
         {shown.map((w) => (
           <li key={w.senseId} className="flex flex-wrap items-center justify-between gap-3 py-3">
             <Link

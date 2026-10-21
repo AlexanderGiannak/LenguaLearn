@@ -112,6 +112,10 @@ Decisions that go beyond [SPEC.md](SPEC.md), newest last. One line of reason eac
 | 2026-10-21 | My words states: Due (any card due), else Learned, else New (introduced in the last 24 hours), else Learning. The strength meters show current predicted recall | Spec names the chips but not the rules |
 | 2026-10-21 | Theme (system, light, dark) and word-audio autoplay (default off) are per-device settings in localStorage. Dark mode follows `data-theme`, set by a small inline script before first paint | Spec: settings for autoplay and theme; no tracking |
 | 2026-10-21 | Signing in lands on `/home` (a teacher is sent on to `/teacher`, an unplaced learner to `/placement`). The level page and the session summary link to it | The learner home must be reachable without typing a URL (Codex review, PR #11) |
+| 2026-10-21 | Visual design follows a Brilliant-like direction (owner's choice): friendly and clean, rounded cards, chunky buttons with a pressed lower edge, an indigo-violet brand color, green and red only for right and wrong. Our own look; nothing copied from Brilliant | Suits first-year students through AP and college |
+| 2026-10-21 | Design tokens live in `app/globals.css`: the `ink` neutral scale, the `brand` scale, semantic CSS variables that switch for dark mode, and shared `btn`, `card`, `choice` and `field` utilities. Shared class strings for server and client code are in `app/_components/styles.ts` | One place to change the look; dark mode is one switch |
+| 2026-10-21 | Font: Figtree via `next/font` (self-hosted at build time, no new dependency) | Friendly and very readable at small sizes |
+| 2026-10-21 | A slim site header with the logo appears on every page except training and placement, which stay full-screen | Nothing to wander off through mid-session |
 
 ## Open questions
 

@@ -45,7 +45,7 @@ export function PreferencesPanel() {
             setTheme(t);
             setThemeState(t);
           }}
-          className={`min-h-11 w-48 rounded-lg border border-zinc-300 bg-transparent px-3 dark:border-zinc-700 ${focusRing}`}
+          className={`min-h-11 w-48 field ${focusRing}`}
         >
           <option value="system">Match this device</option>
           <option value="light">Light</option>

@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Figtree } from "next/font/google";
+import { Suspense } from "react";
+import { HeaderBar, SiteHeader } from "./_components/site-header";
 import "./globals.css";
 
 // next/font downloads the font at build time and serves it from our own domain,
 // so students' browsers never contact Google.
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const figtree = Figtree({
+  variable: "--font-figtree",
   subsets: ["latin", "latin-ext"],
 });
 
@@ -16,7 +18,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geistSans.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="en" className={`${figtree.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
         {/* Apply the saved theme before first paint. Inline, so nothing loads from elsewhere. */}
         <script
@@ -25,7 +27,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           }}
         />
       </head>
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        <Suspense fallback={<HeaderBar />}>
+          <SiteHeader />
+        </Suspense>
+        {children}
+      </body>
     </html>
   );
 }

@@ -12,13 +12,15 @@
 
 ## Current phase
 
-Phases run back to back (owner, 2026-10-21). Open stacked PRs: #8 accounts (auto-merge armed),
-#9 teacher tools, #10 integrity, #11 placement and learner home (Phase 7). As each merges, its child
-retargets to `main`; turn on auto-merge for it once its Codex findings are handled. Next: Phase 9
-(content pipeline), which needs owner keys (see DECISIONS open questions); Phase 8 is after the pilot.
+Phases 0–7 are merged (2026-10-21). In progress: a design pass in a Brilliant-like direction
+(owner's choice): student screens first, owner approves screenshots, then the teacher pages.
+Next: Phase 9 (content pipeline), which needs owner answers and keys (see DECISIONS open
+questions); Phase 8 is after the pilot. Production (lengualearn.com) has not deployed yet: Railway
+paused builds platform-wide on 2026-10-21; deploy `main` once they resume.
 Stop only for blockers or privacy, grading or money choices; batch questions when stopping.
 
 Environment notes: the repo is in iCloud-synced Documents and iCloud creates "* 2" duplicates (even
 in `.git` and `drizzle/meta`). Before generating migrations or committing, delete them:
-`find . -path ./node_modules -prune -o -name '* 2*' -print`. The local test database is rebuilt with
+`find . -path ./node_modules -prune -o -name '* 2*' -print`. iCloud also corrupts `.next`
+(the dev server then reloads pages in a loop): stop the server, `rm -rf .next`, restart. The local test database is rebuilt with
 `docker compose exec -T db psql -U postgres -c 'DROP DATABASE IF EXISTS lengualearn_test'`.

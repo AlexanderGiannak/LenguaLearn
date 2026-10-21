@@ -73,14 +73,14 @@ export function Seats({
 
   return (
     <section aria-label="Seats" className="flex flex-col gap-6">
-      <p className="rounded-md bg-blue-50 p-3 text-blue-900 dark:bg-blue-950 dark:text-blue-100">
+      <p className="rounded-md bg-brand-50 p-3 text-brand-900 dark:bg-brand-950 dark:text-brand-100">
         Names stay on this computer. LenguaLearn never receives them.
       </p>
 
       <div className="flex flex-wrap gap-2">
         <a
           href={`/api/teacher/classes/${classId}/csv`}
-          className={`inline-flex min-h-11 items-center rounded-lg border border-zinc-300 px-4 dark:border-zinc-700 ${focusRing}`}
+          className={`btn btn-secondary px-4 ${focusRing}`}
         >
           Download codes (CSV)
         </a>
@@ -134,7 +134,7 @@ export function Seats({
               <th className="py-2" aria-label="Actions" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <tbody className="divide-y divide-ink-200 dark:divide-ink-800">
             {seats.map((s) => (
               <tr key={s.id}>
                 <td className="py-2 pr-3 font-medium">{s.seatNumber}</td>
@@ -145,7 +145,7 @@ export function Seats({
                     maxLength={80}
                     autoComplete="off"
                     onChange={(e) => setLabel(s.id, e.target.value)}
-                    className={`min-h-11 w-full min-w-40 rounded-md border border-zinc-300 bg-transparent px-2 dark:border-zinc-700 ${focusRing}`}
+                    className={`min-h-11 w-full min-w-40 field px-2 ${focusRing}`}
                   />
                 </td>
                 <td className="py-2 pr-3">
@@ -183,7 +183,7 @@ export function Seats({
         </table>
       </div>
 
-      <div className="border-t border-zinc-200 pt-6 dark:border-zinc-800">
+      <div className="border-t border-ink-200 pt-6 dark:border-ink-800">
         <Button
           variant="danger"
           disabled={busy}

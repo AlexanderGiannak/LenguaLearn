@@ -9,7 +9,7 @@ import type { teacherScope } from "@/lib/teacher/scope";
 type GradeData = Awaited<ReturnType<ReturnType<typeof teacherScope>["gradeRows"]>>;
 type Range = { kind: "week"; offset: number } | { kind: "dates"; from: string; to: string };
 
-const input = `min-h-11 rounded-lg border border-zinc-300 bg-transparent px-3 dark:border-zinc-700 ${focusRing}`;
+const input = `min-h-11 field ${focusRing}`;
 
 function query(range: Range, f: GradeFormula, format: "json" | "csv") {
   const p = new URLSearchParams({
@@ -108,7 +108,7 @@ export function Grades({ classId, initial }: { classId: string; initial: GradeDa
         )}
       </div>
 
-      <fieldset className="flex flex-wrap items-end gap-4 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+      <fieldset className="flex flex-wrap items-end gap-4 card p-4">
         <legend className="px-1 font-semibold">Grade formula</legend>
         <label className="flex flex-col gap-1">
           <span className={`text-sm ${muted}`}>Weight on % of goal (capped at 100%)</span>
@@ -165,7 +165,7 @@ export function Grades({ classId, initial }: { classId: string; initial: GradeDa
               <th className="py-2">Suggested grade</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <tbody className="divide-y divide-ink-200 dark:divide-ink-800">
             {data.rows.map((r) => (
               <tr key={r.seatId}>
                 <td className="py-2 pr-3">
@@ -194,7 +194,7 @@ export function Grades({ classId, initial }: { classId: string; initial: GradeDa
 
       <a
         href={`/api/teacher/classes/${classId}/grades?${query(range, formula, "csv")}`}
-        className={`inline-flex min-h-11 items-center self-start rounded-lg bg-zinc-900 px-5 font-medium text-white dark:bg-zinc-100 dark:text-zinc-900 ${focusRing}`}
+        className={`btn btn-primary self-start ${focusRing}`}
       >
         Download grades (CSV)
       </a>

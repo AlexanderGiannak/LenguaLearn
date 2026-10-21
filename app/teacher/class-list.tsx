@@ -29,12 +29,12 @@ export function ClassList({ classes }: { classes: ClassRow[] }) {
       {classes.length === 0 ? (
         <p className={muted}>No classes yet.</p>
       ) : (
-        <ul className="divide-y divide-zinc-200 rounded-lg border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+        <ul className="card divide-y-2 divide-ink-100 overflow-hidden dark:divide-ink-800">
           {classes.map((c) => (
             <li key={c.id}>
               <Link
                 href={`/teacher/class/${c.id}`}
-                className="flex min-h-14 items-center justify-between px-4 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                className="flex min-h-14 items-center justify-between px-4 hover:bg-ink-50 dark:hover:bg-ink-900"
               >
                 <span className="font-medium">{c.name}</span>
                 <span className={muted}>
@@ -45,10 +45,7 @@ export function ClassList({ classes }: { classes: ClassRow[] }) {
           ))}
         </ul>
       )}
-      <form
-        action={create}
-        className="flex flex-col gap-4 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
-      >
+      <form action={create} className="flex flex-col gap-4 card p-4">
         <h2 className="text-xl font-semibold">New class</h2>
         <Field
           label="Class name"

@@ -11,10 +11,13 @@ import type { Feedback, PublicQuestion, SessionSummary } from "@/lib/train/types
 // "I don't know", Enter continues, Space plays audio) and by touch.
 
 export const focusRing =
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600";
-const muted = "text-zinc-600 dark:text-zinc-400";
-const primaryButton = `inline-flex min-h-12 items-center justify-center rounded-lg bg-zinc-900 px-6 text-lg font-medium text-white hover:bg-zinc-700 disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300 ${focusRing}`;
-const secondaryButton = `inline-flex min-h-12 items-center justify-center rounded-lg border border-zinc-300 px-6 text-lg hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800 ${focusRing}`;
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600";
+const muted = "text-ink-600 dark:text-ink-400";
+const primaryButton = `btn btn-primary min-h-12 px-6 text-lg ${focusRing}`;
+const secondaryButton = `btn btn-secondary min-h-12 px-6 text-lg ${focusRing}`;
+/** A small keyboard-shortcut badge. */
+const keyBadge =
+  "inline-flex h-7 min-w-7 shrink-0 items-center justify-center rounded-lg border-2 border-current px-1.5 text-sm font-bold opacity-60";
 
 /** A feedback line with its Spanish words marked lang="es" for screen readers. */
 function Parts({ parts }: { parts: NotePart[] }) {
@@ -147,7 +150,7 @@ export function IntroView({
   });
   return (
     <section aria-label="New word" className="flex flex-col gap-8">
-      <p className={`text-sm font-semibold tracking-wide uppercase ${muted}`}>
+      <p className="self-start rounded-full bg-brand-100 px-3 py-1 text-sm font-bold tracking-wide text-brand-800 uppercase dark:bg-brand-950 dark:text-brand-200">
         New word · {word.partOfSpeech}
       </p>
       <WordCard word={word} />
@@ -158,7 +161,7 @@ export function IntroView({
           disabled={busy}
           onClick={() => onChoose("got_it")}
         >
-          Got it <kbd className="ml-2 text-sm opacity-60">1</kbd>
+          Got it <kbd className={keyBadge}>1</kbd>
         </button>
         <button
           type="button"
@@ -166,7 +169,7 @@ export function IntroView({
           disabled={busy}
           onClick={() => onChoose("already_know")}
         >
-          I already know this <kbd className="ml-2 text-sm opacity-60">2</kbd>
+          I already know this <kbd className={keyBadge}>2</kbd>
         </button>
       </div>
     </section>
@@ -229,7 +232,7 @@ export function QuestionView({
 
   return (
     <section aria-label="Question" className="flex flex-col gap-8">
-      <p className={`text-sm font-semibold tracking-wide uppercase ${muted}`}>{q.instruction}</p>
+      <p className={`text-sm font-bold tracking-wide uppercase ${muted}`}>{q.instruction}</p>
       <Prompt q={q} />
       {q.note && <p className={muted}>{q.note}</p>}
 
@@ -241,9 +244,9 @@ export function QuestionView({
                 type="button"
                 disabled={busy}
                 onClick={() => onAnswer({ chosenIndex: i })}
-                className={`flex min-h-14 w-full items-center gap-3 rounded-lg border border-zinc-300 px-4 py-3 text-left text-lg hover:bg-zinc-100 disabled:opacity-60 dark:border-zinc-700 dark:hover:bg-zinc-800 ${focusRing}`}
+                className={`choice min-h-16 px-4 py-3 text-lg font-medium ${focusRing}`}
               >
-                <kbd className={`text-sm ${muted}`}>{i + 1}</kbd>
+                <kbd className={`${keyBadge} ${muted}`}>{i + 1}</kbd>
                 <span lang={o.lang}>{o.text}</span>
               </button>
             </li>
@@ -270,7 +273,7 @@ export function QuestionView({
             autoCapitalize="off"
             spellCheck={false}
             onChange={(e) => setTyped(e.target.value)}
-            className={`min-h-12 flex-1 rounded-lg border border-zinc-300 bg-transparent px-4 text-xl dark:border-zinc-700 ${focusRing}`}
+            className={`field min-h-12 flex-1 px-4 text-xl ${focusRing}`}
           />
           <button type="submit" className={primaryButton} disabled={busy || !typed.trim()}>
             Check
@@ -282,11 +285,29 @@ export function QuestionView({
         type="button"
         disabled={busy}
         onClick={() => onAnswer({ dontKnow: true })}
-        className={`self-start min-h-11 px-2 underline underline-offset-4 ${muted} ${focusRing}`}
+        className={`inline-flex min-h-11 items-center gap-2 self-start rounded-lg px-2 font-semibold underline underline-offset-4 ${muted} ${focusRing}`}
       >
-        I don&apos;t know{q.mode === "choice" && <kbd className="ml-2 text-sm opacity-60">0</kbd>}
+        I don&apos;t know{q.mode === "choice" && <kbd className={keyBadge}>0</kbd>}
       </button>
     </section>
+  );
+}
+
+/** A filled check or cross, so the result never depends on color alone. */
+function ResultIcon({ correct }: { correct: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className={`h-8 w-8 shrink-0 rounded-full p-1.5 text-white ${correct ? "bg-green-600" : "bg-red-600"}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {correct ? <path d="M5 12.5l4.5 4.5L19 7.5" /> : <path d="M7 7l10 10M17 7L7 17" />}
+    </svg>
   );
 }
 
@@ -338,10 +359,17 @@ export function FeedbackView({
 
   return (
     <section aria-label="Feedback" aria-live="polite" className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
+      <div
+        className={`flex flex-col gap-1 rounded-2xl border-2 p-5 ${
+          f.correct
+            ? "border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950/60"
+            : "border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950/60"
+        }`}
+      >
         <p
-          className={`text-2xl font-semibold ${f.correct ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400"}`}
+          className={`flex items-center gap-3 text-2xl font-extrabold ${f.correct ? "text-green-800 dark:text-green-300" : "text-red-800 dark:text-red-300"}`}
         >
+          <ResultIcon correct={f.correct} />
           {title}
         </p>
         {!f.correct && (
@@ -362,7 +390,7 @@ export function FeedbackView({
         {f.integrityNote && (
           <p
             role="status"
-            className="rounded-md bg-amber-50 p-3 text-amber-900 dark:bg-amber-950 dark:text-amber-100"
+            className="mt-2 rounded-xl bg-amber-100 p-3 text-amber-900 dark:bg-amber-950 dark:text-amber-100"
           >
             {f.integrityNote}
           </p>
@@ -413,26 +441,26 @@ export function SummaryView({
 }) {
   return (
     <section aria-label="Session summary" className="flex flex-col gap-8">
-      <h1 className="text-3xl font-semibold tracking-tight">Session complete</h1>
-      <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <h1 className="text-3xl font-extrabold tracking-tight">Session complete</h1>
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
           ["Active minutes", summary.activeMinutes.toLocaleString("en-US")],
           ["Questions", String(summary.questions)],
           ["Accuracy", summary.accuracy === null ? "–" : `${summary.accuracy}%`],
           ["New words", String(summary.newWords)],
         ].map(([label, value]) => (
-          <div key={label} className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-            <dt className={`text-sm ${muted}`}>{label}</dt>
-            <dd className="text-2xl font-semibold">{value}</dd>
+          <div key={label} className="card p-4">
+            <dt className={`text-sm font-semibold ${muted}`}>{label}</dt>
+            <dd className="text-3xl font-extrabold text-brand-700 dark:text-brand-300">{value}</dd>
           </div>
         ))}
       </dl>
       {summary.words.length > 0 && (
         <div>
-          <h2 className={`text-sm font-semibold tracking-wide uppercase ${muted}`}>
+          <h2 className={`text-sm font-bold tracking-wide uppercase ${muted}`}>
             Words this session
           </h2>
-          <ul className="mt-3 divide-y divide-zinc-200 dark:divide-zinc-800">
+          <ul className="card mt-3 divide-y-2 divide-ink-100 px-4 dark:divide-ink-800">
             {summary.words.map((w) => (
               <li key={w.senseId} className="flex items-center justify-between gap-4 py-2">
                 <span>
