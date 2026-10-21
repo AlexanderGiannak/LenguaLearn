@@ -1,32 +1,22 @@
 "use client";
 
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
+import { focusRing, muted } from "./styles";
+
+export { focusRing, link, muted } from "./styles";
 
 // Small shared pieces for forms. 44px targets, visible focus, light and dark.
-
-export const focusRing =
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600";
-export const muted = "text-zinc-600 dark:text-zinc-400";
 
 export function Button({
   variant = "primary",
   className = "",
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "secondary" | "danger" }) {
-  const look = {
-    primary:
-      "bg-zinc-900 text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300",
-    secondary:
-      "border border-zinc-300 hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800",
-    danger: "bg-red-700 text-white hover:bg-red-800",
-  }[variant];
-  return (
-    <button
-      type="button"
-      {...props}
-      className={`inline-flex min-h-11 items-center justify-center rounded-lg px-5 font-medium disabled:opacity-50 ${look} ${focusRing} ${className}`}
-    />
-  );
+  // Written out in full: Tailwind only generates classes it can find in the source.
+  const look = { primary: "btn-primary", secondary: "btn-secondary", danger: "btn-danger" }[
+    variant
+  ];
+  return <button type="button" {...props} className={`btn ${look} ${focusRing} ${className}`} />;
 }
 
 export function Field({
@@ -36,11 +26,8 @@ export function Field({
 }: InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: ReactNode }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="font-medium">{label}</span>
-      <input
-        {...props}
-        className={`min-h-11 rounded-lg border border-zinc-300 bg-transparent px-3 text-lg dark:border-zinc-700 ${focusRing}`}
-      />
+      <span className="font-semibold">{label}</span>
+      <input {...props} className={`field text-lg ${focusRing}`} />
       {hint && <span className={`text-sm ${muted}`}>{hint}</span>}
     </label>
   );
@@ -51,7 +38,7 @@ export function ErrorText({ children }: { children: ReactNode }) {
   return (
     <p
       role="alert"
-      className="rounded-md bg-red-50 p-3 text-red-900 dark:bg-red-950 dark:text-red-100"
+      className="rounded-xl border-2 border-red-200 bg-red-50 p-3 text-red-900 dark:border-red-900 dark:bg-red-950 dark:text-red-100"
     >
       {children}
     </p>
@@ -61,7 +48,7 @@ export function ErrorText({ children }: { children: ReactNode }) {
 export function Page({ title, children }: { title: string; children: ReactNode }) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-6 px-4 py-10">
-      <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight">{title}</h1>
       {children}
     </main>
   );

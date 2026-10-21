@@ -24,7 +24,7 @@ async function Content({ params }: Pick<PageProps<"/teacher/class/[id]/insights"
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-4 py-10">
       <ClassNav classId={id} className={c.name} current="insights" />
       <div className="flex items-center justify-between gap-4">
-        <p className="text-zinc-600 dark:text-zinc-400">
+        <p className="text-ink-600 dark:text-ink-400">
           The words this class missed most in the last 4 weeks, with the wrong answer chosen most.
           Use it to plan what to reteach.
         </p>
@@ -32,10 +32,10 @@ async function Content({ params }: Pick<PageProps<"/teacher/class/[id]/insights"
       </div>
       <h2 className="hidden text-2xl font-semibold print:block">{c.name}: words to review</h2>
       {words.length === 0 ? (
-        <p className="text-zinc-600 dark:text-zinc-400">Nothing missed yet.</p>
+        <p className="text-ink-600 dark:text-ink-400">Nothing missed yet.</p>
       ) : (
         <table className="w-full text-left">
-          <thead className="text-sm text-zinc-600 dark:text-zinc-400">
+          <thead className="text-sm text-ink-600 dark:text-ink-400">
             <tr>
               <th className="py-2 pr-3">Word</th>
               <th className="py-2 pr-3">Meaning</th>
@@ -43,7 +43,7 @@ async function Content({ params }: Pick<PageProps<"/teacher/class/[id]/insights"
               <th className="py-2 print:hidden">Most-chosen wrong answer</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <tbody className="divide-y divide-ink-200 dark:divide-ink-800">
             {words.map((w) => (
               <tr key={w.senseId}>
                 <td lang="es" className="py-2 pr-3 font-medium">

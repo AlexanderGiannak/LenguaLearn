@@ -121,7 +121,7 @@ export function SignUpForm({ googleEnabled }: { googleEnabled: boolean }) {
         </Button>
       </form>
       {googleEnabled && (
-        <div className="flex flex-col gap-2 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+        <div className="flex flex-col gap-2 border-t border-ink-200 pt-4 dark:border-ink-800">
           <label className="flex min-h-11 items-center gap-3">
             <input
               type="checkbox"

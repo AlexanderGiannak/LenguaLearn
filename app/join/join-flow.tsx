@@ -51,7 +51,7 @@ export function JoinFlow() {
     return (
       <Page title={step.reset ? "Password changed" : "You're in"}>
         <p className="text-lg">Your handle is</p>
-        <p className="rounded-lg border-2 border-zinc-900 p-4 text-center font-mono text-3xl font-semibold dark:border-zinc-100">
+        <p className="rounded-lg border-2 border-ink-900 p-4 text-center font-mono text-3xl font-semibold dark:border-ink-100">
           {step.handle}
         </p>
         <p className="text-lg">

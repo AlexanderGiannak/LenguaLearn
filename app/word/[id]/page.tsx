@@ -31,7 +31,7 @@ async function Word({ params }: Pick<PageProps<"/word/[id]">, "params">) {
 }
 
 function WordSkeleton() {
-  const bar = "rounded bg-zinc-100 dark:bg-zinc-900";
+  const bar = "rounded bg-ink-100 dark:bg-ink-900";
   return (
     <main aria-busy="true" className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12">
       <div className={`h-10 w-48 ${bar}`} />

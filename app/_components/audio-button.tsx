@@ -58,7 +58,7 @@ export function AudioButton({
       disabled={unavailable}
       aria-label={unavailable ? `${label} (audio not available in this browser)` : label}
       title={unavailable ? "Audio is not available in this browser" : label}
-      className={`inline-flex shrink-0 items-center justify-center rounded-full border border-zinc-300 text-zinc-700 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800 ${
+      className={`inline-flex shrink-0 items-center justify-center rounded-full border-2 border-brand-200 bg-brand-50 text-brand-700 hover:border-brand-400 hover:bg-brand-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:opacity-40 dark:border-brand-800 dark:bg-brand-950 dark:text-brand-200 dark:hover:border-brand-600 ${
         size === "lg" ? "h-14 w-14" : "h-11 w-11"
       }`}
     >

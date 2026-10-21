@@ -18,5 +18,5 @@ export function SeatLabel({
     const value = loadLabels(classId)[seatId] ?? null;
     queueMicrotask(() => setLabel(value));
   }, [classId, seatId]);
-  return <span className="font-normal text-zinc-600 dark:text-zinc-400">{label ?? fallback}</span>;
+  return <span className="font-normal text-ink-600 dark:text-ink-400">{label ?? fallback}</span>;
 }

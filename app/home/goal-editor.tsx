@@ -31,7 +31,7 @@ export function GoalEditor({ initial }: { initial: number }) {
             setMinutes(Number(e.target.value));
             setSaved(false);
           }}
-          className={`min-h-11 w-32 rounded-lg border border-zinc-300 bg-transparent px-3 dark:border-zinc-700 ${focusRing}`}
+          className={`min-h-11 w-32 field ${focusRing}`}
         />
       </label>
       <Button type="submit" variant="secondary">

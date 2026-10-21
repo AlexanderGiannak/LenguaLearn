@@ -21,7 +21,7 @@ const STATUS: Record<string, { label: string; className: string }> = {
   },
   not_started: {
     label: "Not started",
-    className: "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100",
+    className: "bg-ink-100 text-ink-800 dark:bg-ink-800 dark:text-ink-100",
   },
   flagged: {
     label: "Flagged",
@@ -112,7 +112,7 @@ export function Dashboard({ initial }: { initial: Data }) {
             ["Class accuracy", data.summary.accuracy === null ? "–" : `${data.summary.accuracy}%`],
             ["Weekly goal", `${goal} min`],
           ].map(([label, v]) => (
-            <div key={label} className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
+            <div key={label} className="card p-3">
               <dt className={`text-sm ${muted}`}>{label}</dt>
               <dd className="text-xl font-semibold">{v}</dd>
             </div>
@@ -123,7 +123,7 @@ export function Dashboard({ initial }: { initial: Data }) {
           <select
             defaultValue={0}
             onChange={(e) => void pickWeek(Number(e.target.value))}
-            className={`min-h-11 rounded-lg border border-zinc-300 bg-transparent px-3 dark:border-zinc-700 ${focusRing}`}
+            className={`min-h-11 field ${focusRing}`}
           >
             {Array.from({ length: 9 }, (_, i) => -i).map((o) => (
               <option key={o} value={o}>
@@ -147,7 +147,7 @@ export function Dashboard({ initial }: { initial: Data }) {
               {header("status", "Status")}
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <tbody className="divide-y divide-ink-200 dark:divide-ink-800">
             {rows.map((r) => (
               <tr key={r.seatId}>
                 <td className="py-2 pr-3">
@@ -161,11 +161,11 @@ export function Dashboard({ initial }: { initial: Data }) {
                     <td className="py-2 pr-3">
                       <div className="flex items-center gap-2">
                         <div
-                          className="h-2 w-24 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800"
+                          className="h-2 w-24 overflow-hidden rounded-full bg-ink-200 dark:bg-ink-800"
                           aria-hidden="true"
                         >
                           <div
-                            className="h-full bg-zinc-900 dark:bg-zinc-100"
+                            className="h-full bg-brand-500"
                             style={{ width: `${Math.min(100, (100 * r.minutes) / goal)}%` }}
                           />
                         </div>

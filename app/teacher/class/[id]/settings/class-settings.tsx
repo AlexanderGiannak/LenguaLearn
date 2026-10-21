@@ -23,7 +23,7 @@ const ZONES = [
   "America/Anchorage",
   "Pacific/Honolulu",
 ];
-const select = `min-h-11 rounded-lg border border-zinc-300 bg-transparent px-3 dark:border-zinc-700 ${focusRing}`;
+const select = `min-h-11 field ${focusRing}`;
 
 export function ClassSettings({
   classId,
@@ -148,7 +148,7 @@ export function ClassSettings({
         {students.length === 0 ? (
           <p className={muted}>No students have joined yet.</p>
         ) : (
-          <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <ul className="divide-y divide-ink-200 dark:divide-ink-800">
             {students.map((s) => (
               <li key={s.seatId} className="flex items-center justify-between gap-4 py-2">
                 <span>

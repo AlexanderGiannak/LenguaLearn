@@ -15,8 +15,8 @@ import { AudioButton } from "@/app/_components/audio-button";
 // "More about this word". A section with no content is left out.
 
 const focusRing =
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600";
-const muted = "text-zinc-600 dark:text-zinc-400";
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600";
+const muted = "text-ink-600 dark:text-ink-400";
 const sectionHeading = `text-sm font-semibold uppercase tracking-wide ${muted}`;
 
 type Relation = WordPageData["relations"][number];
@@ -27,7 +27,7 @@ function byType(relations: Relation[], type: RelationType) {
 
 function RelatedWord({ relation, chip }: { relation: Relation; chip?: boolean }) {
   const chipClass = chip
-    ? "inline-flex min-h-11 items-center rounded-full border border-zinc-300 px-4 dark:border-zinc-700"
+    ? "inline-flex min-h-11 items-center rounded-full border-2 border-ink-200 px-4 font-semibold dark:border-ink-700"
     : "";
   if (relation.targetId === null) {
     return (
@@ -40,7 +40,7 @@ function RelatedWord({ relation, chip }: { relation: Relation; chip?: boolean })
     <Link
       lang="es"
       href={`/word/${relation.targetId}`}
-      className={`${chipClass} ${chip ? "hover:bg-zinc-100 dark:hover:bg-zinc-800" : "inline-flex min-h-11 items-center underline underline-offset-4"} text-blue-700 dark:text-blue-300 ${focusRing}`}
+      className={`${chipClass} ${chip ? "hover:bg-ink-100 dark:hover:bg-ink-800" : "inline-flex min-h-11 items-center underline underline-offset-4"} text-brand-700 dark:text-brand-300 ${focusRing}`}
     >
       {relation.text}
     </Link>
@@ -123,7 +123,7 @@ export function WordView({ word }: { word: WordPageData }) {
               alt={image.alt}
               width={160}
               height={128}
-              className="h-24 w-28 shrink-0 rounded-lg bg-zinc-50 object-contain sm:h-32 sm:w-40 dark:bg-zinc-900"
+              className="h-24 w-28 shrink-0 rounded-lg bg-ink-50 object-contain sm:h-32 sm:w-40 dark:bg-ink-900"
             />
           )}
           <div>
@@ -180,7 +180,7 @@ export function WordView({ word }: { word: WordPageData }) {
         )}
 
         {hasMore && (
-          <details className="group rounded-lg border border-zinc-200 dark:border-zinc-800">
+          <details className="card group">
             <summary
               className={`flex min-h-11 cursor-pointer items-center justify-between px-4 font-medium ${focusRing}`}
             >
@@ -234,7 +234,7 @@ export function WordView({ word }: { word: WordPageData }) {
                     {wordParts.map((p) => (
                       <li
                         key={p.id}
-                        className="flex flex-col items-center rounded-md border border-zinc-300 px-3 py-2 dark:border-zinc-700"
+                        className="flex flex-col items-center rounded-md border border-ink-300 px-3 py-2 dark:border-ink-700"
                       >
                         <span lang="es" className="font-mono text-lg font-semibold">
                           {p.text}

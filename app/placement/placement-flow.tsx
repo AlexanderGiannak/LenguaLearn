@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, ErrorText, muted, Page, postJson } from "@/app/_components/ui";
+import { Button, ErrorText, focusRing, link, muted, Page, postJson } from "@/app/_components/ui";
 
 // Spec: Placement. Total beginners start at level 1. Everyone else answers about 40 "Do you
 // know this word?" items, some of them made-up words; saying yes to those lowers the score.
@@ -73,23 +73,19 @@ export function PlacementFlow() {
   if (screen.done) {
     return (
       <Page title="Your starting level">
-        <p className="text-5xl font-semibold">Level {screen.level}</p>
+        <p className="text-5xl font-extrabold text-brand-700 dark:text-brand-300">
+          Level {screen.level}
+        </p>
         <p className="text-lg">
           {screen.reliable
             ? "New words start here. Easier words you probably know are checked along the way instead of taught."
             : "That was hard to read, so you'll start at level 1. You'll move up quickly through words you know."}
         </p>
         {/* A full page load: the router may hold /train's earlier redirect to this page. */}
-        <a
-          href="/train"
-          className="inline-flex min-h-11 items-center justify-center rounded-lg bg-zinc-900 px-5 font-medium text-white hover:bg-zinc-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:bg-zinc-100 dark:text-zinc-900"
-        >
+        <a href="/train" className={`btn btn-primary min-h-12 text-lg ${focusRing}`}>
           Start training
         </a>
-        <a
-          href="/home"
-          className="inline-flex min-h-11 items-center justify-center underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-        >
+        <a href="/home" className={`${link} inline-flex min-h-11 items-center justify-center`}>
           Go to your home page
         </a>
       </Page>
@@ -101,15 +97,20 @@ export function PlacementFlow() {
       <p className={muted}>
         {screen.index} of {screen.total}
       </p>
-      <p lang="es" className="py-8 text-center text-5xl font-semibold break-words">
+      <p lang="es" className="card px-4 py-12 text-center text-5xl font-extrabold break-words">
         {screen.text}
       </p>
       <div className="grid grid-cols-2 gap-3">
-        <Button disabled={busy} onClick={() => answer(true)}>
-          Yes <kbd className="ml-2 text-sm opacity-60">Y</kbd>
+        <Button className="min-h-14 text-lg" disabled={busy} onClick={() => answer(true)}>
+          Yes <kbd className="text-sm opacity-70">Y</kbd>
         </Button>
-        <Button variant="secondary" disabled={busy} onClick={() => answer(false)}>
-          No <kbd className="ml-2 text-sm opacity-60">N</kbd>
+        <Button
+          variant="secondary"
+          className="min-h-14 text-lg"
+          disabled={busy}
+          onClick={() => answer(false)}
+        >
+          No <kbd className="text-sm opacity-70">N</kbd>
         </Button>
       </div>
       <ErrorText>{error}</ErrorText>

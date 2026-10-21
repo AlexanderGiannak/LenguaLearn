@@ -142,7 +142,7 @@ export function SettingsPanel({
 
       <form
         action={deleteAccount}
-        className="flex flex-col gap-4 border-t border-zinc-200 pt-6 dark:border-zinc-800"
+        className="flex flex-col gap-4 border-t border-ink-200 pt-6 dark:border-ink-800"
       >
         <h2 className="text-xl font-semibold">Delete account</h2>
         <p className={muted}>

@@ -13,7 +13,7 @@ export default function ProgressPage() {
   );
 }
 
-const muted = "text-zinc-600 dark:text-zinc-400";
+const muted = "text-ink-600 dark:text-ink-400";
 
 function LineChart({ points }: { points: { day: string; size: number }[] }) {
   if (points.length < 2) return <p className={muted}>The chart appears after a few sessions.</p>;
@@ -32,14 +32,14 @@ function LineChart({ points }: { points: { day: string; size: number }[] }) {
       role="img"
       aria-label={`Estimated vocabulary from ${points[0]!.size} to ${points.at(-1)!.size} words`}
     >
-      <path d={d} fill="none" strokeWidth="3" className="stroke-zinc-900 dark:stroke-zinc-100" />
+      <path d={d} fill="none" strokeWidth="3" className="stroke-ink-900 dark:stroke-ink-100" />
       {points.map((p, i) => (
         <circle
           key={p.day}
           cx={x(i)}
           cy={y(p.size)}
           r="3"
-          className="fill-zinc-900 dark:fill-zinc-100"
+          className="fill-ink-900 dark:fill-ink-100"
         >
           <title>{`${p.day}: ${p.size} words`}</title>
         </circle>
@@ -91,7 +91,7 @@ async function Progress() {
           {p.minutesByWeek.map((m) => (
             <div key={m.start} className="flex flex-1 flex-col items-center gap-1">
               <div
-                className="w-full rounded-t bg-zinc-800 dark:bg-zinc-200"
+                className="w-full rounded-t bg-ink-800 dark:bg-ink-200"
                 style={{
                   height: `${(100 * m.minutes) / maxMinutes}%`,
                   minHeight: m.minutes ? 2 : 0,

@@ -15,7 +15,7 @@ export default function StudentPage({ params }: PageProps<"/teacher/class/[id]/s
   );
 }
 
-const muted = "text-zinc-600 dark:text-zinc-400";
+const muted = "text-ink-600 dark:text-ink-400";
 
 const REASONS: Record<string, string> = {
   fast: "Answers faster than reading time, mostly wrong",
@@ -47,7 +47,7 @@ async function Content({
           ["In progress", String(d.inProgress)],
           ["Handle", d.handle ?? "–"],
         ].map(([label, v]) => (
-          <div key={label} className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
+          <div key={label} className="card p-3">
             <dt className={`text-sm ${muted}`}>{label}</dt>
             <dd className="text-xl font-semibold">{v}</dd>
           </div>
@@ -67,7 +67,7 @@ async function Content({
             <div
               key={m.day}
               title={`${m.day}: ${m.minutes} min`}
-              className="flex-1 rounded-t bg-zinc-800 dark:bg-zinc-200"
+              className="flex-1 rounded-t bg-ink-800 dark:bg-ink-200"
               style={{
                 height: `${(100 * m.minutes) / maxMinutes}%`,
                 minHeight: m.minutes > 0 ? 2 : 0,
@@ -102,7 +102,7 @@ async function Content({
         {d.mostMissed.length === 0 ? (
           <p className={muted}>None yet.</p>
         ) : (
-          <ul className="mt-2 divide-y divide-zinc-200 dark:divide-zinc-800">
+          <ul className="mt-2 divide-y divide-ink-200 dark:divide-ink-800">
             {d.mostMissed.map((m) => (
               <li key={m.display} className="flex justify-between py-2">
                 <span>
@@ -127,7 +127,7 @@ async function Content({
         {d.integrityEvents.length === 0 ? (
           <p className={muted}>None in the last 4 weeks.</p>
         ) : (
-          <ul className="mt-2 divide-y divide-zinc-200 dark:divide-zinc-800">
+          <ul className="mt-2 divide-y divide-ink-200 dark:divide-ink-800">
             {d.integrityEvents.map((e) => (
               <li key={`${e.at}-${e.reason}`} className="flex justify-between gap-4 py-2">
                 <span>{REASONS[e.reason]}</span>
