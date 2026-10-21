@@ -69,7 +69,7 @@
     --line-strong: var(--color-ink-700);
     --muted: var(--color-ink-400);
     --primary: var(--color-brand-500);
-    --primary-hover: var(--color-brand-400);
+    --primary-hover: var(--color-brand-600);
     --primary-edge: var(--color-brand-700);
     --primary-soft: rgb(111 92 241 / 0.16);
   }
@@ -83,7 +83,7 @@
   --line-strong: var(--color-ink-700);
   --muted: var(--color-ink-400);
   --primary: var(--color-brand-500);
-  --primary-hover: var(--color-brand-400);
+  --primary-hover: var(--color-brand-600);
   --primary-edge: var(--color-brand-700);
   --primary-soft: rgb(111 92 241 / 0.16);
 }
