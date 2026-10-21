@@ -174,7 +174,7 @@ describe("training service", () => {
   });
 
   it("logs Easy and the production card when I already know this is answered right", async () => {
-    const userId = `test-${randomUUID()}`;
+    const userId = await testUser();
     let { screen } = await startSession(userId, { audio: false });
     while (screen.kind === "question" && screen.stage === "pretest") {
       screen = (await answerRight(userId, screen)).next;
@@ -197,7 +197,7 @@ describe("training service", () => {
   });
 
   it("counts the last screen's time when the session ends", async () => {
-    const userId = `test-${randomUUID()}`;
+    const userId = await testUser();
     const { sessionId } = await startSession(userId, { audio: false });
     const summary = await endSession(userId, sessionId, 42_000);
     expect(summary.activeMinutes).toBeCloseTo(0.7, 1);

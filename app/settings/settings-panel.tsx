@@ -90,6 +90,23 @@ export function SettingsPanel({
         </Button>
       </form>
 
+      {role === "learner" && email && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-xl font-semibold">Teaching</h2>
+          <p className={muted}>Switch to a teacher account to create classes.</p>
+          <Button
+            variant="secondary"
+            onClick={async () => {
+              const r = await postJson("/api/account/become-teacher", {});
+              if (!r.ok) return setError(r.error);
+              router.push("/teacher");
+            }}
+          >
+            I&apos;m a teacher
+          </Button>
+        </section>
+      )}
+
       <section className="flex flex-col gap-3">
         <h2 className="text-xl font-semibold">Your data</h2>
         <a
