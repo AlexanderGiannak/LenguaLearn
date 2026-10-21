@@ -2,12 +2,12 @@ import { and, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
 import { isLearned } from "@/lib/engine/cards";
 import { getDb } from "@/lib/db/client";
 import {
+  activeTime,
   answerEvent,
   answerFlag,
   card,
   learnerProfile,
   senseProgress,
-  studySession,
 } from "@/lib/db/schema";
 import { toCard } from "@/lib/train/store";
 
@@ -23,20 +23,17 @@ export async function minutesByStudent(ids: string[], w: Window) {
   if (ids.length === 0) return new Map<string, { activeMs: number; flaggedMs: number }>();
   const db = getDb();
   const [active, flagged] = await Promise.all([
+    // Time counts in the window where it happened, even if the session started earlier.
     db
       .select({
-        userId: studySession.userId,
-        ms: sql<number>`coalesce(sum(${studySession.activeMs}), 0)::int`,
+        userId: activeTime.userId,
+        ms: sql<number>`coalesce(sum(${activeTime.ms}), 0)::int`,
       })
-      .from(studySession)
+      .from(activeTime)
       .where(
-        and(
-          inArray(studySession.userId, ids),
-          gte(studySession.startedAt, w.start),
-          lt(studySession.startedAt, w.end),
-        ),
+        and(inArray(activeTime.userId, ids), gte(activeTime.at, w.start), lt(activeTime.at, w.end)),
       )
-      .groupBy(studySession.userId),
+      .groupBy(activeTime.userId),
     // Flagged time is the counted time of answers in a flagged stretch (spec: Flagged time).
     db
       .select({
@@ -131,18 +128,12 @@ export async function abilityByStudent(ids: string[]) {
   return new Map(rows.map((r) => [r.userId, { ability: r.ability, startLevel: r.startLevel }]));
 }
 
-/** Active minutes per local day for one student, over a window. */
+/** Counted active time for one student over a window, for minutes per local day. */
 export async function sessionsForStudent(id: string, w: Window) {
   return getDb()
-    .select({ startedAt: studySession.startedAt, activeMs: studySession.activeMs })
-    .from(studySession)
-    .where(
-      and(
-        eq(studySession.userId, id),
-        gte(studySession.startedAt, w.start),
-        lt(studySession.startedAt, w.end),
-      ),
-    );
+    .select({ startedAt: activeTime.at, activeMs: activeTime.ms })
+    .from(activeTime)
+    .where(and(eq(activeTime.userId, id), gte(activeTime.at, w.start), lt(activeTime.at, w.end)));
 }
 
 /** The senses these students miss most, with how often and the most-chosen wrong answer. */

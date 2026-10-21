@@ -1,5 +1,5 @@
 {
-  "id": "6bc3e90f-b555-4101-8438-2f9559a48487",
+  "id": "61ab4014-96c3-422d-b29b-bd13c7591ca4",
   "prevId": "eabf0166-472e-4673-b4c3-a04d8f078b5c",
   "version": "7",
   "dialect": "postgresql",
@@ -2050,6 +2050,114 @@
       },
       "policies": {},
       "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.active_time": {
+      "name": "active_time",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "active_time_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "study_session_id": {
+          "name": "study_session_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "at": {
+          "name": "at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ms": {
+          "name": "ms",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "active_time_user_at_idx": {
+          "name": "active_time_user_at_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "active_time_user_id_user_id_fk": {
+          "name": "active_time_user_id_user_id_fk",
+          "tableFrom": "active_time",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "active_time_study_session_id_study_session_id_fk": {
+          "name": "active_time_study_session_id_study_session_id_fk",
+          "tableFrom": "active_time",
+          "tableTo": "study_session",
+          "columnsFrom": [
+            "study_session_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "active_time_ms": {
+          "name": "active_time_ms",
+          "value": "\"active_time\".\"ms\" >= 0"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.answer_event": {

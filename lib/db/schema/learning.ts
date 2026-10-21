@@ -195,3 +195,27 @@ export const answerFlag = pgTable(
   },
   (t) => [check("answer_flag_reason", sql`${t.reason} IN ('fast', 'same_position', 'hidden_tab')`)],
 );
+
+/**
+ * Counted active time, one row per screen request, stamped when it was counted. Dashboards
+ * and grades sum it by `at`, so time lands in the week it happened even when a session
+ * crosses a week reset. Append-only; deleted with the account.
+ */
+export const activeTime = pgTable(
+  "active_time",
+  {
+    id: bigint("id", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    studySessionId: uuid("study_session_id")
+      .notNull()
+      .references(() => studySession.id, { onDelete: "cascade" }),
+    at: timestamp("at", { withTimezone: true }).notNull(),
+    ms: integer("ms").notNull(),
+  },
+  (t) => [
+    index("active_time_user_at_idx").on(t.userId, t.at),
+    check("active_time_ms", sql`${t.ms} >= 0`),
+  ],
+);

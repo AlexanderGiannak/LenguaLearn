@@ -2,6 +2,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { Rating, type Card, type Grade } from "ts-fsrs";
 import { getDb } from "@/lib/db/client";
 import {
+  activeTime,
   answerEvent,
   answerFlag,
   classroom,
@@ -100,6 +101,17 @@ async function issue(ctx: Ctx, payload: IssuedPayload): Promise<string> {
     .values({ studySessionId: ctx.sessionId, userId: ctx.userId, payload, issuedAt: ctx.now })
     .returning({ id: issuedQuestion.id });
   return row!.id;
+}
+
+/** Records counted active time when it was counted (see the active_time table). */
+async function countTime(
+  db: Tx | ReturnType<typeof getDb>,
+  userId: string,
+  studySessionId: string,
+  at: Date,
+  ms: number,
+) {
+  if (ms > 0) await db.insert(activeTime).values({ userId, studySessionId, at, ms });
 }
 
 /** How much text a question puts on screen, for its minimum reading time. */
@@ -360,7 +372,9 @@ export async function chooseIntro(
     });
     // The word page is not graded, so an impossibly quick choice is not refused; it just
     // counts no time.
-    const activeMs = session.activeMs + (timing.ok ? timing.activeMs : 0);
+    const counted = timing.ok ? timing.activeMs : 0;
+    const activeMs = session.activeMs + counted;
+    await countTime(tx, userId, session.id, ctx.now, counted);
     const response = { next, activeMs, plannedMs: session.plannedMinutes * 60_000 };
     await tx
       .update(issuedQuestion)
@@ -670,6 +684,7 @@ export async function answerQuestion(
       });
     }
     const activeMs = session.activeMs + countedMs;
+    await countTime(tx, userId, session.id, receivedAt, countedMs);
     const plannedMs = session.plannedMinutes * 60_000;
     const next = await nextScreen(ctx, activeMs, plannedMs);
 
@@ -718,12 +733,15 @@ export async function endSession(
   let session = found;
   if (!session.endedAt) {
     // Attentive time on the last screen counts too, with the same per-screen cap.
+    const endedAt = clock();
+    const last = capActive(activeMs, "choice");
     const [updated] = await db
       .update(studySession)
-      .set({ endedAt: clock(), activeMs: session.activeMs + capActive(activeMs, "choice") })
+      .set({ endedAt, activeMs: session.activeMs + last })
       .where(eq(studySession.id, sessionId))
       .returning();
     session = updated!;
+    await countTime(db, userId, sessionId, endedAt, last);
   }
 
   const content = await getTrainingContent();
