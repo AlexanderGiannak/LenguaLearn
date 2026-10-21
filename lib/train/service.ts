@@ -72,8 +72,8 @@ function publicQuestion(q: Question, sense: EngineSense, content: TrainingConten
     note: q.note,
     speak: listening
       ? q.prompt.audio === "sentence"
-        ? { text: example?.text ?? q.prompt.text, audioKey: null }
-        : { text: core.display, audioKey: core.lemmaAudioKey }
+        ? { text: example?.text ?? q.prompt.text, audioUrl: null }
+        : { text: core.display, audioUrl: core.lemmaAudioUrl }
       : null,
   };
 }
@@ -345,9 +345,11 @@ export async function answerQuestion(userId: string, input: AnswerInput): Promis
     let reason: string | null = null;
     let note = q.note;
     let correctAnswer: string;
+    let correctAnswerLang: "es" | "en" = "es";
     let chosenMeaning: string | null = null;
     if (q.mode === "choice") {
       correctAnswer = q.options![q.correctIndex!]!.text;
+      correctAnswerLang = q.options![q.correctIndex!]!.lang;
       const chosen = input.chosenIndex === undefined ? undefined : q.options![input.chosenIndex];
       grade = !dontKnow && input.chosenIndex === q.correctIndex ? "correct" : "wrong";
       if (grade === "wrong" && chosen?.senseId && chosen.senseId !== sense.id) {
@@ -519,6 +521,7 @@ export async function answerQuestion(userId: string, input: AnswerInput): Promis
         grade,
         note,
         correctAnswer,
+        correctAnswerLang,
         chosenMeaning,
         word: content.core.get(sense.id)!,
         requiredReadMs: correct ? 0 : WRONG_READ_MS,

@@ -1,6 +1,6 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
-import { articleFor } from "@/lib/content/display";
+import { articleFor, mediaUrl } from "@/lib/content/display";
 import { getDb } from "@/lib/db/client";
 import { audio, example, lemma, relation, sense, wordPart } from "@/lib/db/schema";
 import { normalizeAnswer } from "@/lib/engine/answer-check";
@@ -19,13 +19,13 @@ export type WordCore = {
   display: string;
   gloss: string;
   definition: string;
-  lemmaAudioKey: string | null;
+  lemmaAudioUrl: string | null;
   example: {
     text: string;
     start: number;
     end: number;
     translation: string;
-    audioKey: string | null;
+    audioUrl: string | null;
   } | null;
 };
 
@@ -144,14 +144,14 @@ async function loadTrainingContent(): Promise<TrainingContent> {
       display: article ? `${article} ${l.headword}` : l.headword,
       gloss: s.gloss,
       definition: s.definition,
-      lemmaAudioKey: lemmaAudio.get(l.id) ?? null,
+      lemmaAudioUrl: lemmaAudio.has(l.id) ? mediaUrl(lemmaAudio.get(l.id)!) : null,
       example: first
         ? {
             text: first.text,
             start: first.startOffset,
             end: first.endOffset,
             translation: first.translation,
-            audioKey: exampleAudio.get(first.id) ?? null,
+            audioUrl: exampleAudio.has(first.id) ? mediaUrl(exampleAudio.get(first.id)!) : null,
           }
         : null,
     });

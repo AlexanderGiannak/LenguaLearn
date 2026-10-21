@@ -44,6 +44,8 @@ jobs:
           --health-retries 15
     env:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/lengualearn
+      # Training runs as a dev user until accounts exist (Phase 4). Never set in production.
+      ENABLE_DEV_USER: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

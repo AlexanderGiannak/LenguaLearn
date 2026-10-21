@@ -38,7 +38,7 @@ export type PublicQuestion = {
   options: { text: string; lang: "es" | "en" }[] | null;
   note: string | null;
   /** What the speaker button says, and the recording to play first, if there is one. */
-  speak: { text: string; audioKey: string | null } | null;
+  speak: { text: string; audioUrl: string | null } | null;
 };
 
 export type Screen =
@@ -51,6 +51,7 @@ export type Feedback = {
   grade: "correct" | "hard" | "wrong";
   note: string | null;
   correctAnswer: string;
+  correctAnswerLang: "es" | "en";
   /** For a wrong pick: what the chosen option actually means. */
   chosenMeaning: string | null;
   word: WordCore;
