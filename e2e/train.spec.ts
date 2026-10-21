@@ -69,6 +69,7 @@ test("a session from the first new word to the summary", async ({ page }) => {
   await expect(summary.getByRole("heading", { name: "Session complete" })).toBeVisible();
   await expect(summary.getByText("Questions")).toBeVisible();
   await expect(summary.locator('[lang="es"]').first()).toBeVisible();
+  await expect(summary.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/home");
   expect(errors).toEqual([]);
 });
 

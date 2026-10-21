@@ -458,9 +458,15 @@ export function SummaryView({
           </ul>
         </div>
       )}
-      <button type="button" className={`${primaryButton} self-start`} onClick={onAgain}>
-        Train again
-      </button>
+      <div className="flex flex-wrap gap-3">
+        <button type="button" className={primaryButton} onClick={onAgain}>
+          Train again
+        </button>
+        {/* A teacher trying training is sent on to /teacher from here. */}
+        <a href="/home" className={secondaryButton}>
+          Home
+        </a>
+      </div>
     </section>
   );
 }

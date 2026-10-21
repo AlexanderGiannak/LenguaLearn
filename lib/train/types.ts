@@ -31,6 +31,8 @@ export type SessionData = {
   forced: { stage: "intro" | "intro_check"; senseId: number; abilityDone?: boolean }[];
   /** The class focus list's senses, introduced before other new words. */
   focus?: number[];
+  /** The last new word was a probably-known check, so the next one comes from the level. */
+  lastNewBelow?: boolean;
 };
 
 export type PublicQuestion = {

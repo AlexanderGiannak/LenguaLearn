@@ -86,6 +86,12 @@ export function PlacementFlow() {
         >
           Start training
         </a>
+        <a
+          href="/home"
+          className="inline-flex min-h-11 items-center justify-center underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+        >
+          Go to your home page
+        </a>
       </Page>
     );
   }

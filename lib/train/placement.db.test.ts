@@ -4,6 +4,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { getDb, getSql } from "@/lib/db/client";
 import { issuedQuestion, learnerProfile, placement, user } from "@/lib/db/schema";
 import { seedFixtureContent } from "@/test/seed-content";
+import { authSecret } from "@/lib/auth/auth";
+import { signQuestionToken } from "@/lib/integrity/server";
 import { getTrainingContent } from "./content";
 import { answerPlacement, needsPlacement, startPlacement, type PlacementScreen } from "./placement";
 import * as svc from "./service";
@@ -23,6 +25,11 @@ async function learner(): Promise<string> {
     .insert(user)
     .values({ id, name: id, email: `${id}@learners.invalid`, role: "learner" });
   return id;
+}
+
+async function payloadOf(id: string): Promise<IssuedPayload> {
+  const [row] = await getDb().select().from(issuedQuestion).where(eq(issuedQuestion.id, id));
+  return row!.payload as IssuedPayload;
 }
 
 /** Takes the test as someone who knows real words up to `knownRank` and rejects pseudowords. */
@@ -84,6 +91,50 @@ describe("placement", () => {
       .where(eq(issuedQuestion.id, first.screen.id));
     const senseId = (row!.payload as IssuedPayload).senseId;
     expect(content.byId.get(senseId)!.frequencyRank).toBeLessThan((level - 1) * 500 + 1);
+  });
+
+  it("alternates probably-known checks with new words at the starting level", async () => {
+    const id = await learner();
+    const { screen } = await takeTest(id, 2000);
+    const firstRank = ((screen.done ? screen.level : 1) - 1) * 500 + 1;
+    const content = await getTrainingContent();
+    // A simulated clock, so the answer isn't refused as impossibly fast.
+    let now = Date.now();
+    const clock = () => new Date(now);
+    const first = await svc.startSession(id, { audio: false }, clock);
+    if (first.screen.kind !== "question") throw new Error("expected a question");
+    expect(first.screen.stage).toBe("intro_known");
+
+    const [row] = await getDb()
+      .select()
+      .from(issuedQuestion)
+      .where(eq(issuedQuestion.id, first.screen.id));
+    const { question } = row!.payload as IssuedPayload;
+    now += 5000;
+    const { next } = await svc.answerQuestion(
+      id,
+      {
+        questionId: row!.id,
+        token: signQuestionToken(row!.id, row!.issuedAt, authSecret()),
+        clientAnswerId: randomUUID(),
+        ...(question!.mode === "choice"
+          ? { chosenIndex: question!.correctIndex! }
+          : { typed: question!.expected! }),
+        responseMs: 4000,
+        activeMs: 5000,
+      },
+      clock,
+    );
+    // The next new word is taught at the starting level (as a guess-first question or a
+    // word page), not another below-level check.
+    const nextId =
+      next.kind === "intro"
+        ? next.word.senseId
+        : next.kind === "question"
+          ? (await payloadOf(next.id)).senseId
+          : null;
+    expect(next.kind === "question" && next.stage).not.toBe("intro_known");
+    expect(content.byId.get(nextId!)!.frequencyRank).toBeGreaterThanOrEqual(firstRank);
   });
 
   it("refuses an answer to an item that was already answered", async () => {

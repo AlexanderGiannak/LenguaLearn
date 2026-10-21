@@ -201,9 +201,12 @@ async function nextScreen(ctx: Ctx, activeMs: number, plannedMs: number): Promis
       if (atLevel.length < 10) atLevel.push(id);
     } else if (placed && below.length < 10) below.push(id);
   }
-  for (let i = 0; newWords.length < 10 && (i < atLevel.length || i < below.length); i++) {
-    if (below[i] !== undefined) newWords.push(below[i]!);
-    if (atLevel[i] !== undefined && newWords.length < 10) newWords.push(atLevel[i]!);
+  // The list is rebuilt for every pick, so the group that goes first switches after each
+  // new word; otherwise every below-level word would come before any at-level one.
+  const [first, second] = ctx.data.lastNewBelow ? [atLevel, below] : [below, atLevel];
+  for (let i = 0; newWords.length < 10 && (i < first.length || i < second.length); i++) {
+    if (first[i] !== undefined) newWords.push(first[i]!);
+    if (second[i] !== undefined && newWords.length < 10) newWords.push(second[i]!);
   }
 
   // A word that stopped being live mid-session is dropped from the waiting lists.
@@ -223,7 +226,8 @@ async function nextScreen(ctx: Ctx, activeMs: number, plannedMs: number): Promis
   const sense = ctx.content.byId.get(item.senseId)!;
 
   if (item.kind === "new") {
-    if (placed && sense.frequencyRank < firstRank) {
+    ctx.data.lastNewBelow = placed && sense.frequencyRank < firstRank;
+    if (ctx.data.lastNewBelow) {
       // A probably-known word: straight to the "I already know this" production question.
       // Right: scheduled as known. Wrong: the word page and its check follow, as a new word.
       const type = introQuestionType("already_know", sense);

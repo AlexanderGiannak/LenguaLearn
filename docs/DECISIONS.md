@@ -111,6 +111,7 @@ Decisions that go beyond [SPEC.md](SPEC.md), newest last. One line of reason eac
 | 2026-10-21 | An independent learner's week resets Sunday 11:59 pm in the time zone their browser reports at placement; class students use their class's week and goal. A vocabulary snapshot is saved per learner per day when a session ends | Needed for the home ring and the progress chart |
 | 2026-10-21 | My words states: Due (any card due), else Learned, else New (introduced in the last 24 hours), else Learning. The strength meters show current predicted recall | Spec names the chips but not the rules |
 | 2026-10-21 | Theme (system, light, dark) and word-audio autoplay (default off) are per-device settings in localStorage. Dark mode follows `data-theme`, set by a small inline script before first paint | Spec: settings for autoplay and theme; no tracking |
+| 2026-10-21 | Signing in lands on `/home` (a teacher is sent on to `/teacher`, an unplaced learner to `/placement`). The level page and the session summary link to it | The learner home must be reachable without typing a URL (Codex review, PR #11) |
 
 ## Open questions
 
