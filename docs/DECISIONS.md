@@ -102,12 +102,13 @@ Decisions that go beyond [SPEC.md](SPEC.md), newest last. One line of reason eac
 | 2026-10-21 | Question tokens are an HMAC (keyed with `BETTER_AUTH_SECRET`) over the question ID and issue time, and are single-use through `issued_question`. Graded answers that arrive less than 300 ms after their question was issued are refused. Claimed response and active times are bounded by the server's own elapsed time plus 2 s. The raw client time is still logged. Word-page choices are never refused | Spec: server-side checks. Questions are prefetched, so time since issue is an upper bound |
 | 2026-10-21 | The feedback screen and the question screen are capped separately: 60 s each, 90 s for typed questions | Spec: "each screen" |
 | 2026-10-21 | After 2 minutes with no input the session pauses ("Still there?"); the idle stretch is also uncounted. Starting or resuming in one tab pauses the session in this browser's other tabs (BroadcastChannel). On another device, starting a session ends the old one, and the old tab explains why | Spec: idle pause, one active session per account |
+| 2026-10-21 | Domain: lengualearn.com (Namecheap). The app serves the bare domain; www redirects to it. `BETTER_AUTH_URL` is set in `.railway/railway.ts`; Railway PR environments ignore it and use their own generated domain | Sign-in trusts exactly one origin, and PR environments copy production's variables |
 
 ## Open questions
 
 - **Second-model provider for the content check (Phase 9 step 3):** OpenAI or Google. Decide at Phase 9.
 - **Content license:** for word pages, examples, hooks and audio (for example CC BY-SA, or all rights reserved). Code is MIT.
-- **Domain and AWS (blocking teacher email in production):** SES needs SPF/DKIM on a domain for verification and reset email. Until then teachers cannot verify in production. Also needed before the pilot (CloudFront audio subdomain, IT data sheet allowlist).
+- **AWS (blocking teacher email in production):** the domain is lengualearn.com; SES needs SPF/DKIM on it for verification and reset email. Until then teachers cannot verify in production. Also needed before the pilot (CloudFront audio subdomain, IT data sheet allowlist).
 - **Google OAuth client:** needed to turn on Google sign-in for teachers and learners (set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`).
 - **Rate limiting (Phase 4):** Better Auth's built-in limiter keys on IP and path. Per-handle, per-seat-code and per-device-cookie limits likely need custom rules or a small custom limiter; confirm before Phase 4.
 - **TN-NDPA:** nothing found yet that would prevent signing. Add items here as they come up.

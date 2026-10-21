@@ -6,6 +6,7 @@ import { getDb } from "@/lib/db/client";
 import { account, session, user, verification } from "@/lib/db/schema";
 import { sendEmail } from "@/lib/email/mailer";
 import { hasAgeConfirmation } from "./age";
+import { authBaseUrl } from "./base-url";
 import { isPlaceholderEmail } from "./identifiers";
 
 // Better Auth setup (spec: Decisions, Auth; Accounts and privacy).
@@ -18,11 +19,7 @@ import { isPlaceholderEmail } from "./identifiers";
 // OWASP's recommended Argon2id settings: 19 MiB memory, 2 passes, 1 lane.
 const ARGON2 = { memoryCost: 19_456, timeCost: 2, parallelism: 1 } as const;
 
-export function authBaseUrl(): string {
-  if (process.env.BETTER_AUTH_URL) return process.env.BETTER_AUTH_URL;
-  if (process.env.RAILWAY_PUBLIC_DOMAIN) return `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`;
-  return "http://localhost:3000";
-}
+export { authBaseUrl };
 
 export function authSecret(): string {
   const secret = process.env.BETTER_AUTH_SECRET;
