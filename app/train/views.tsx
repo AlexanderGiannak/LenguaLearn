@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AudioButton, playAudio } from "@/app/_components/audio-button";
 import type { WordCore } from "@/lib/train/content";
+import type { NotePart } from "@/lib/engine/answer-check";
 import type { Feedback, PublicQuestion, SessionSummary } from "@/lib/train/types";
 
 // The screens of a training session. Every action works by keyboard (1–4 pick, 0 is
@@ -13,6 +14,23 @@ export const focusRing =
 const muted = "text-zinc-600 dark:text-zinc-400";
 const primaryButton = `inline-flex min-h-12 items-center justify-center rounded-lg bg-zinc-900 px-6 text-lg font-medium text-white hover:bg-zinc-700 disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300 ${focusRing}`;
 const secondaryButton = `inline-flex min-h-12 items-center justify-center rounded-lg border border-zinc-300 px-6 text-lg hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800 ${focusRing}`;
+
+/** A feedback line with its Spanish words marked lang="es" for screen readers. */
+function Parts({ parts }: { parts: NotePart[] }) {
+  return (
+    <>
+      {parts.map((p, i) =>
+        p.lang ? (
+          <span key={i} lang={p.lang}>
+            {p.text}
+          </span>
+        ) : (
+          <span key={i}>{p.text}</span>
+        ),
+      )}
+    </>
+  );
+}
 
 /** Runs `handler` for keydowns, except plain typing inside text inputs. */
 function useKeys(handler: (e: KeyboardEvent) => void) {
@@ -321,8 +339,16 @@ export function FeedbackView({
             Answer: <strong lang={f.correctAnswerLang}>{f.correctAnswer}</strong>
           </p>
         )}
-        {f.chosenMeaning && <p className={muted}>{f.chosenMeaning}</p>}
-        {f.note && <p className={muted}>{f.note}</p>}
+        {f.chosenMeaning && (
+          <p className={muted}>
+            <Parts parts={f.chosenMeaning} />
+          </p>
+        )}
+        {f.note && (
+          <p className={muted}>
+            <Parts parts={f.note} />
+          </p>
+        )}
       </div>
 
       {f.correct && f.word.example ? (

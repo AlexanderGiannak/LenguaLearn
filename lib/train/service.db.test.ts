@@ -163,6 +163,38 @@ describe("training service", () => {
       chooseIntro(`test-${randomUUID()}`, { questionId: screen.id, choice: "got_it", activeMs: 0 }),
     ).rejects.toThrow("not found");
   });
+
+  it("logs Easy and the production card when I already know this is answered right", async () => {
+    const userId = `test-${randomUUID()}`;
+    let { screen } = await startSession(userId, { audio: false });
+    while (screen.kind === "question" && screen.stage === "pretest") {
+      screen = (await answerRight(userId, screen)).next;
+    }
+    if (screen.kind !== "intro") throw new Error("expected a word page");
+    const { next } = await chooseIntro(userId, {
+      questionId: screen.id,
+      choice: "already_know",
+      activeMs: 1000,
+    });
+    if (next.kind !== "question") throw new Error("expected a question");
+    expect(next.stage).toBe("intro_known");
+    await answerRight(userId, next);
+    const [event] = await getDb()
+      .select()
+      .from(answerEvent)
+      .where(and(eq(answerEvent.userId, userId), eq(answerEvent.isPretest, false)));
+    expect(event).toMatchObject({ rating: 4, cardKind: "production", correct: true });
+    expect((event!.fsrsAfter as { reps: number }).reps).toBe(1);
+  });
+
+  it("counts the last screen's time when the session ends", async () => {
+    const userId = `test-${randomUUID()}`;
+    const { sessionId } = await startSession(userId, { audio: false });
+    const summary = await endSession(userId, sessionId, 42_000);
+    expect(summary.activeMinutes).toBeCloseTo(0.7, 1);
+    // Ending twice adds nothing more.
+    expect((await endSession(userId, sessionId, 42_000)).activeMinutes).toBeCloseTo(0.7, 1);
+  });
 });
 
 describe("answer_event", () => {

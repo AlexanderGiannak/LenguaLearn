@@ -104,7 +104,10 @@ export function Trainer() {
     async (screen: Screen, saved: Saved | null) => {
       if (screen.kind === "done") {
         if (!saved) return setView({ kind: "start" });
-        const r = await send("/api/train/end", { sessionId: saved.sessionId });
+        const r = await send("/api/train/end", {
+          sessionId: saved.sessionId,
+          activeMs: clock.lap(),
+        });
         saveSession(null);
         setView(
           r.ok

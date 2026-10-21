@@ -1,9 +1,9 @@
 import { and, desc, eq, sql } from "drizzle-orm";
-import type { Card, Grade } from "ts-fsrs";
+import { Rating, type Card, type Grade } from "ts-fsrs";
 import { getDb } from "@/lib/db/client";
 import { answerEvent, issuedQuestion, learnerProfile, studySession } from "@/lib/db/schema";
 import { updateAbility } from "@/lib/engine/ability";
-import { checkTypedAnswer, normalizeAnswer } from "@/lib/engine/answer-check";
+import { checkTypedAnswer, normalizeAnswer, type NotePart } from "@/lib/engine/answer-check";
 import { applyReview, isLearned, markKnown, newSenseMemory } from "@/lib/engine/cards";
 import { ENGINE_CONFIG } from "@/lib/engine/config";
 import { guessFirst, introQuestionType } from "@/lib/engine/intro";
@@ -343,10 +343,10 @@ export async function answerQuestion(userId: string, input: AnswerInput): Promis
     const dontKnow = input.dontKnow === true;
     let grade: Feedback["grade"];
     let reason: string | null = null;
-    let note = q.note;
+    let note: NotePart[] | null = q.note ? [{ text: q.note }] : null;
     let correctAnswer: string;
     let correctAnswerLang: "es" | "en" = "es";
-    let chosenMeaning: string | null = null;
+    let chosenMeaning: NotePart[] | null = null;
     if (q.mode === "choice") {
       correctAnswer = q.options![q.correctIndex!]!.text;
       correctAnswerLang = q.options![q.correctIndex!]!.lang;
@@ -357,8 +357,8 @@ export async function answerQuestion(userId: string, input: AnswerInput): Promis
         if (other) {
           chosenMeaning =
             chosen.lang === "es"
-              ? `${chosen.text} means ${other.gloss}`
-              : `"${chosen.text}" is ${other.display}`;
+              ? [{ text: chosen.text, lang: "es" }, { text: ` means ${other.gloss}` }]
+              : [{ text: `"${chosen.text}" is ` }, { text: other.display, lang: "es" }];
         }
       }
     } else {
@@ -375,7 +375,7 @@ export async function answerQuestion(userId: string, input: AnswerInput): Promis
       });
       grade = result.grade;
       reason = result.reason;
-      note = result.note ?? note;
+      note = result.noteParts ?? note;
       correctAnswer = result.correctAnswer;
     }
     const correct = grade !== "wrong";
@@ -460,8 +460,11 @@ export async function answerQuestion(userId: string, input: AnswerInput): Promis
         before = null;
         await firstExposure(correct);
         if (correct) {
+          // markKnown rates both cards Easy; log what was actually scheduled for the card
+          // this production question tests.
           const memory = markKnown(newSenseMemory(receivedAt), receivedAt);
-          after = memory.recognition;
+          loggedRating = Rating.Easy;
+          after = memory.production;
           await saveProgress(tx, userId, sense.id, memory, q.type);
           knownAlready = true;
           introDone = true;
@@ -543,18 +546,27 @@ export async function answerQuestion(userId: string, input: AnswerInput): Promis
   });
 }
 
-export async function endSession(userId: string, sessionId: string): Promise<SessionSummary> {
+export async function endSession(
+  userId: string,
+  sessionId: string,
+  /** Visible time since the last answer (the last feedback screen, or an unanswered one). */
+  activeMs = 0,
+): Promise<SessionSummary> {
   const db = getDb();
-  const [session] = await db
+  const [found] = await db
     .select()
     .from(studySession)
     .where(and(eq(studySession.id, sessionId), eq(studySession.userId, userId)));
-  if (!session) throw new TrainingError(404, "session not found");
+  if (!found) throw new TrainingError(404, "session not found");
+  let session = found;
   if (!session.endedAt) {
-    await db
+    // Attentive time on the last screen counts too, with the same per-screen cap.
+    const [updated] = await db
       .update(studySession)
-      .set({ endedAt: new Date() })
-      .where(eq(studySession.id, sessionId));
+      .set({ endedAt: new Date(), activeMs: session.activeMs + capActive(activeMs, "choice") })
+      .where(eq(studySession.id, sessionId))
+      .returning();
+    session = updated!;
   }
 
   const content = await getTrainingContent();

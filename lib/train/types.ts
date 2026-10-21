@@ -1,3 +1,4 @@
+import type { NotePart } from "@/lib/engine/answer-check";
 import type { NextItem, SessionState } from "@/lib/engine/next-item";
 import type { Question, QuestionType } from "@/lib/engine/questions";
 import type { WordCore } from "./content";
@@ -49,11 +50,12 @@ export type Screen =
 export type Feedback = {
   correct: boolean;
   grade: "correct" | "hard" | "wrong";
-  note: string | null;
+  /** Feedback line in parts; Spanish parts carry lang "es". */
+  note: NotePart[] | null;
   correctAnswer: string;
   correctAnswerLang: "es" | "en";
-  /** For a wrong pick: what the chosen option actually means. */
-  chosenMeaning: string | null;
+  /** For a wrong pick: what the chosen option actually means, in parts. */
+  chosenMeaning: NotePart[] | null;
   word: WordCore;
   /** A wrong answer must be read for this long before Continue is enabled. */
   requiredReadMs: number;
