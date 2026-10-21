@@ -10,16 +10,17 @@ const schema = z.strictObject({
 });
 
 export async function POST(request: Request) {
-  return handle(request, { roles: "public" }, async ({ user, body }) => {
+  return handle(request, { roles: "public" }, async ({ user, body, setCookie }) => {
     const ctx = requestContext(request);
+    // Set on failures too, so failed attempts from a new browser share one device ID.
+    if (ctx.setDeviceCookie) setCookie(deviceCookieHeader(ctx.setDeviceCookie));
     const input = parse(schema, body);
-    const device = ctx.setDeviceCookie && deviceCookieHeader(ctx.setDeviceCookie);
     if (input.kind === "reset") {
       if (!input.password) throw new HttpError(400, "Choose a new password.");
       const r = await redeemResetCode({ code: input.code, password: input.password }, ctx);
-      return withCookies(r.response, { handle: r.handle }, device);
+      return withCookies(r.response, { handle: r.handle });
     }
     const r = await redeemJoinCode({ code: input.code, password: input.password }, user, ctx);
-    return withCookies(r.response, { handle: r.handle }, device);
+    return withCookies(r.response, { handle: r.handle });
   });
 }

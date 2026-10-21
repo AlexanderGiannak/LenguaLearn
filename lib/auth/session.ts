@@ -42,14 +42,16 @@ export class AuthError extends Error {
 }
 
 /**
- * The current user, if they have one of `roles`. Teachers must have a verified email
- * before they can use teacher features (spec: Roles).
+ * The current user, if they have one of `roles`. Teachers must have a verified email before
+ * they can use teacher-only features (spec: Roles); their own account, data export and
+ * deletion stay available while unverified.
  */
 export async function requireUser(headers: Headers, roles: readonly Role[]): Promise<CurrentUser> {
   const u = await currentUser(headers);
   if (!u) throw new AuthError(401, "sign in first");
   if (!roles.includes(u.role)) throw new AuthError(403, "not allowed for this account");
-  if (u.role === "teacher" && !u.emailVerified) {
+  const teacherFeature = roles.every((r) => r === "teacher");
+  if (teacherFeature && u.role === "teacher" && !u.emailVerified) {
     throw new AuthError(403, "confirm your email address first");
   }
   return u;

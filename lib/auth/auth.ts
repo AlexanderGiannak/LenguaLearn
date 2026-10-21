@@ -5,6 +5,7 @@ import { username } from "better-auth/plugins";
 import { getDb } from "@/lib/db/client";
 import { account, session, user, verification } from "@/lib/db/schema";
 import { sendEmail } from "@/lib/email/mailer";
+import { hasAgeConfirmation } from "./age";
 import { isPlaceholderEmail } from "./identifiers";
 
 // Better Auth setup (spec: Decisions, Auth; Accounts and privacy).
@@ -110,6 +111,18 @@ function createAuth() {
     },
     socialProviders: google,
     databaseHooks: {
+      user: {
+        create: {
+          // A Google sign-up (the OAuth callback) needs the 13-or-older confirmation from
+          // the sign-up page. The app's own sign-up routes record it themselves.
+          before: async (u, ctx) => {
+            if (!ctx?.path?.startsWith("/callback")) return;
+            const cookie = ctx.request?.headers.get("cookie") ?? ctx.headers?.get("cookie") ?? null;
+            if (!hasAgeConfirmation(cookie, authSecret())) return false;
+            return { data: { ...u, ageConfirmedAt: new Date() } };
+          },
+        },
+      },
       // Belt and braces with the database check: never keep an IP or user agent.
       session: {
         create: {

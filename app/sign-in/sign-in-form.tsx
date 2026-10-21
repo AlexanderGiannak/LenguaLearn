@@ -25,9 +25,7 @@ export function SignInForm({
     setBusy(false);
     if (!r.ok) return setError(r.error);
     const next = new URLSearchParams(window.location.search).get("next");
-    window.location.assign(
-      next?.startsWith("/") && !next.startsWith("//") ? next : student ? "/train" : "/",
-    );
+    window.location.assign(safeNext(next) ?? (student ? "/train" : "/"));
   }
 
   return (
@@ -79,4 +77,15 @@ export function SignInForm({
       )}
     </Page>
   );
+}
+
+/** Only same-origin destinations, so a crafted ?next= cannot send people elsewhere. */
+function safeNext(next: string | null): string | null {
+  if (!next) return null;
+  try {
+    const url = new URL(next, window.location.origin);
+    return url.origin === window.location.origin ? url.pathname + url.search + url.hash : null;
+  } catch {
+    return null;
+  }
 }

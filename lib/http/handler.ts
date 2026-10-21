@@ -35,7 +35,13 @@ export function parse<T extends z.ZodType>(schema: T, body: unknown): z.output<T
   return r.data;
 }
 
-type Ctx<U> = { user: U; body: unknown; request: Request };
+type Ctx<U> = {
+  user: U;
+  body: unknown;
+  request: Request;
+  /** A Set-Cookie value for the response, whether the handler succeeds or fails. */
+  setCookie: (cookie: string) => void;
+};
 
 export async function handle(
   request: Request,
@@ -52,6 +58,11 @@ export async function handle(
   opts: { roles: readonly Role[] | "public" },
   fn: (ctx: Ctx<CurrentUser>) => Promise<unknown>,
 ): Promise<Response> {
+  const cookies: string[] = [];
+  const send = (res: Response) => {
+    for (const c of cookies) res.headers.append("Set-Cookie", c);
+    return res;
+  };
   try {
     const changesState = request.method !== "GET" && request.method !== "HEAD";
     if (changesState && !isSameOrigin(request)) {
@@ -75,19 +86,19 @@ export async function handle(
       }
     }
 
-    const result = await fn({ user, body, request });
-    return result instanceof Response ? result : json(result);
+    const result = await fn({ user, body, request, setCookie: (c) => cookies.push(c) });
+    return send(result instanceof Response ? result : json(result));
   } catch (error) {
     if (error instanceof BadRequest)
-      return json({ error: "invalid request", issues: error.issues }, 400);
+      return send(json({ error: "invalid request", issues: error.issues }, 400));
     if (error instanceof AuthError || error instanceof AccountError || error instanceof HttpError) {
-      return json({ error: error.message }, error.status);
+      return send(json({ error: error.message }, error.status));
     }
-    if (error instanceof NotFound) return json({ error: "not found" }, 404);
+    if (error instanceof NotFound) return send(json({ error: "not found" }, 404));
     if (error && typeof error === "object" && "status" in error && "message" in error) {
       const status = Number((error as { status: unknown }).status);
       if (status >= 400 && status < 500) {
-        return json({ error: String((error as { message: unknown }).message) }, status);
+        return send(json({ error: String((error as { message: unknown }).message) }, status));
       }
     }
     throw error;

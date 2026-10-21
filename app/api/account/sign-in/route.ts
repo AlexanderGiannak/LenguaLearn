@@ -10,13 +10,11 @@ const schema = z.strictObject({
 });
 
 export async function POST(request: Request) {
-  return handle(request, { roles: "public" }, async ({ body }) => {
+  return handle(request, { roles: "public" }, async ({ body, setCookie }) => {
     const ctx = requestContext(request);
+    // Set on failures too, so failed attempts from a new browser share one device ID.
+    if (ctx.setDeviceCookie) setCookie(deviceCookieHeader(ctx.setDeviceCookie));
     const res = await signIn(parse(schema, body), ctx);
-    return withCookies(
-      res,
-      { ok: true },
-      ctx.setDeviceCookie && deviceCookieHeader(ctx.setDeviceCookie),
-    );
+    return withCookies(res, { ok: true });
   });
 }

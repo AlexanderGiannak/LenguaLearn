@@ -15,6 +15,7 @@ export function SignUpForm({ googleEnabled }: { googleEnabled: boolean }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
+  const [googleAge, setGoogleAge] = useState(false);
 
   async function submit(form: FormData) {
     setBusy(true);
@@ -119,7 +120,20 @@ export function SignUpForm({ googleEnabled }: { googleEnabled: boolean }) {
           Create account
         </Button>
       </form>
-      {googleEnabled && <GoogleButton label="Sign up with Google" />}
+      {googleEnabled && (
+        <div className="flex flex-col gap-2 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+          <label className="flex min-h-11 items-center gap-3">
+            <input
+              type="checkbox"
+              className="h-5 w-5"
+              checked={googleAge}
+              onChange={(e) => setGoogleAge(e.target.checked)}
+            />
+            <span>I am 13 or older.</span>
+          </label>
+          <GoogleButton label="Sign up with Google" ageConfirmed={googleAge} />
+        </div>
+      )}
       <p className={muted}>
         Already have an account?{" "}
         <Link className="underline" href="/sign-in">

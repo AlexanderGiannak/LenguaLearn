@@ -325,6 +325,49 @@ describe("rate limits", () => {
   });
 });
 
+describe("device limits", () => {
+  it("sets the device cookie on a failed sign-in, so failures from one browser add up", async () => {
+    const first = await call(signInRoute.POST, {
+      ip: "198.51.100.200",
+      body: { identifier: "nobody-here", password: "wrong-guess" },
+    });
+    expect(first.status).toBe(401);
+    expect(first.cookie).toMatch(/^ll_device=/);
+    const statuses: number[] = [];
+    for (let i = 0; i < 30; i++) {
+      statuses.push(
+        (
+          await call(signInRoute.POST, {
+            cookie: first.cookie,
+            ip: `198.51.100.${i}`,
+            body: { identifier: `spray-${i}`, password: "wrong-guess" },
+          })
+        ).status,
+      );
+    }
+    // 1 + 29 failures are allowed; the 31st attempt from this browser is refused.
+    expect(statuses.slice(0, 29).every((s) => s === 401)).toBe(true);
+    expect(statuses[29]).toBe(429);
+  });
+});
+
+describe("unverified teachers", () => {
+  it("can still export and delete their own data", async () => {
+    const email = `t${uniq()}@example.com`;
+    await call(signUpRoute.POST, {
+      body: { role: "teacher", name: "T", email, password: "teacher-password" },
+    });
+    const r = await call(signInRoute.POST, {
+      body: { identifier: email, password: "teacher-password" },
+    });
+    expect((await call(exportRoute.GET, { cookie: r.cookie })).status).toBe(200);
+    expect(
+      (await call(deleteRoute.POST, { cookie: r.cookie, body: { confirm: "teacher-password" } }))
+        .status,
+    ).toBe(200);
+  });
+});
+
 describe("deletion and export", () => {
   it("a student can export their data, which holds no email", async () => {
     const { seats } = await classWithSeats(await teacher());
