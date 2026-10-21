@@ -12,13 +12,16 @@ export async function checkDatabase(
     timer = setTimeout(() => resolve(false), timeoutMs);
   });
   try {
-    // The rejection handler is attached here so a ping that fails after the
-    // timeout already won does not surface as an unhandled rejection.
+    // Calling ping inside .then() turns a synchronous throw into a rejection. The
+    // rejection handler is attached here so a ping that fails after the timeout
+    // already won does not surface as an unhandled rejection.
     return await Promise.race([
-      ping().then(
-        () => true,
-        () => false,
-      ),
+      Promise.resolve()
+        .then(ping)
+        .then(
+          () => true,
+          () => false,
+        ),
       timeout,
     ]);
   } finally {

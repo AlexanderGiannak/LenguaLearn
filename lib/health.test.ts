@@ -14,6 +14,14 @@ describe("checkDatabase", () => {
     ).resolves.toBe(false);
   });
 
+  it("returns false when the ping throws before returning a promise", async () => {
+    // e.g. getSql() throwing because DATABASE_URL is missing
+    const throwsSync = (): Promise<unknown> => {
+      throw new Error("DATABASE_URL is not set");
+    };
+    await expect(checkDatabase(throwsSync, 100)).resolves.toBe(false);
+  });
+
   it("returns false when the ping is slower than the timeout", async () => {
     const slow = () => new Promise((resolve) => setTimeout(resolve, 200));
     await expect(checkDatabase(slow, 20)).resolves.toBe(false);
