@@ -13,15 +13,17 @@ Decisions that go beyond [SPEC.md](SPEC.md), newest last. One line of reason eac
 | 2026-10-20 | No `Co-Authored-By` or AI attribution in commits or PRs | Owner's preference |
 | 2026-10-20 | `reference/prototype.html` does not exist. The 40-word Phase 1 seed set will be proposed in the Phase 1 plan, as marked fixtures going through the status flow | File referenced by the spec was never created |
 | 2026-10-20 | Raw AI generation responses (`content/raw/`) are gitignored, kept locally for audit | The repo is public; unreviewed content shouldn't be published |
+| 2026-10-20 | npm is the package manager | Already installed with Node 24; no extra tooling |
+| 2026-10-20 | Code is MIT-licensed. Content license still open | Owner's choice; permissive for a free public project |
+| 2026-10-20 | Passwords hashed with Argon2id (OWASP parameters: 19 MiB memory, 2 iterations, 1 lane) via `@node-rs/argon2`, plugged into Better Auth's custom hash/verify hooks. Integration verified in Phase 4 | OWASP's first recommendation; far less memory per hash than scrypt at OWASP strength, which matters when a whole class logs in at once on one small server; native code runs off the event loop; prebuilt binaries mean no build step on Railway |
+| 2026-10-20 | No domain yet: use Railway's generated `*.up.railway.app` domain until one is bought | Enough for Phases 0–3 |
+| 2026-10-20 | First pilot is in Nashville, TN: time zone America/Chicago. Deploys and migrations happen outside 7am–4pm CT on school days. Tennessee law (Tenn. Code 49-1-708) and the TN-NDPA take priority over Florida | Owner's pilot location |
+| 2026-10-20 | Railway is managed from the CLI (`railway`, installed via Homebrew) | Owner's preference; lets the agent configure services and read logs |
 
 ## Open questions
 
 - **Second-model provider for the content check (Phase 9 step 3):** OpenAI or Google. Decide at Phase 9.
-- **Domain:** needed for SES (SPF/DKIM), the CloudFront audio subdomain and the IT data sheet allowlist.
-- **Railway:** account and GitHub connection needed for Phase 0's preview deploy.
-- **Pilot school:** state and time zone (deploy windows; TN vs FL law emphasis).
-- **Password hashing:** recommendation is to keep Better Auth's default scrypt (no native module). Argon2id would add `@node-rs/argon2`.
-- **Licenses:** code license for a public repo (MIT, AGPL or none) and a separate license for content.
-- **Package manager:** npm proposed (already installed, Node 24).
+- **Content license:** for word pages, examples, hooks and audio (for example CC BY-SA, or all rights reserved). Code is MIT.
+- **Domain:** needed before Phase 4 finishes (SES needs SPF/DKIM on a domain for verification and reset email) and before the pilot (CloudFront audio subdomain, IT data sheet allowlist).
 - **Rate limiting (Phase 4):** Better Auth's built-in limiter keys on IP and path. Per-handle, per-seat-code and per-device-cookie limits likely need custom rules or a small custom limiter; confirm before Phase 4.
 - **TN-NDPA:** nothing found yet that would prevent signing. Add items here as they come up.

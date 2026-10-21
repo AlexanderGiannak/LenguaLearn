@@ -9,3 +9,5 @@ Status: planning. No app code yet.
 - Product spec: [docs/SPEC.md](docs/SPEC.md)
 - Decisions and open questions: [docs/DECISIONS.md](docs/DECISIONS.md)
 - Contributor and agent guidelines: [AGENTS.md](AGENTS.md)
+
+Code is licensed under the [MIT License](LICENSE). The license for Spanish learning content is still to be decided.
