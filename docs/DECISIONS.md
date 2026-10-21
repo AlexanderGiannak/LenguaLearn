@@ -29,7 +29,7 @@ Decisions that go beyond [SPEC.md](SPEC.md), newest last. One line of reason eac
 | 2026-10-21 | Playwright runs two projects: Chromebook (1366×768) and phone (390px wide), Chromium only | The spec's two target devices; Chromebooks run Chrome |
 | 2026-10-21 | Railway config lives in `.railway/railway.ts` (IaC), not `railway.json` | `railway.json` is deprecated and stops being read on 2026-12-01 |
 | 2026-10-21 | Markdown is excluded from Prettier | Keeps hand-formatted docs and SPEC.md tables from being rewritten |
-| 2026-10-21 | Railway deploys a commit only after GitHub CI passes (`checkSuites: true`) | A broken build or failing test never reaches production or a preview |
+| 2026-10-21 | ~~Railway deploys a commit only after GitHub CI passes (`checkSuites: true`)~~ Superseded below | A broken build or failing test never reaches production or a preview |
 | 2026-10-21 | Railway hard spending limit: $15/month for the workspace | Owner's choice; caps surprise bills (Railway stops services above it) |
 | 2026-10-21 | Production uses Railway's generated `*.up.railway.app` domain until a domain is bought. Generated domains stay out of `.railway/railway.ts` | No domain yet; Railway's IaC rules say not to commit generated domains |
 | 2026-10-21 | Content IDs are integers; the word page URL uses the sense ID (`/word/[id]`). Imports match rows by stable text keys (`cuenta#noun`, `cuenta#noun#2`) and children by position | IDs stay the same across re-imports, so student history never breaks; keys work across environments where IDs differ |
@@ -59,6 +59,10 @@ Decisions that go beyond [SPEC.md](SPEC.md), newest last. One line of reason eac
 | 2026-10-21 | `lib/engine` imports use `.ts` extensions, so `npm run simulate` runs under plain Node. A test enforces that the engine imports nothing outside itself and ts-fsrs | No build step or extra dependency for the simulator; keeps the spec's "pure module" rule checked |
 | 2026-10-21 | PRs auto-merge once CI passes and Codex's findings are fixed or answered, instead of the owner merging by hand. Branches are deleted after merge | Owner's request. The phase gate (owner says when to start the next phase) is unchanged |
 | 2026-10-21 | Phases run back to back without waiting for the owner at each phase end. Reports still go in each PR. Work stops only for blockers (credentials, accounts, money) or privacy and grading choices | Owner's request to speed up |
+| 2026-10-21 | Railway "wait for CI" turned off. Branch protection (now also binding admins) requires green CI before anything merges to `main` | The wait also covered other GitHub apps' check suites that never finish, so production never deployed |
+| 2026-10-21 | The ability score behind the vocabulary estimate updates only on first exposures: placement, "I already know this" checks, and choosing "Got it". This changes the spec's "after every graded answer" | Owner's choice. In the simulator the spec's rule overestimated a beginner ~7× (2,105 vs 279); first exposures land within ~5% |
+| 2026-10-21 | New-word cap stays at 8 per session for everyone | Owner's choice; revisit with pilot data (simulator: beginners' backlog grows to ~41 by week 9) |
+| 2026-10-21 | Default grade formula: 100% weight on percent of goal (capped at 100%), 0% on accuracy, no flagged-minute deduction. Teachers can change it per class | Owner's choice. Flagged minutes already don't count toward the goal |
 
 ## Open questions
 
@@ -68,6 +72,4 @@ Decisions that go beyond [SPEC.md](SPEC.md), newest last. One line of reason eac
 - **Rate limiting (Phase 4):** Better Auth's built-in limiter keys on IP and path. Per-handle, per-seat-code and per-device-cookie limits likely need custom rules or a small custom limiter; confirm before Phase 4.
 - **TN-NDPA:** nothing found yet that would prevent signing. Add items here as they come up.
 - **Human edits in review (Phase 9):** the status flow has no draft → approved step. When a reviewer fixes a sense that failed the AI check, should the fix re-run the AI check, or should a human edit count as the check? Decide before building the review tool.
-- **Vocabulary-size estimate (Phase 2 simulator):** updating ability after every graded answer, as the spec says, overestimates a beginner's vocabulary about 7× (estimate 2,105 vs a true 279), because right answers on just-taught words look like general knowledge. Updating ability only on first exposures, placement and "I already know this" checks came within about 5%. Owner to decide.
-- **New-word cap and backlog:** with two cards per sense and 8 new words per session, a beginner's review backlog keeps growing through week 9 (about 41 due at session start). Owner to review the cap sweep in `docs/simulator-report.md`.
 - **Misuse sentences (Phase 9):** the content model needs reviewed sentences that misuse each sense, for "which sentence uses the word correctly" questions (a column or table, generated in step 2 and checked like examples). Add with the pipeline.
