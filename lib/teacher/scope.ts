@@ -384,6 +384,7 @@ export function teacherScope(teacherId: string) {
             const flagged = round1(m.flaggedMs / 60_000);
             const acc = a?.answered ? Math.round((100 * a.correct) / a.answered) : null;
             return {
+              seatId: s.id,
               seat: s.seatNumber,
               handle: s.handle!,
               minutes: mins,

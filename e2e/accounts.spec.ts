@@ -61,7 +61,7 @@ test("name labels never leave the browser", async ({ page }) => {
     sent.push(req.url(), JSON.stringify(req.headers()), req.postData() ?? "");
   });
 
-  await page.goto(`/teacher/class/${id}`);
+  await page.goto(`/teacher/class/${id}/seats`);
   await expect(
     page.getByText("Names stay on this computer. LenguaLearn never receives them."),
   ).toBeVisible();
@@ -82,6 +82,12 @@ test("name labels never leave the browser", async ({ page }) => {
   const file = await (await download).path();
   const exported = await import("node:fs").then((fs) => fs.readFileSync(file!, "utf8"));
   expect(exported).toContain(labels[1]);
+
+  // The dashboard and grade pages show the labels too, still from this browser only.
+  await page.goto(`/teacher/class/${id}`);
+  await expect(page.getByText(labels[0]!)).toBeVisible();
+  await page.goto(`/teacher/class/${id}/grades`);
+  await page.goto(`/teacher/class/${id}/settings`);
 
   const all = sent.join("\n");
   for (const label of labels) {
