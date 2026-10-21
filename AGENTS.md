@@ -83,6 +83,7 @@ npm run seed:fixtures          # load the 40 fixture words and publish them
 | `npm run db:migrate` | Apply migrations (Railway runs this as the pre-deploy step) |
 | `npm run admin:token` | Print a new admin API token and its hash (`ADMIN_API_TOKEN` stays on the laptop; the hash goes to the server) |
 | `npm run simulate` | Run the engine simulator (100 synthetic learners × 60 days per cohort) and rewrite `docs/simulator-report.md`. About 3 minutes |
+| `npm run seed:demo-class [-- <url>]` | Create a demo teacher and a class of 25 students with a simulated week of practice (local and PR previews only); prints the sign-in |
 | `npm run seed:fixtures [-- <url>]` | Import the fixture words through the admin API and publish them. Default `http://localhost:3000`; refused in production |
 
 CI (`.github/workflows/ci.yml`) runs lint, format check, typecheck and unit tests, then, against a
@@ -100,7 +101,7 @@ throwaway Postgres, the database tests, a build, and Playwright (which seeds the
 | `lib/admin/` | Admin API token check and request helpers |
 | `lib/train/` | Training on the server: live content cache (`content.ts`), card storage (`store.ts`), the session flow (`service.ts`), shared types, and who may train (`roles.ts`) |
 | `lib/auth/` | Better Auth setup (`auth.ts`), sign-up, sign-in and seat codes (`accounts.ts`), limits, device cookie, handles and codes, and `session.ts` (`currentUser`, `requireUser`) |
-| `lib/teacher/scope.ts` | The one shared teacher-scope helper: every class and seat query goes through it |
+| `lib/teacher/` | `scope.ts` is the one shared teacher-scope helper: every class, seat, dashboard and grade query goes through it. Also `stats.ts` (queries it calls), `week.ts` (class weeks by time zone), `grades.ts` (grade formula and status chips), `demo.ts` (demo class) and `page-gate.ts` |
 | `lib/account/` | Data export and account deletion, including district deletions |
 | `lib/email/` | Outgoing email (console in development; SES later) |
 | `lib/http/` | The Origin check and `handle()`, the wrapper every browser-facing API route uses (Origin, role, Zod, errors) |

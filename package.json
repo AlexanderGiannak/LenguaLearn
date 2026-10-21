@@ -22,7 +22,8 @@
     "test:db": "vitest run --config vitest.db.config.mts",
     "seed:fixtures": "node --env-file-if-exists=.env.local scripts/seed-fixtures.mts",
     "admin:token": "node scripts/admin-token.mts",
-    "simulate": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/simulate.mts"
+    "simulate": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/simulate.mts",
+    "seed:demo-class": "node --env-file-if-exists=.env.local scripts/seed-demo-class.mts"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.2.2",

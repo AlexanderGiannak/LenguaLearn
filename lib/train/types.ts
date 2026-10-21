@@ -29,6 +29,8 @@ export type SessionData = {
   engine: SessionState;
   /** Screens that must come next, before the engine picks again (the new-word flow). */
   forced: { stage: "intro" | "intro_check"; senseId: number; abilityDone?: boolean }[];
+  /** The class focus list's senses, introduced before other new words. */
+  focus?: number[];
 };
 
 export type PublicQuestion = {

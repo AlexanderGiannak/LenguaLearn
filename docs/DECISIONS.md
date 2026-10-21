@@ -86,6 +86,16 @@ Decisions that go beyond [SPEC.md](SPEC.md), newest last. One line of reason eac
 | 2026-10-21 | Email uses a console transport in development. In production, nothing sends until SES is set up, so teacher verification and password resets wait for the domain and AWS account | Blocked on owner setup; see Open questions |
 | 2026-10-21 | The Phase 3 dev user is removed: training needs a signed-in student, learner or teacher | Accounts exist now |
 | 2026-10-21 | Seat name labels are stored in localStorage by seat ID and can be exported and imported as a JSON file | Spec: local-only labels that can move between computers |
+| 2026-10-21 | Dashboard minutes are a student's session active time in the class week minus flagged answer time (`answer_event.active_ms`). A student in two classes shows the same practice in both | Minutes measure the student's practice, not a class's |
+| 2026-10-21 | "Gained this week" counts senses whose `first_learned_at` (first passed recognition review after 7+ days) falls in the week; "learned" totals use the full rule, including current recall ≥ 85% | Cheap to count, and matches the spec's definition |
+| 2026-10-21 | Status chips: On track means keeping pace (goal × fraction of the week passed) or goal met. Flagged means at least 5 flagged minutes making up at least 20% of the week's time. Not started means no activity this week; otherwise Behind. Thresholds are in `STATUS_CONFIG` | The spec names the chips but not the rules |
+| 2026-10-21 | Class weeks run from the class's reset time (default Sunday 11:59 pm, America/Chicago), computed with `Intl`, so they stay correct across daylight-saving changes | No time-zone dependency |
+| 2026-10-21 | Grade formula weights are relative (goal weight and accuracy weight are normalized). Percent of goal is capped at 100. The deduction per flagged minute comes after that, and the grade is clamped to 0–100 and rounded. A date-range export prorates the weekly goal by the range's length | The spec's "simple parts", with the owner's default (100% percent of goal) |
+| 2026-10-21 | Student detail "current level" is the higher of the starting level and the level implied by the ability score | Gives a sensible number before placement exists (Phase 7) |
+| 2026-10-21 | Class insights cover the last 4 weeks. "Most-chosen wrong answer" leaves out "I don't know" | A reteaching list should reflect recent work and real confusions |
+| 2026-10-21 | A class student's session length and focus list come from their most recently joined class. Focus-list words are introduced first, at any level | A student can be in more than one class |
+| 2026-10-21 | A demo class (25 students, one simulated week, trained through the real service with a simulated clock) can be created through the admin API, in local, CI and PR environments only. `npm run seed:demo-class` | Spec's Phase 5 check, and something to click through in previews |
+| 2026-10-21 | The class page opens on the dashboard; a new class opens on Seats. Printable cards show only unused join codes, 8 per page | The dashboard is the weekly task; codes are needed right after creating a class |
 
 ## Open questions
 

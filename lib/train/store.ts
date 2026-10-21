@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import type { Card } from "ts-fsrs";
 import type { getDb } from "@/lib/db/client";
 import { card, learnerProfile, senseProgress } from "@/lib/db/schema";
@@ -74,7 +74,12 @@ export async function saveProgress(
   senseId: number,
   memory: SenseMemory,
   lastType: QuestionType | null,
+  now: Date = new Date(),
 ): Promise<void> {
+  // The first time the learned rule's interval part is met (the recall part is ~1 right
+  // after a passed review), keep that moment; later saves never move it.
+  const learnedNow =
+    memory.bestRecognitionPassDays >= ENGINE_CONFIG.learnedMinIntervalDays ? now : null;
   await tx
     .insert(senseProgress)
     .values({
@@ -82,10 +87,15 @@ export async function saveProgress(
       senseId,
       bestRecognitionPassDays: memory.bestRecognitionPassDays,
       lastQuestionType: lastType,
+      firstLearnedAt: learnedNow,
     })
     .onConflictDoUpdate({
       target: [senseProgress.userId, senseProgress.senseId],
-      set: { bestRecognitionPassDays: memory.bestRecognitionPassDays, lastQuestionType: lastType },
+      set: {
+        bestRecognitionPassDays: memory.bestRecognitionPassDays,
+        lastQuestionType: lastType,
+        firstLearnedAt: sql`coalesce(${senseProgress.firstLearnedAt}, ${learnedNow})`,
+      },
     });
   for (const kind of ["recognition", "production"] as const satisfies CardKind[]) {
     const c = memory[kind];

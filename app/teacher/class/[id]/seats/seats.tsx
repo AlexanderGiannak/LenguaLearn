@@ -1,10 +1,15 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Button, ErrorText, focusRing, muted, postJson } from "@/app/_components/ui";
-import { labelsFile, loadLabels, readLabelsFile, saveLabels, type Labels } from "./labels";
+import {
+  labelsFile,
+  loadLabels,
+  readLabelsFile,
+  saveLabels,
+  type Labels,
+} from "@/app/teacher/labels";
 
 type SeatRow = {
   id: string;
@@ -67,14 +72,7 @@ export function Seats({
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-4 py-10">
-      <div>
-        <Link href="/teacher" className={`text-sm underline ${muted} ${focusRing}`}>
-          All classes
-        </Link>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">{className}</h1>
-      </div>
-
+    <section aria-label="Seats" className="flex flex-col gap-6">
       <p className="rounded-md bg-blue-50 p-3 text-blue-900 dark:bg-blue-950 dark:text-blue-100">
         Names stay on this computer. LenguaLearn never receives them.
       </p>
@@ -204,6 +202,6 @@ export function Seats({
           Delete class
         </Button>
       </div>
-    </main>
+    </section>
   );
 }

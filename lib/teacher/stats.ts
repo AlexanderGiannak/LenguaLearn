@@ -1,0 +1,184 @@
+import { and, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
+import { isLearned } from "@/lib/engine/cards";
+import { getDb } from "@/lib/db/client";
+import { answerEvent, card, learnerProfile, senseProgress, studySession } from "@/lib/db/schema";
+import { toCard } from "@/lib/train/store";
+
+// Per-student numbers for teacher views. Only lib/teacher/scope.ts calls these, with the
+// student IDs it has already scoped to the teacher's class (spec: shared teacher scope).
+//
+// A student in two classes shows the same practice in both: minutes are the student's
+// training, not a class's.
+
+type Window = { start: Date; end: Date };
+
+export async function minutesByStudent(ids: string[], w: Window) {
+  if (ids.length === 0) return new Map<string, { activeMs: number; flaggedMs: number }>();
+  const db = getDb();
+  const [active, flagged] = await Promise.all([
+    db
+      .select({
+        userId: studySession.userId,
+        ms: sql<number>`coalesce(sum(${studySession.activeMs}), 0)::int`,
+      })
+      .from(studySession)
+      .where(
+        and(
+          inArray(studySession.userId, ids),
+          gte(studySession.startedAt, w.start),
+          lt(studySession.startedAt, w.end),
+        ),
+      )
+      .groupBy(studySession.userId),
+    db
+      .select({
+        userId: answerEvent.userId,
+        ms: sql<number>`coalesce(sum(${answerEvent.activeMs}), 0)::int`,
+      })
+      .from(answerEvent)
+      .where(
+        and(
+          inArray(answerEvent.userId, ids),
+          eq(answerEvent.flagged, true),
+          gte(answerEvent.serverReceivedAt, w.start),
+          lt(answerEvent.serverReceivedAt, w.end),
+        ),
+      )
+      .groupBy(answerEvent.userId),
+  ]);
+  const out = new Map<string, { activeMs: number; flaggedMs: number }>();
+  for (const id of ids) out.set(id, { activeMs: 0, flaggedMs: 0 });
+  for (const a of active) out.get(a.userId)!.activeMs = a.ms;
+  for (const f of flagged) out.get(f.userId)!.flaggedMs = f.ms;
+  return out;
+}
+
+export async function accuracyByStudent(ids: string[], w: Window) {
+  if (ids.length === 0) return new Map<string, { answered: number; correct: number }>();
+  const rows = await getDb()
+    .select({
+      userId: answerEvent.userId,
+      answered: sql<number>`count(*)::int`,
+      correct: sql<number>`count(*) filter (where ${answerEvent.correct})::int`,
+    })
+    .from(answerEvent)
+    .where(
+      and(
+        inArray(answerEvent.userId, ids),
+        eq(answerEvent.isPretest, false),
+        gte(answerEvent.serverReceivedAt, w.start),
+        lt(answerEvent.serverReceivedAt, w.end),
+      ),
+    )
+    .groupBy(answerEvent.userId);
+  return new Map(rows.map((r) => [r.userId, { answered: r.answered, correct: r.correct }]));
+}
+
+export async function lastActiveByStudent(ids: string[]) {
+  if (ids.length === 0) return new Map<string, Date>();
+  const rows = await getDb()
+    .select({ userId: answerEvent.userId, at: sql<Date>`max(${answerEvent.serverReceivedAt})` })
+    .from(answerEvent)
+    .where(inArray(answerEvent.userId, ids))
+    .groupBy(answerEvent.userId);
+  return new Map(rows.map((r) => [r.userId, new Date(r.at)]));
+}
+
+/** Words learned now, words gained in the window, and words in progress, per student. */
+export async function wordsByStudent(ids: string[], now: Date, w: Window) {
+  const out = new Map<string, { learned: number; gained: number; inProgress: number }>();
+  for (const id of ids) out.set(id, { learned: 0, gained: 0, inProgress: 0 });
+  if (ids.length === 0) return out;
+  const db = getDb();
+  const [progress, cards] = await Promise.all([
+    db.select().from(senseProgress).where(inArray(senseProgress.userId, ids)),
+    db
+      .select()
+      .from(card)
+      .where(and(inArray(card.userId, ids), eq(card.kind, "recognition"))),
+  ]);
+  const recognition = new Map(cards.map((c) => [`${c.userId}:${c.senseId}`, toCard(c)]));
+  for (const p of progress) {
+    const r = recognition.get(`${p.userId}:${p.senseId}`);
+    const entry = out.get(p.userId)!;
+    if (!r) continue;
+    const learned = isLearned(
+      { recognition: r, production: null, bestRecognitionPassDays: p.bestRecognitionPassDays },
+      now,
+    );
+    if (learned) entry.learned += 1;
+    else entry.inProgress += 1;
+    if (p.firstLearnedAt && p.firstLearnedAt >= w.start && p.firstLearnedAt < w.end)
+      entry.gained += 1;
+  }
+  return out;
+}
+
+export async function abilityByStudent(ids: string[]) {
+  if (ids.length === 0) return new Map<string, { ability: number; startLevel: number }>();
+  const rows = await getDb()
+    .select()
+    .from(learnerProfile)
+    .where(inArray(learnerProfile.userId, ids));
+  return new Map(rows.map((r) => [r.userId, { ability: r.ability, startLevel: r.startLevel }]));
+}
+
+/** Active minutes per local day for one student, over a window. */
+export async function sessionsForStudent(id: string, w: Window) {
+  return getDb()
+    .select({ startedAt: studySession.startedAt, activeMs: studySession.activeMs })
+    .from(studySession)
+    .where(
+      and(
+        eq(studySession.userId, id),
+        gte(studySession.startedAt, w.start),
+        lt(studySession.startedAt, w.end),
+      ),
+    );
+}
+
+/** The senses these students miss most, with how often and the most-chosen wrong answer. */
+export async function mostMissed(ids: string[], w: Window, limit: number) {
+  if (ids.length === 0) return [];
+  const db = getDb();
+  const scope = and(
+    inArray(answerEvent.userId, ids),
+    eq(answerEvent.isPretest, false),
+    gte(answerEvent.serverReceivedAt, w.start),
+    lt(answerEvent.serverReceivedAt, w.end),
+  );
+  const top = await db
+    .select({
+      senseId: answerEvent.senseId,
+      missed: sql<number>`count(*) filter (where not ${answerEvent.correct})::int`,
+      answered: sql<number>`count(*)::int`,
+    })
+    .from(answerEvent)
+    .where(scope)
+    .groupBy(answerEvent.senseId)
+    .having(sql`count(*) filter (where not ${answerEvent.correct}) > 0`)
+    .orderBy(desc(sql`count(*) filter (where not ${answerEvent.correct})`))
+    .limit(limit);
+  const chosenText = sql<
+    string | null
+  >`coalesce(${answerEvent.options} -> (${answerEvent.chosenIndex}::int) ->> 'text', ${answerEvent.typedText})`;
+  return Promise.all(
+    top.map(async (t) => {
+      const [wrong] = await db
+        .select({ text: chosenText, n: sql<number>`count(*)::int` })
+        .from(answerEvent)
+        .where(
+          and(
+            scope,
+            eq(answerEvent.senseId, t.senseId),
+            eq(answerEvent.correct, false),
+            eq(answerEvent.dontKnow, false),
+          ),
+        )
+        .groupBy(chosenText)
+        .orderBy(desc(sql`count(*)`))
+        .limit(1);
+      return { ...t, topWrongAnswer: wrong?.text ?? null };
+    }),
+  );
+}

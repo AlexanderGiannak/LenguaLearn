@@ -21,7 +21,7 @@ export function ClassList({ classes }: { classes: ClassRow[] }) {
     });
     setBusy(false);
     if (!r.ok) return setError(r.error);
-    router.push(`/teacher/class/${r.data.id}`);
+    router.push(`/teacher/class/${r.data.id}/seats`);
   }
 
   return (

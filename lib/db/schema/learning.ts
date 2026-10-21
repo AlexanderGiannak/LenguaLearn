@@ -45,6 +45,8 @@ export const senseProgress = pgTable(
     bestRecognitionPassDays: real("best_recognition_pass_days").notNull().default(0),
     lastQuestionType: text("last_question_type"),
     introducedAt: timestamp("introduced_at", { withTimezone: true }).notNull().defaultNow(),
+    /** When the sense first met the "learned" rule (for "gained this week"). */
+    firstLearnedAt: timestamp("first_learned_at", { withTimezone: true }),
   },
   (t) => [primaryKey({ columns: [t.userId, t.senseId] })],
 );
@@ -160,6 +162,8 @@ export const answerEvent = pgTable(
     fsrsAfter: jsonb("fsrs_after"),
     fsrsParamsVersion: text("fsrs_params_version").notNull(),
     clientResponseMs: integer("client_response_ms").notNull(),
+    /** Active time counted for this answer's screens, after the per-screen cap. */
+    activeMs: integer("active_ms").notNull().default(0),
     serverIssuedAt: timestamp("server_issued_at", { withTimezone: true }).notNull(),
     serverReceivedAt: timestamp("server_received_at", { withTimezone: true }).notNull(),
     flagged: boolean("flagged").notNull().default(false),
