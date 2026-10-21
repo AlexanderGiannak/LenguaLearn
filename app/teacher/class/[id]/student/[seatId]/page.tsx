@@ -17,6 +17,12 @@ export default function StudentPage({ params }: PageProps<"/teacher/class/[id]/s
 
 const muted = "text-zinc-600 dark:text-zinc-400";
 
+const REASONS: Record<string, string> = {
+  fast: "Answers faster than reading time, mostly wrong",
+  same_position: "Same answer position chosen again and again while wrong",
+  hidden_tab: "Answered right after coming back from another tab",
+};
+
 async function Content({
   params,
 }: Pick<PageProps<"/teacher/class/[id]/student/[seatId]">, "params">) {
@@ -118,7 +124,27 @@ async function Content({
         <h3 id="integrity-h" className="text-lg font-semibold">
           Integrity events
         </h3>
-        {d.integrityEvents.length === 0 ? <p className={muted}>None.</p> : null}
+        {d.integrityEvents.length === 0 ? (
+          <p className={muted}>None in the last 4 weeks.</p>
+        ) : (
+          <ul className="mt-2 divide-y divide-zinc-200 dark:divide-zinc-800">
+            {d.integrityEvents.map((e) => (
+              <li key={`${e.at}-${e.reason}`} className="flex justify-between gap-4 py-2">
+                <span>{REASONS[e.reason]}</span>
+                <span className={muted}>
+                  {new Date(e.at).toLocaleString("en-US", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })}{" "}
+                  · {e.answers} answers, {e.minutes} min flagged
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className={`mt-2 text-sm ${muted}`}>
+          These are patterns, not accusations. Flagged minutes do not count toward the goal.
+        </p>
       </section>
     </main>
   );

@@ -164,6 +164,10 @@ export const answerEvent = pgTable(
     clientResponseMs: integer("client_response_ms").notNull(),
     /** Active time counted for this answer's screens, after the per-screen cap. */
     activeMs: integer("active_ms").notNull().default(0),
+    /** Minimum reading time for the question as shown (spec: Flagged time). */
+    minReadingMs: integer("min_reading_ms"),
+    /** Time from returning to a hidden tab to answering, if the tab was hidden mid-question. */
+    hiddenReturnMs: integer("hidden_return_ms"),
     serverIssuedAt: timestamp("server_issued_at", { withTimezone: true }).notNull(),
     serverReceivedAt: timestamp("server_received_at", { withTimezone: true }).notNull(),
     flagged: boolean("flagged").notNull().default(false),
@@ -173,5 +177,45 @@ export const answerEvent = pgTable(
     index("answer_event_user_idx").on(t.userId, t.serverReceivedAt),
     index("answer_event_sense_idx").on(t.senseId),
     check("answer_event_typed_len", sql`char_length(${t.typedText}) <= 40`),
+  ],
+);
+
+/**
+ * Integrity flags (spec: Flagged time). Kept apart from answer_event, which stays append-only:
+ * a stretch can be flagged after its first answers were logged. Deleted with the answers.
+ */
+export const answerFlag = pgTable(
+  "answer_flag",
+  {
+    answerEventId: bigint("answer_event_id", { mode: "number" })
+      .primaryKey()
+      .references(() => answerEvent.id, { onDelete: "cascade" }),
+    reason: text("reason", { enum: ["fast", "same_position", "hidden_tab"] }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [check("answer_flag_reason", sql`${t.reason} IN ('fast', 'same_position', 'hidden_tab')`)],
+);
+
+/**
+ * Counted active time, one row per screen request, stamped when it was counted. Dashboards
+ * and grades sum it by `at`, so time lands in the week it happened even when a session
+ * crosses a week reset. Append-only; deleted with the account.
+ */
+export const activeTime = pgTable(
+  "active_time",
+  {
+    id: bigint("id", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    studySessionId: uuid("study_session_id")
+      .notNull()
+      .references(() => studySession.id, { onDelete: "cascade" }),
+    at: timestamp("at", { withTimezone: true }).notNull(),
+    ms: integer("ms").notNull(),
+  },
+  (t) => [
+    index("active_time_user_at_idx").on(t.userId, t.at),
+    check("active_time_ms", sql`${t.ms} >= 0`),
   ],
 );

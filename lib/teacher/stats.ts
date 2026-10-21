@@ -1,7 +1,14 @@
 import { and, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
 import { isLearned } from "@/lib/engine/cards";
 import { getDb } from "@/lib/db/client";
-import { answerEvent, card, learnerProfile, senseProgress, studySession } from "@/lib/db/schema";
+import {
+  activeTime,
+  answerEvent,
+  answerFlag,
+  card,
+  learnerProfile,
+  senseProgress,
+} from "@/lib/db/schema";
 import { toCard } from "@/lib/train/store";
 
 // Per-student numbers for teacher views. Only lib/teacher/scope.ts calls these, with the
@@ -16,30 +23,28 @@ export async function minutesByStudent(ids: string[], w: Window) {
   if (ids.length === 0) return new Map<string, { activeMs: number; flaggedMs: number }>();
   const db = getDb();
   const [active, flagged] = await Promise.all([
+    // Time counts in the window where it happened, even if the session started earlier.
     db
       .select({
-        userId: studySession.userId,
-        ms: sql<number>`coalesce(sum(${studySession.activeMs}), 0)::int`,
+        userId: activeTime.userId,
+        ms: sql<number>`coalesce(sum(${activeTime.ms}), 0)::int`,
       })
-      .from(studySession)
+      .from(activeTime)
       .where(
-        and(
-          inArray(studySession.userId, ids),
-          gte(studySession.startedAt, w.start),
-          lt(studySession.startedAt, w.end),
-        ),
+        and(inArray(activeTime.userId, ids), gte(activeTime.at, w.start), lt(activeTime.at, w.end)),
       )
-      .groupBy(studySession.userId),
+      .groupBy(activeTime.userId),
+    // Flagged time is the counted time of answers in a flagged stretch (spec: Flagged time).
     db
       .select({
         userId: answerEvent.userId,
         ms: sql<number>`coalesce(sum(${answerEvent.activeMs}), 0)::int`,
       })
       .from(answerEvent)
+      .innerJoin(answerFlag, eq(answerFlag.answerEventId, answerEvent.id))
       .where(
         and(
           inArray(answerEvent.userId, ids),
-          eq(answerEvent.flagged, true),
           gte(answerEvent.serverReceivedAt, w.start),
           lt(answerEvent.serverReceivedAt, w.end),
         ),
@@ -123,18 +128,12 @@ export async function abilityByStudent(ids: string[]) {
   return new Map(rows.map((r) => [r.userId, { ability: r.ability, startLevel: r.startLevel }]));
 }
 
-/** Active minutes per local day for one student, over a window. */
+/** Counted active time for one student over a window, for minutes per local day. */
 export async function sessionsForStudent(id: string, w: Window) {
   return getDb()
-    .select({ startedAt: studySession.startedAt, activeMs: studySession.activeMs })
-    .from(studySession)
-    .where(
-      and(
-        eq(studySession.userId, id),
-        gte(studySession.startedAt, w.start),
-        lt(studySession.startedAt, w.end),
-      ),
-    );
+    .select({ startedAt: activeTime.at, activeMs: activeTime.ms })
+    .from(activeTime)
+    .where(and(eq(activeTime.userId, id), gte(activeTime.at, w.start), lt(activeTime.at, w.end)));
 }
 
 /** The senses these students miss most, with how often and the most-chosen wrong answer. */
@@ -181,4 +180,36 @@ export async function mostMissed(ids: string[], w: Window, limit: number) {
       return { ...t, topWrongAnswer: wrong?.text ?? null };
     }),
   );
+}
+
+/**
+ * Integrity events for one student: each flagged stretch as one line, with its reason and
+ * time. Shows the pattern; it never accuses.
+ */
+export async function integrityEvents(id: string, w: Window) {
+  const rows = await getDb()
+    .select({
+      sessionId: answerEvent.studySessionId,
+      reason: answerFlag.reason,
+      at: sql<Date>`min(${answerEvent.serverReceivedAt})`,
+      answers: sql<number>`count(*)::int`,
+      ms: sql<number>`coalesce(sum(${answerEvent.activeMs}), 0)::int`,
+    })
+    .from(answerFlag)
+    .innerJoin(answerEvent, eq(answerFlag.answerEventId, answerEvent.id))
+    .where(
+      and(
+        eq(answerEvent.userId, id),
+        gte(answerEvent.serverReceivedAt, w.start),
+        lt(answerEvent.serverReceivedAt, w.end),
+      ),
+    )
+    .groupBy(answerEvent.studySessionId, answerFlag.reason)
+    .orderBy(desc(sql`min(${answerEvent.serverReceivedAt})`));
+  return rows.map((r) => ({
+    at: new Date(r.at).toISOString(),
+    reason: r.reason,
+    answers: r.answers,
+    minutes: Math.round(r.ms / 6000) / 10,
+  }));
 }

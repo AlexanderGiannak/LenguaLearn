@@ -8,7 +8,31 @@ import { applyStatusChanges } from "@/lib/content/status-changes";
 import { getDb, getSql } from "@/lib/db/client";
 import { answerEvent, card, issuedQuestion, studySession, user } from "@/lib/db/schema";
 import { clearTrainingContentCache } from "./content";
-import { answerQuestion, chooseIntro, endSession, startSession } from "./service";
+import { authSecret } from "@/lib/auth/auth";
+import { signQuestionToken } from "@/lib/integrity/server";
+import * as svc from "./service";
+
+// A simulated clock: each step moves it forward a few seconds, as a real student would.
+// (The server refuses answers that arrive impossibly soon after their question.)
+let now = Date.now();
+const clock = () => new Date(now);
+const startSession = (u: string, o: Parameters<typeof svc.startSession>[1]) =>
+  svc.startSession(u, o, clock);
+const chooseIntro = (u: string, b: Parameters<typeof svc.chooseIntro>[1]) => {
+  now += 5000;
+  return svc.chooseIntro(u, b, clock);
+};
+const endSession = (u: string, id: string, ms?: number) => svc.endSession(u, id, ms, clock);
+/** Answers with the token the server issued for that question. */
+async function answerQuestion(u: string, input: Omit<svc.AnswerInput, "token">) {
+  now += 5000;
+  const [row] = await getDb()
+    .select()
+    .from(issuedQuestion)
+    .where(eq(issuedQuestion.id, input.questionId));
+  const token = row ? signQuestionToken(row.id, row.issuedAt, authSecret()) : "";
+  return svc.answerQuestion(u, { ...input, token }, clock);
+}
 import type { IssuedPayload, Screen } from "./types";
 
 // Walks real sessions through the service against the 40 fixture words.

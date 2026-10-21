@@ -23,6 +23,8 @@ async function step(page: Page, opts: { wrong?: boolean } = {}): Promise<string>
     return "intro";
   }
   if (await question.isVisible()) {
+    // A person needs a moment to read; the server refuses answers that arrive impossibly fast.
+    await page.waitForTimeout(400);
     if (opts.wrong) {
       await question.getByRole("button", { name: /I don't know/ }).click();
     } else if (await page.locator("#answer").isVisible()) {
@@ -93,6 +95,7 @@ test("works by keyboard: 1 picks, Enter continues", async ({ page }) => {
   await expect(intro.or(question).first()).toBeVisible();
   if (await intro.isVisible()) await page.keyboard.press("1");
   await expect(question).toBeVisible();
+  await page.waitForTimeout(400);
   if (await page.locator("#answer").isVisible()) {
     await page.locator("#answer").fill("algo");
     await page.keyboard.press("Enter");
@@ -118,14 +121,15 @@ test("an answer sent while offline is kept and retried", async ({ page }) => {
     }
     return route.continue();
   });
+  await page.waitForTimeout(400);
   await page.keyboard.press("1");
   if (await page.locator("#answer").isVisible()) {
     await page.locator("#answer").fill("algo");
     await page.keyboard.press("Enter");
   }
-  await expect(page.getByRole("status")).toContainText("Reconnecting");
+  await expect(page.getByText("Reconnecting")).toBeVisible();
   await expect(page.getByRole("region", { name: "Feedback" })).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByRole("status")).toHaveCount(0);
+  await expect(page.getByText("Reconnecting")).toHaveCount(0);
   expect(dropped).toBe(2);
 });
 

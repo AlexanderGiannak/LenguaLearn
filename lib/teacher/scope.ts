@@ -8,6 +8,7 @@ import { percentOfGoal, seatStatus, suggestedGrade, type GradeFormula } from "./
 import {
   abilityByStudent,
   accuracyByStudent,
+  integrityEvents,
   lastActiveByStudent,
   minutesByStudent,
   mostMissed,
@@ -291,12 +292,13 @@ export function teacherScope(teacherId: string) {
       if (s.classroomId !== classId || !s.studentId) throw new NotFound();
       const id = s.studentId;
       const fourWeeks = { start: new Date(now.getTime() - 28 * 86_400_000), end: now };
-      const [sessions, words, profile, missed, handleRow] = await Promise.all([
+      const [sessions, words, profile, missed, handleRow, flags] = await Promise.all([
         sessionsForStudent(id, fourWeeks),
         wordsByStudent([id], now, weekWindow(now, weekSettings(c))),
         abilityByStudent([id]),
         mostMissed([id], { start: new Date(0), end: now }, 10),
         db.select({ handle: user.username }).from(user).where(eq(user.id, id)),
+        integrityEvents(id, fourWeeks),
       ]);
       const perDay = new Map<string, number>();
       for (let d = 27; d >= 0; d--)
@@ -331,8 +333,7 @@ export function teacherScope(teacherId: string) {
           missed: m.missed,
           answered: m.answered,
         })),
-        // Integrity events arrive with Phase 6.
-        integrityEvents: [] as { at: string; reason: string }[],
+        integrityEvents: flags,
       };
     },
 

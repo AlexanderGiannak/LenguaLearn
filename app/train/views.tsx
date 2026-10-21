@@ -287,9 +287,12 @@ export function QuestionView({
 export function FeedbackView({
   feedback: f,
   onContinue,
+  disabled = false,
 }: {
   feedback: Feedback;
   onContinue: () => void;
+  /** True while the session is paused: keys go to the pause dialog, not this screen. */
+  disabled?: boolean;
 }) {
   const [waitMs, setWaitMs] = useState(f.requiredReadMs);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -304,6 +307,7 @@ export function FeedbackView({
   }, [waitMs]);
 
   useKeys((e) => {
+    if (disabled) return;
     if (e.key === "Enter" && waitMs <= 0) {
       e.preventDefault();
       onContinue();
@@ -347,6 +351,14 @@ export function FeedbackView({
         {f.note && (
           <p className={muted}>
             <Parts parts={f.note} />
+          </p>
+        )}
+        {f.integrityNote && (
+          <p
+            role="status"
+            className="rounded-md bg-amber-50 p-3 text-amber-900 dark:bg-amber-950 dark:text-amber-100"
+          >
+            {f.integrityNote}
           </p>
         )}
       </div>

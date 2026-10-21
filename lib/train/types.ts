@@ -45,7 +45,7 @@ export type PublicQuestion = {
 };
 
 export type Screen =
-  | { kind: "question"; id: string; stage: Stage; question: PublicQuestion }
+  | { kind: "question"; id: string; token: string; stage: Stage; question: PublicQuestion }
   | { kind: "intro"; id: string; word: WordCore & { partOfSpeech: string } }
   | { kind: "done" };
 
@@ -62,6 +62,8 @@ export type Feedback = {
   /** A wrong answer must be read for this long before Continue is enabled. */
   requiredReadMs: number;
   pretest: boolean;
+  /** A gentle note when a flagged stretch starts (spec: Flagged time). */
+  integrityNote: string | null;
 };
 
 export type AnswerResponse = {

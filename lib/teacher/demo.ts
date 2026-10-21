@@ -72,6 +72,7 @@ async function simulateSession(
         userId,
         {
           questionId: screen.id,
+          token: screen.token,
           clientAnswerId: randomUUID(),
           ...answer,
           responseMs,
