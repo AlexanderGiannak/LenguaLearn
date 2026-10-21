@@ -154,9 +154,12 @@ export function Trainer() {
     async (screen: Screen, saved: Saved | null) => {
       if (screen.kind === "done") {
         if (!saved) return setView({ kind: "start" });
+        // The last feedback screen's time, if Continue was pressed, plus anything since.
+        const pendingFeedback = feedbackMs.current;
+        feedbackMs.current = 0;
         const r = await send("/api/train/end", {
           sessionId: saved.sessionId,
-          activeMs: clock.lap(),
+          activeMs: clock.lap() + pendingFeedback,
         });
         saveSession(null);
         setView(
@@ -222,12 +225,13 @@ export function Trainer() {
     setSession(saved);
     setActiveMs(0);
     clock.lap();
+    feedbackMs.current = 0;
     announceActive();
     await show(data.screen, saved);
   }
 
   async function chooseIntro(choice: "got_it" | "already_know") {
-    if (view.kind !== "screen" || busy) return;
+    if (view.kind !== "screen" || busy || paused) return;
     const r = await send("/api/train/intro", {
       questionId: view.screen.id,
       choice,
@@ -241,7 +245,7 @@ export function Trainer() {
   }
 
   async function answer(a: { chosenIndex?: number; typed?: string; dontKnow?: boolean }) {
-    if (view.kind !== "screen" || busy) return;
+    if (view.kind !== "screen" || busy || paused) return;
     if (view.screen.kind !== "question") return;
     const responseMs = Math.max(0, clock.peek() - questionShownAt.current);
     handleAnswerResult(
@@ -373,9 +377,26 @@ export function Trainer() {
                 ? "Your session is paused. Paused time doesn't count."
                 : "You're training in another tab. This one is paused."}
             </p>
-            <button type="button" autoFocus className={primaryButton} onClick={resume}>
-              {paused === "idle" ? "Resume" : "Continue here"}
-            </button>
+            {paused === "idle" ? (
+              <button type="button" autoFocus className={primaryButton} onClick={resume}>
+                Resume
+              </button>
+            ) : (
+              // The server ended this tab's session when the other tab started one, so
+              // continuing here means starting a new session (which pauses the other tab).
+              <button
+                type="button"
+                autoFocus
+                className={primaryButton}
+                onClick={() => {
+                  setPaused(null);
+                  clock.resume();
+                  void start();
+                }}
+              >
+                Start a new session here
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -405,32 +426,35 @@ export function Trainer() {
           </button>
         </section>
       )}
-      {view.kind === "screen" && view.screen.kind === "intro" && (
-        <IntroView
-          key={view.screen.id}
-          word={view.screen.word}
-          onChoose={chooseIntro}
-          busy={busy}
-        />
-      )}
-      {view.kind === "screen" && view.screen.kind === "question" && (
-        <QuestionView
-          key={view.screen.id}
-          question={view.screen.question}
-          onAnswer={answer}
-          busy={busy}
-        />
-      )}
-      {view.kind === "feedback" && (
-        <FeedbackView
-          key={`feedback-${view.next.kind === "done" ? "done" : view.next.id}`}
-          feedback={view.feedback}
-          onContinue={() => {
-            feedbackMs.current = clock.lap();
-            void show(view.next, session);
-          }}
-        />
-      )}
+      <div inert={paused !== null && inSession ? true : undefined} className="contents">
+        {view.kind === "screen" && view.screen.kind === "intro" && (
+          <IntroView
+            key={view.screen.id}
+            word={view.screen.word}
+            onChoose={chooseIntro}
+            busy={busy || paused !== null}
+          />
+        )}
+        {view.kind === "screen" && view.screen.kind === "question" && (
+          <QuestionView
+            key={view.screen.id}
+            question={view.screen.question}
+            onAnswer={answer}
+            busy={busy || paused !== null}
+          />
+        )}
+        {view.kind === "feedback" && (
+          <FeedbackView
+            key={`feedback-${view.next.kind === "done" ? "done" : view.next.id}`}
+            feedback={view.feedback}
+            disabled={paused !== null}
+            onContinue={() => {
+              feedbackMs.current = clock.lap();
+              void show(view.next, session);
+            }}
+          />
+        )}
+      </div>
       {view.kind === "summary" && (
         <SummaryView summary={view.summary} onAgain={() => setView({ kind: "start" })} />
       )}

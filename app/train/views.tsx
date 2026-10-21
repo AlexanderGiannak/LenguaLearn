@@ -287,9 +287,12 @@ export function QuestionView({
 export function FeedbackView({
   feedback: f,
   onContinue,
+  disabled = false,
 }: {
   feedback: Feedback;
   onContinue: () => void;
+  /** True while the session is paused: keys go to the pause dialog, not this screen. */
+  disabled?: boolean;
 }) {
   const [waitMs, setWaitMs] = useState(f.requiredReadMs);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -304,6 +307,7 @@ export function FeedbackView({
   }, [waitMs]);
 
   useKeys((e) => {
+    if (disabled) return;
     if (e.key === "Enter" && waitMs <= 0) {
       e.preventDefault();
       onContinue();
