@@ -1,0 +1,29 @@
+# dependencies
+node_modules/
+
+# Next.js / build
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# tests
+coverage/
+playwright-report/
+test-results/
+blob-report/
+
+# env (commit .env.example only)
+.env
+.env.*
+!.env.example
+
+# content pipeline: raw AI responses kept locally for audit
+content/raw/
+
+# misc
+.DS_Store
+*.log
+npm-debug.log*
+.vercel

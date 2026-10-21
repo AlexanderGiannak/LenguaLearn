@@ -1,0 +1,16 @@
+@AGENTS.md
+
+# Claude Code notes
+
+- Before each task, read the relevant sections of `docs/SPEC.md`. It is long, so don't load it whole unless the
+  task needs it. When a session starts a new phase, re-read that phase's row and every section it touches.
+- Workflow per chunk: branch → commits → `gh pr create` → wait for CI and the Codex review → read review
+  comments with `gh pr view <n> --comments` and `gh api repos/AlexanderGiannak/LenguaLearn/pulls/<n>/comments`
+  → fix or reply → the owner merges.
+- Plain commit messages and PR bodies: no `Co-Authored-By` trailer, no "Generated with Claude Code" line.
+- Record any decision beyond the spec in `docs/DECISIONS.md` in the same PR.
+
+## Current phase
+
+Pre-Phase 0: docs scaffold done. Next: answer open questions in `docs/DECISIONS.md`, then propose the
+Phase 0 + Phase 1 plan (no code before the owner approves it).
