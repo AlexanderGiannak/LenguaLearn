@@ -12,5 +12,5 @@
 
 ## Current phase
 
-Phase 1 (content schema) in review: PR from `phase-1/content-schema`. Phase 2 (engine) starts after the
-owner merges Phase 1 and says to continue.
+Phase 2 (engine) in review: PR from `phase-2/engine`. The owner reads `docs/simulator-report.md` and
+answers the open questions in DECISIONS.md. Phase 3 (training UI) starts after the owner merges and says to continue.
