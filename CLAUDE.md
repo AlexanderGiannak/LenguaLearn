@@ -12,5 +12,5 @@
 
 ## Current phase
 
-Phase 0 (setup) in review: PR from `phase-0/setup`. Phase 1 (content schema) starts after the owner
-merges Phase 0 and says to continue.
+Phase 1 (content schema) in review: PR from `phase-1/content-schema`. Phase 2 (engine) starts after the
+owner merges Phase 1 and says to continue.

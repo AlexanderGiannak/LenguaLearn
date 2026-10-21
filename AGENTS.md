@@ -57,9 +57,12 @@ First-time setup: Node 24 (`nvm use`), Docker running, then:
 ```sh
 npm install
 cp .env.example .env.local     # local settings; never committed
+npm run admin:token >> .env.local   # local admin API token pair
 npm run db:up                  # local Postgres in Docker
 npm run db:migrate             # apply migrations
 npx playwright install chromium
+npm run dev                    # then, in another terminal:
+npm run seed:fixtures          # load the 40 fixture words and publish them
 ```
 
 | Command | What it does |
@@ -69,13 +72,16 @@ npx playwright install chromium
 | `npm run lint` | ESLint |
 | `npm run format` / `npm run format:check` | Prettier write / check |
 | `npm run typecheck` | Generate Next route types, then `tsc --noEmit` |
-| `npm test` | Vitest unit tests (`**/*.test.ts`) |
+| `npm test` | Vitest unit tests (`**/*.test.ts`, no database) |
+| `npm run test:db` | Database tests (`**/*.db.test.ts`) against a separate `<db>_test` database, created and migrated automatically |
 | `npm run test:e2e` | Playwright tests in `e2e/` at Chromebook (1366×768) and phone (390px) sizes |
 | `npm run db:generate` | Generate a SQL migration in `drizzle/` from schema changes. Review the SQL before committing |
 | `npm run db:migrate` | Apply migrations (Railway runs this as the pre-deploy step) |
+| `npm run admin:token` | Print a new admin API token and its hash (`ADMIN_API_TOKEN` stays on the laptop; the hash goes to the server) |
+| `npm run seed:fixtures [-- <url>]` | Import the fixture words through the admin API and publish them. Default `http://localhost:3000`; refused in production |
 
-CI (`.github/workflows/ci.yml`) runs lint, format check, typecheck and unit tests, then builds and runs
-Playwright against a throwaway Postgres, on every push.
+CI (`.github/workflows/ci.yml`) runs lint, format check, typecheck and unit tests, then, against a
+throwaway Postgres, the database tests, a build, and Playwright (which seeds the fixtures first), on every push.
 
 ## Repo map
 
@@ -83,12 +89,17 @@ Playwright against a throwaway Postgres, on every push.
 |---|---|
 | `docs/SPEC.md` | Product spec (source of truth) |
 | `docs/DECISIONS.md` | Decisions beyond the spec, plus open questions |
-| `app/` | Next.js App Router pages and route handlers. `app/api/health` is the health check |
-| `lib/db/` | Drizzle client (`client.ts`, lazy pool) and table definitions (`schema/`) |
+| `app/` | Next.js App Router pages and route handlers. `app/api/health` is the health check; `app/api/admin/` holds the import and status endpoints; `app/word/[id]` is the word page |
+| `lib/db/` | Drizzle client (`client.ts`, lazy pool) and table definitions (`schema/content.ts` for the content model) |
+| `lib/content/` | Content rules shared by the API and pages: allowed values (`constants.ts`), import validation and loading, the status flow (`status.ts`), and the live-only word page query (`word-page.ts`) |
+| `lib/admin/` | Admin API token check and request helpers |
 | `lib/engine/` | Pure TypeScript learning engine (Phase 2). No database, UI or Next.js imports |
 | `drizzle/` | Generated SQL migrations, committed |
 | `scripts/` | Node scripts. `migrate.mts` runs migrations. `scripts/content/` (Phase 9) runs on the owner's laptop, never touches the database, and uploads JSON through the admin import endpoint |
-| `e2e/` | Playwright tests |
+| `e2e/` | Playwright tests. `seed.setup.ts` loads the fixture words before the browser tests |
+| `fixtures/` | Test fixtures only, never production content. `fixtures/content/seed-40.json` holds the 40 AI-written seed words |
+| `test/` | Setup for the database tests (`vitest.db.config.mts`) |
+| `public/fixtures/` | Fixture media (the seed's one picture) |
 | `.railway/railway.ts` | Railway infrastructure as code (services, database, region, health check) |
 | `docs/` | Also: privacy policy, school IT data sheet, VPAT, COPPA notice, incident plan (later phases) |
 
@@ -96,6 +107,8 @@ Playwright against a throwaway Postgres, on every push.
 
 - TypeScript strict mode. Zod validates every API input at the boundary.
 - Every teacher-facing query goes through the one shared teacher-scope helper. Never scope by hand in a route.
+- Student-facing content reads filter every table to `status = 'live'` (see `lib/content/word-page.ts`).
+  Content rows are never deleted; they are retired.
 - Engine thresholds (accent strictness, new-word gate, integrity limits) live in config, not inline.
 - Next 16 runs with Cache Components on: anything that reads the database or the request at request
   time calls `await connection()` (or a request API) first, so the build never tries to prerender it.

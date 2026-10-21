@@ -1,4 +1,4 @@
-import { defineRailway, github, postgres, project, service } from "railway/iac";
+import { defineRailway, github, postgres, preserve, project, service } from "railway/iac";
 
 // US East (Virginia). Everything that touches student data runs in this one region.
 const REGION = "us-east4-eqdc4a";
@@ -24,6 +24,8 @@ export default defineRailway(() => {
     replicas: { [REGION]: 1 },
     env: {
       DATABASE_URL: db.env.DATABASE_URL,
+      // Set by hand with `railway variables`, never written in source (see .env.example).
+      ADMIN_API_TOKEN_HASH: preserve(),
     },
   });
 

@@ -32,6 +32,20 @@ Decisions that go beyond [SPEC.md](SPEC.md), newest last. One line of reason eac
 | 2026-10-21 | Railway deploys a commit only after GitHub CI passes (`checkSuites: true`) | A broken build or failing test never reaches production or a preview |
 | 2026-10-21 | Railway hard spending limit: $15/month for the workspace | Owner's choice; caps surprise bills (Railway stops services above it) |
 | 2026-10-21 | Production uses Railway's generated `*.up.railway.app` domain until a domain is bought. Generated domains stay out of `.railway/railway.ts` | No domain yet; Railway's IaC rules say not to commit generated domains |
+| 2026-10-21 | Content IDs are integers; the word page URL uses the sense ID (`/word/[id]`). Imports match rows by stable text keys (`cuenta#noun`, `cuenta#noun#2`) and children by position | IDs stay the same across re-imports, so student history never breaks; keys work across environments where IDs differ |
+| 2026-10-21 | Cognate status values are `none`, `true_cognate`, `false_friend` (the spec's "none, true, or false") | `cognate === "false"` reads like a boolean bug in code |
+| 2026-10-21 | Extra lemma fields beyond the spec's list: `article_override` (el agua: feminine, takes "el") and `feminine` (irregular adjective forms) | The word page must show the right article and both adjective forms |
+| 2026-10-21 | An import that changes a row saves the old row in `content_revision`, bumps `version`, and puts the row back to the import's status, even if it was live. Unchanged approved or live rows keep their status. Children dropped from an import are retired, never deleted. Senses dropped from a lemma are left alone | Changed text must be reviewed again; nothing a student answered is ever deleted |
+| 2026-10-21 | Status flow: draft → ai_checked → approved → live, rejections back to draft, retire from any status, retired → draft. No draft → approved | The spec's flow with no skipped steps. See the open question on human edits |
+| 2026-10-21 | Admin API (import, status) uses a bearer token; the server stores only its SHA-256 in `ADMIN_API_TOKEN_HASH`. Requests with an `Origin` header are refused | Laptop scripts need a non-browser credential and accounts don't exist until Phase 4. A 32-byte random token doesn't need a slow hash. Refusing browsers outright removes cross-site risk without an origin allowlist |
+| 2026-10-21 | Fixture imports (`"fixture": true`) are accepted only when `RAILWAY_ENVIRONMENT_NAME` is unset (local, CI) or ends in `-pr-<n>` | Test words can never reach production, even with the right token |
+| 2026-10-21 | Relation targets are stored as sense keys, not foreign keys, and link only when the target is live | The related word can be imported later, and a link never leads to unpublished content |
+| 2026-10-21 | "Under 8 words" for glosses means at most 7. Import also enforces the 20-word sentence limit and requires NFC text | Offsets are character positions; a decomposed "ñ" would shift them |
+| 2026-10-21 | Seed: 40 lemmas (41 senses; la cuenta has two), AI-written fixtures with 2 examples each, one original SVG picture, no audio files | Covers every word-page feature; audio comes with Polly in Phase 9 |
+| 2026-10-21 | Without a recording, the audio button uses the browser's Spanish voice and prefers on-device voices | Some browser voices send text to a cloud service. Only content text is ever spoken |
+| 2026-10-21 | In production a missing or unpublished word shows the not-found page with status 200 and a `noindex` tag, not a 404 status | With Cache Components the page shell streams before the data loads. A true 404 would need a database check in Proxy on every request |
+| 2026-10-21 | Database tests (`*.db.test.ts`) run against a separate `<db>_test` database, locally with `npm run test:db` and in the CI e2e job | They never touch dev data, and the fast unit job needs no Postgres |
+| 2026-10-21 | No new dependencies in Phase 1 | Zod, Drizzle and Playwright cover everything |
 
 ## Open questions
 
@@ -40,3 +54,4 @@ Decisions that go beyond [SPEC.md](SPEC.md), newest last. One line of reason eac
 - **Domain:** needed before Phase 4 finishes (SES needs SPF/DKIM on a domain for verification and reset email) and before the pilot (CloudFront audio subdomain, IT data sheet allowlist).
 - **Rate limiting (Phase 4):** Better Auth's built-in limiter keys on IP and path. Per-handle, per-seat-code and per-device-cookie limits likely need custom rules or a small custom limiter; confirm before Phase 4.
 - **TN-NDPA:** nothing found yet that would prevent signing. Add items here as they come up.
+- **Human edits in review (Phase 9):** the status flow has no draft → approved step. When a reviewer fixes a sense that failed the AI check, should the fix re-run the AI check, or should a human edit count as the check? Decide before building the review tool.
