@@ -75,7 +75,7 @@ _Filled in as code lands._ Fixed locations from the spec:
 - Engine thresholds (accent strictness, new-word gate, integrity limits) live in config, not inline.
 - Spanish text in the UI is marked `lang="es"`. Fonts via `next/font`. No external scripts, analytics or trackers.
 
-## Review guidelines
+## Code Review Rules
 
 Priorities for automated PR review. Treat every item below as at least P1, and the ones marked P0 as P0.
 

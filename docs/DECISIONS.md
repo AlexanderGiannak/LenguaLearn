@@ -8,7 +8,7 @@ Decisions that go beyond [SPEC.md](SPEC.md), newest last. One line of reason eac
 | 2026-10-20 | Spec moved from CLAUDE.md to `docs/SPEC.md` with markdown restored. Text unchanged apart from the rename | CLAUDE.md is loaded into every agent session; 50 KB of spec wasted context, and the paste had flattened tables |
 | 2026-10-20 | Shared agent rules live in `AGENTS.md`. `CLAUDE.md` imports it and adds Claude-only notes. The spec's "update CLAUDE.md with setup and run commands, architecture, where things live" now means AGENTS.md | One set of rules for both Claude Code and Codex |
 | 2026-10-20 | Architecture diagram in SPEC.md reconstructed as Mermaid | The original embed was lost in the paste |
-| 2026-10-20 | Codex (OpenAI) reviews every PR automatically using `## Review guidelines` in AGENTS.md. Claude Code writes; the owner merges | Independent second reviewer from a different provider |
+| 2026-10-20 | Codex (OpenAI) reviews every PR automatically using `## Code Review Rules` in AGENTS.md. Claude Code writes; the owner merges | Independent second reviewer from a different provider |
 | 2026-10-20 | Work goes through PRs. Branch protection on `main` (PR + green CI) once Phase 0 adds CI | Gives CI, Railway previews and Codex a PR to attach to |
 | 2026-10-20 | No `Co-Authored-By` or AI attribution in commits or PRs | Owner's preference |
 | 2026-10-20 | `reference/prototype.html` does not exist. The 40-word Phase 1 seed set will be proposed in the Phase 1 plan, as marked fixtures going through the status flow | File referenced by the spec was never created |
