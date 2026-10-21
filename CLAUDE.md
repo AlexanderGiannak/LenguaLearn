@@ -12,6 +12,6 @@
 
 ## Current phase
 
-Phases run back to back (owner, 2026-10-21). Phase 4 (accounts) and Phase 5 (teacher tools) in review:
-PRs from `phase-4/accounts` and `phase-5/teacher` (stacked). Phase 6 (integrity) is next. Stop only for
-blockers or privacy, grading or money choices; batch questions when stopping.
+Phases run back to back (owner, 2026-10-21). Phases 4, 5 and 6 in review as stacked PRs
+(`phase-4/accounts`, `phase-5/teacher`, `phase-6/integrity`). Phase 7 (placement and learner home) is
+next. Stop only for blockers or privacy, grading or money choices; batch questions when stopping.

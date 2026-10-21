@@ -14,6 +14,10 @@ const schema = z
     dontKnow: z.boolean().optional(),
     responseMs: z.int().min(0).max(3_600_000),
     activeMs: z.int().min(0).max(3_600_000),
+    feedbackMs: z.int().min(0).max(3_600_000).optional(),
+    /** The signed token issued with the question (spec: Server-side checks). */
+    token: z.string().min(1).max(100),
+    hiddenReturnMs: z.int().min(0).max(3_600_000).nullable().optional(),
   })
   .refine(
     (a) =>

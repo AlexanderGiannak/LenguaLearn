@@ -3,6 +3,7 @@ import { Rating, type Card, type Grade } from "ts-fsrs";
 import { getDb } from "@/lib/db/client";
 import {
   answerEvent,
+  answerFlag,
   classroom,
   issuedQuestion,
   learnerProfile,
@@ -24,7 +25,10 @@ import {
 } from "@/lib/engine/questions";
 import { rateAnswer, responseThresholds } from "@/lib/engine/rating";
 import type { EngineSense } from "@/lib/engine/types";
+import { authSecret } from "@/lib/auth/auth";
 import { INTEGRITY_CONFIG } from "@/lib/integrity/config";
+import { evaluateFlags, minReadingMs, type RecentAnswer } from "@/lib/integrity/rules";
+import { checkTiming, signQuestionToken, verifyQuestionToken } from "@/lib/integrity/server";
 import { getTrainingContent, type TrainingContent } from "./content";
 import { getProfile, loadProgress, saveProgress, type Progress, type Tx } from "./store";
 import type {
@@ -98,6 +102,11 @@ async function issue(ctx: Ctx, payload: IssuedPayload): Promise<string> {
   return row!.id;
 }
 
+/** How much text a question puts on screen, for its minimum reading time. */
+function textOnScreen(q: Question): number {
+  return q.prompt.text.length + (q.options ?? []).reduce((n, o) => n + o.text.length, 0);
+}
+
 async function questionScreen(
   ctx: Ctx,
   stage: Stage,
@@ -107,7 +116,15 @@ async function questionScreen(
 ): Promise<Screen> {
   const sense = ctx.content.byId.get(question.senseId)!;
   const id = await issue(ctx, { stage, senseId: sense.id, item, question, ...extra });
-  return { kind: "question", id, stage, question: publicQuestion(question, sense, ctx.content) };
+  // Spec: each question goes out with a signed token of its ID and issue time.
+  const token = signQuestionToken(id, ctx.now, authSecret());
+  return {
+    kind: "question",
+    id,
+    token,
+    stage,
+    question: publicQuestion(question, sense, ctx.content),
+  };
 }
 
 async function introScreen(ctx: Ctx, senseId: number, abilityDone = false): Promise<Screen> {
@@ -293,14 +310,19 @@ async function lockIssued(tx: Tx, userId: string, questionId: string) {
   return { issued, session };
 }
 
-function capActive(ms: number, mode: "choice" | "typed"): number {
+function capActive(ms: number, mode: "choice" | "typed" | "feedback"): number {
   return Math.max(0, Math.min(ms, INTEGRITY_CONFIG.maxScreenMs[mode]));
 }
 
 /** The student picked Got it or I already know this on a new word's page. */
 export async function chooseIntro(
   userId: string,
-  body: { questionId: string; choice: "got_it" | "already_know"; activeMs: number },
+  body: {
+    questionId: string;
+    choice: "got_it" | "already_know";
+    activeMs: number;
+    feedbackMs?: number;
+  },
   clock: Clock = realClock,
 ): Promise<{ next: Screen; activeMs: number; plannedMs: number }> {
   const content = await getTrainingContent();
@@ -330,7 +352,15 @@ export async function chooseIntro(
       abilityDone: payload.abilityDone,
     });
 
-    const activeMs = session.activeMs + capActive(body.activeMs, "choice");
+    const timing = checkTiming({
+      issuedAt: issued.issuedAt,
+      receivedAt: ctx.now,
+      responseMs: 0,
+      activeMs: capActive(body.activeMs, "choice") + capActive(body.feedbackMs ?? 0, "feedback"),
+    });
+    // The word page is not graded, so an impossibly quick choice is not refused; it just
+    // counts no time.
+    const activeMs = session.activeMs + (timing.ok ? timing.activeMs : 0);
     const response = { next, activeMs, plannedMs: session.plannedMinutes * 60_000 };
     await tx
       .update(issuedQuestion)
@@ -351,7 +381,14 @@ export type AnswerInput = {
   typed?: string;
   dontKnow?: boolean;
   responseMs: number;
+  /** Visible time on this question's screen. */
   activeMs: number;
+  /** Visible time on the feedback screen before it. Each screen is capped on its own. */
+  feedbackMs?: number;
+  /** Signed token issued with the question. */
+  token: string;
+  /** Time from returning to a hidden tab to answering, if the tab was hidden mid-question. */
+  hiddenReturnMs?: number | null;
 };
 
 function cardSnapshot(c: Card | null | undefined) {
@@ -380,6 +417,19 @@ export async function answerQuestion(
     if (!q) throw new TrainingError(409, "not a question");
     const sense = content.byId.get(payload.senseId);
     if (!sense) throw new TrainingError(409, "word is no longer available");
+    if (!verifyQuestionToken(input.token, issued.id, issued.issuedAt, authSecret())) {
+      throw new TrainingError(409, "invalid question token");
+    }
+    const mode = QUESTION_TYPES[q.type].mode;
+    // Server timing check: the question was issued no later than shown, so time since issue
+    // bounds what the client may claim. Answers impossibly soon after issue are refused.
+    const timing = checkTiming({
+      issuedAt: issued.issuedAt,
+      receivedAt,
+      responseMs: input.responseMs,
+      activeMs: capActive(input.activeMs, mode) + capActive(input.feedbackMs ?? 0, "feedback"),
+    });
+    if (!timing.ok) throw new TrainingError(409, "that answer came too quickly");
 
     const ctx: Ctx = {
       tx,
@@ -435,7 +485,6 @@ export async function answerQuestion(
     const correct = grade !== "wrong";
 
     // --- Rate and schedule.
-    const mode = QUESTION_TYPES[q.type].mode;
     const pastTimes = await tx
       .select({ ms: answerEvent.clientResponseMs })
       .from(answerEvent)
@@ -445,7 +494,7 @@ export async function answerQuestion(
     const rating: Grade = rateAnswer({
       outcome: dontKnow ? "dont_know" : grade === "hard" ? "hard" : correct ? "correct" : "wrong",
       mode,
-      responseMs: input.responseMs,
+      responseMs: timing.responseMs,
       usedHint: false,
       thresholds: responseThresholds(
         pastTimes.map((r) => r.ms),
@@ -532,33 +581,83 @@ export async function answerQuestion(
         throw new TrainingError(409, "not a question");
     }
 
-    const countedMs = capActive(input.activeMs, mode);
-    await tx.insert(answerEvent).values({
-      clientAnswerId: input.clientAnswerId,
-      userId,
-      senseId: sense.id,
-      exampleId: q.exampleId,
-      studySessionId: session.id,
-      questionType: q.type,
-      cardKind: payload.stage === "pretest" ? null : q.card,
-      options: q.options,
-      chosenIndex: q.mode === "choice" ? (input.chosenIndex ?? null) : null,
-      typedText: q.mode === "typed" && !dontKnow ? (input.typed ?? "").slice(0, 40) : null,
-      dontKnow,
-      grade,
-      gradeReason: reason,
+    // --- Integrity: flag patterns over this session's recent answers (never "I don't know").
+    const countedMs = timing.activeMs;
+    const minReading = minReadingMs(textOnScreen(q));
+    const hiddenReturnMs = input.hiddenReturnMs ?? null;
+    const recent = await tx
+      .select({
+        id: answerEvent.id,
+        // Bounded by the server's own clock, like the current answer.
+        responseMs: sql<number>`least(${answerEvent.clientResponseMs}, (extract(epoch from ${answerEvent.serverReceivedAt} - ${answerEvent.serverIssuedAt}) * 1000)::int + ${INTEGRITY_CONFIG.clockToleranceMs})`,
+        correct: answerEvent.correct,
+        dontKnow: answerEvent.dontKnow,
+        chosenIndex: answerEvent.chosenIndex,
+        minReadingMs: answerEvent.minReadingMs,
+        hiddenReturnMs: answerEvent.hiddenReturnMs,
+        flagged: sql<boolean>`exists (select 1 from ${answerFlag} where ${answerFlag.answerEventId} = ${answerEvent.id})`,
+      })
+      .from(answerEvent)
+      .where(eq(answerEvent.studySessionId, session.id))
+      .orderBy(desc(answerEvent.id))
+      .limit(10);
+    const history: RecentAnswer[] = recent.reverse().map((r) => ({
+      ...r,
+      minReadingMs: r.minReadingMs ?? INTEGRITY_CONFIG.minReadingBaseMs,
+    }));
+    const CURRENT = -1;
+    const verdict = evaluateFlags(history, {
+      id: CURRENT,
+      responseMs: timing.responseMs,
       correct,
-      rating: loggedRating,
-      isPretest: payload.stage === "pretest",
-      fsrsBefore: cardSnapshot(before),
-      fsrsAfter: cardSnapshot(after),
-      fsrsParamsVersion: ENGINE_CONFIG.fsrs.paramsVersion,
-      clientResponseMs: Math.max(0, Math.round(input.responseMs)),
-      activeMs: countedMs,
-      serverIssuedAt: issued.issuedAt,
-      serverReceivedAt: receivedAt,
-      appVersion: APP_VERSION,
+      dontKnow,
+      chosenIndex: q.mode === "choice" && !dontKnow ? (input.chosenIndex ?? null) : null,
+      minReadingMs: minReading,
+      hiddenReturnMs,
+      flagged: false,
     });
+
+    const [logged] = await tx
+      .insert(answerEvent)
+      .values({
+        clientAnswerId: input.clientAnswerId,
+        userId,
+        senseId: sense.id,
+        exampleId: q.exampleId,
+        studySessionId: session.id,
+        questionType: q.type,
+        cardKind: payload.stage === "pretest" ? null : q.card,
+        options: q.options,
+        chosenIndex: q.mode === "choice" ? (input.chosenIndex ?? null) : null,
+        typedText: q.mode === "typed" && !dontKnow ? (input.typed ?? "").slice(0, 40) : null,
+        dontKnow,
+        grade,
+        gradeReason: reason,
+        correct,
+        rating: loggedRating,
+        isPretest: payload.stage === "pretest",
+        fsrsBefore: cardSnapshot(before),
+        fsrsAfter: cardSnapshot(after),
+        fsrsParamsVersion: ENGINE_CONFIG.fsrs.paramsVersion,
+        clientResponseMs: Math.max(0, Math.round(input.responseMs)),
+        activeMs: countedMs,
+        minReadingMs: minReading,
+        hiddenReturnMs,
+        flagged: verdict.flag.some((f) => f.id === CURRENT),
+        serverIssuedAt: issued.issuedAt,
+        serverReceivedAt: receivedAt,
+        appVersion: APP_VERSION,
+      })
+      .returning({ id: answerEvent.id });
+    if (verdict.flag.length > 0) {
+      await tx.insert(answerFlag).values(
+        verdict.flag.map((f) => ({
+          answerEventId: f.id === CURRENT ? logged!.id : f.id,
+          reason: f.reason,
+          createdAt: receivedAt,
+        })),
+      );
+    }
 
     // --- Advance the session.
     if (payload.stage === "review") {
@@ -585,6 +684,7 @@ export async function answerQuestion(
         word: content.core.get(sense.id)!,
         requiredReadMs: correct ? 0 : WRONG_READ_MS,
         pretest: payload.stage === "pretest",
+        integrityNote: verdict.notify ? INTEGRITY_CONFIG.studentNote : null,
       },
       next,
       activeMs,

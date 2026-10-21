@@ -105,7 +105,7 @@ throwaway Postgres, the database tests, a build, and Playwright (which seeds the
 | `lib/account/` | Data export and account deletion, including district deletions |
 | `lib/email/` | Outgoing email (console in development; SES later) |
 | `lib/http/` | The Origin check and `handle()`, the wrapper every browser-facing API route uses (Origin, role, Zod, errors) |
-| `lib/integrity/` | Integrity thresholds (`config.ts`); the rules arrive in Phase 6 |
+| `lib/integrity/` | Integrity: every threshold (`config.ts`), the flag rules (`rules.ts`) and the server checks (`server.ts`: signed question tokens, timing bounds) |
 | `lib/engine/` | Pure TypeScript learning engine: `config.ts` (every threshold), `cards.ts` (two FSRS cards per sense), `rating.ts`, `answer-check.ts`, `questions.ts` and `distractors.ts`, `next-item.ts` (session order and new-word gate), `ability.ts` (ability and vocabulary size), `intro.ts`, and `simulator/`. Imports only its own files (with `.ts` extensions) and ts-fsrs; `boundaries.test.ts` enforces it |
 | `drizzle/` | Generated SQL migrations, committed |
 | `scripts/` | Node scripts. `migrate.mts` runs migrations. `scripts/content/` (Phase 9) runs on the owner's laptop, never touches the database, and uploads JSON through the admin import endpoint |

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { canSpeak } from "@/app/_components/audio-button";
+import { INTEGRITY_CONFIG } from "@/lib/integrity/config";
 import type { AnswerResponse, Feedback, Screen, SessionSummary } from "@/lib/train/types";
 import { pendingRequest, sendQueued, type SendResult } from "./queue";
 import {
@@ -43,42 +44,86 @@ function loadSession(): Saved | null {
   }
 }
 
-/** Visible time only: a hidden tab does not count (spec: Active time). */
-function useVisibleClock() {
+/**
+ * Active time (spec: Integrity, Active time): only while the tab is visible and the session
+ * is not paused. Also notes whether the tab was hidden while a question was open.
+ */
+function useActiveClock() {
   const last = useRef(0);
-  const visibleSince = useRef<number | null>(null);
+  const runningSince = useRef<number | null>(null);
   const banked = useRef(0);
+  const paused = useRef(false);
+  const hiddenDuringQuestion = useRef(false);
+  const lastVisibleAt = useRef(0);
+
+  const total = useCallback(
+    () =>
+      banked.current +
+      (runningSince.current === null ? 0 : performance.now() - runningSince.current),
+    [],
+  );
+  const stop = useCallback(() => {
+    if (runningSince.current !== null) {
+      banked.current += performance.now() - runningSince.current;
+      runningSince.current = null;
+    }
+  }, []);
+  const run = useCallback(() => {
+    if (
+      !paused.current &&
+      document.visibilityState === "visible" &&
+      runningSince.current === null
+    ) {
+      runningSince.current = performance.now();
+    }
+  }, []);
+
   useEffect(() => {
-    visibleSince.current = document.visibilityState === "visible" ? performance.now() : null;
+    run();
+    lastVisibleAt.current = performance.now();
     const onChange = () => {
-      if (document.visibilityState === "visible") visibleSince.current = performance.now();
-      else if (visibleSince.current !== null) {
-        banked.current += performance.now() - visibleSince.current;
-        visibleSince.current = null;
+      if (document.visibilityState === "visible") {
+        lastVisibleAt.current = performance.now();
+        run();
+      } else {
+        hiddenDuringQuestion.current = true;
+        stop();
       }
     };
     document.addEventListener("visibilitychange", onChange);
     return () => document.removeEventListener("visibilitychange", onChange);
-  }, []);
-  const total = useCallback(
-    () =>
-      banked.current +
-      (visibleSince.current === null ? 0 : performance.now() - visibleSince.current),
-    [],
-  );
+  }, [run, stop]);
+
   return useMemo(
     () => ({
-      /** Visible ms since the last lap, and starts a new lap. */
+      /** Active ms since the last lap, and starts a new lap. */
       lap: () => {
         const now = total();
         const ms = now - last.current;
         last.current = now;
-        return Math.round(ms);
+        return Math.max(0, Math.round(ms));
       },
-      /** Visible ms since the last lap, without starting a new one. */
-      peek: () => Math.round(total() - last.current),
+      /** Active ms since the last lap, without starting a new one. */
+      peek: () => Math.max(0, Math.round(total() - last.current)),
+      /** Stops counting. `rewindMs` removes time already counted (idle time before a pause). */
+      pause: (rewindMs = 0) => {
+        stop();
+        paused.current = true;
+        banked.current = Math.max(last.current, banked.current - rewindMs);
+      },
+      resume: () => {
+        paused.current = false;
+        run();
+      },
+      /** Call when a question appears. */
+      markQuestion: () => {
+        hiddenDuringQuestion.current = false;
+      },
+      /** If the tab was hidden during this question: ms since it came back. */
+      hiddenReturnMs: () =>
+        hiddenDuringQuestion.current ? Math.round(performance.now() - lastVisibleAt.current) : null,
     }),
-    [total],
+    [total, stop, run],
   );
 }
 
@@ -89,8 +134,13 @@ export function Trainer() {
   const [busy, setBusy] = useState(false);
   const [reconnecting, setReconnecting] = useState(false);
   const [, tick] = useState(0);
-  const clock = useVisibleClock();
+  const clock = useActiveClock();
   const questionShownAt = useRef(0);
+  const feedbackMs = useRef(0);
+  const lastInput = useRef(0);
+  const [paused, setPaused] = useState<null | "idle" | "other_tab">(null);
+  const tabId = useRef("");
+  const channel = useRef<BroadcastChannel | null>(null);
 
   const send = useCallback(async (url: string, body: unknown): Promise<SendResult> => {
     setBusy(true);
@@ -117,13 +167,14 @@ export function Trainer() {
         return;
       }
       questionShownAt.current = clock.peek();
+      clock.markQuestion();
       setView({ kind: "screen", screen });
     },
     [send, clock],
   );
 
   const handleAnswerResult = useCallback((r: SendResult) => {
-    if (!r.ok) return setView({ kind: "error", message: r.error });
+    if (!r.ok) return setView({ kind: "error", message: friendly(r.error) });
     const data = r.data as AnswerResponse;
     setActiveMs(data.activeMs);
     setView({ kind: "feedback", feedback: data.feedback, next: data.next });
@@ -171,6 +222,7 @@ export function Trainer() {
     setSession(saved);
     setActiveMs(0);
     clock.lap();
+    announceActive();
     await show(data.screen, saved);
   }
 
@@ -180,8 +232,9 @@ export function Trainer() {
       questionId: view.screen.id,
       choice,
       activeMs: clock.lap(),
+      feedbackMs: takeFeedbackMs(),
     });
-    if (!r.ok) return setView({ kind: "error", message: r.error });
+    if (!r.ok) return setView({ kind: "error", message: friendly(r.error) });
     const data = r.data as { next: Screen; activeMs: number };
     setActiveMs(data.activeMs);
     await show(data.next, session);
@@ -189,16 +242,77 @@ export function Trainer() {
 
   async function answer(a: { chosenIndex?: number; typed?: string; dontKnow?: boolean }) {
     if (view.kind !== "screen" || busy) return;
+    if (view.screen.kind !== "question") return;
     const responseMs = Math.max(0, clock.peek() - questionShownAt.current);
     handleAnswerResult(
       await send("/api/train/answer", {
         questionId: view.screen.id,
+        token: view.screen.token,
         clientAnswerId: crypto.randomUUID(),
         ...a,
         responseMs,
         activeMs: clock.lap(),
+        feedbackMs: takeFeedbackMs(),
+        hiddenReturnMs: clock.hiddenReturnMs(),
       }),
     );
+  }
+
+  /** Time on the feedback screen, measured when Continue was pressed; sent once. */
+  function takeFeedbackMs() {
+    const ms = feedbackMs.current;
+    feedbackMs.current = 0;
+    return ms;
+  }
+
+  // Idle pause (spec: Active time): after 2 minutes with no input, pause and ask
+  // "Still there?". The idle stretch itself is not counted either.
+  useEffect(() => {
+    const touch = () => (lastInput.current = performance.now());
+    touch();
+    const events = ["keydown", "pointerdown", "input", "touchstart"] as const;
+    for (const e of events) window.addEventListener(e, touch, { passive: true });
+    return () => {
+      for (const e of events) window.removeEventListener(e, touch);
+    };
+  }, []);
+  const inSessionNow = view.kind === "screen" || view.kind === "feedback";
+  useEffect(() => {
+    if (!inSessionNow || paused) return;
+    const t = setInterval(() => {
+      const idle = performance.now() - lastInput.current;
+      if (idle >= INTEGRITY_CONFIG.idlePauseMs) {
+        clock.pause(idle);
+        setPaused("idle");
+      }
+    }, 1000);
+    return () => clearInterval(t);
+  }, [inSessionNow, paused, clock]);
+
+  // One active session per account (spec): starting or resuming in this tab pauses any other
+  // tab of this browser. Another device is handled by the server, which ends the old session.
+  useEffect(() => {
+    if (typeof BroadcastChannel === "undefined") return;
+    tabId.current = crypto.randomUUID();
+    const ch = new BroadcastChannel("lengualearn-training");
+    channel.current = ch;
+    ch.onmessage = (e: MessageEvent<{ type: string; tabId: string }>) => {
+      if (e.data.type === "active" && e.data.tabId !== tabId.current) {
+        clock.pause();
+        setPaused((p) => p ?? "other_tab");
+      }
+    };
+    return () => ch.close();
+  }, [clock]);
+  const announceActive = useCallback(() => {
+    channel.current?.postMessage({ type: "active", tabId: tabId.current });
+  }, []);
+
+  function resume() {
+    lastInput.current = performance.now();
+    clock.resume();
+    setPaused(null);
+    announceActive();
   }
 
   async function endEarly() {
@@ -241,6 +355,29 @@ export function Trainer() {
             </button>
           </div>
         </header>
+      )}
+
+      {paused && inSession && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="paused-title"
+          className="fixed inset-0 z-10 flex items-center justify-center bg-white/90 p-4 dark:bg-zinc-950/90"
+        >
+          <div className="flex max-w-sm flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-6 shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
+            <h2 id="paused-title" className="text-2xl font-semibold">
+              {paused === "idle" ? "Still there?" : "Paused"}
+            </h2>
+            <p>
+              {paused === "idle"
+                ? "Your session is paused. Paused time doesn't count."
+                : "You're training in another tab. This one is paused."}
+            </p>
+            <button type="button" autoFocus className={primaryButton} onClick={resume}>
+              {paused === "idle" ? "Resume" : "Continue here"}
+            </button>
+          </div>
+        </div>
       )}
 
       {reconnecting && (
@@ -288,7 +425,10 @@ export function Trainer() {
         <FeedbackView
           key={`feedback-${view.next.kind === "done" ? "done" : view.next.id}`}
           feedback={view.feedback}
-          onContinue={() => void show(view.next, session)}
+          onContinue={() => {
+            feedbackMs.current = clock.lap();
+            void show(view.next, session);
+          }}
         />
       )}
       {view.kind === "summary" && (
@@ -297,7 +437,7 @@ export function Trainer() {
       {view.kind === "error" && (
         <section className="flex flex-col gap-4">
           <p role="alert" className="text-lg">
-            Something went wrong: {view.message}
+            {view.message}
           </p>
           <button
             type="button"
@@ -310,4 +450,14 @@ export function Trainer() {
       )}
     </main>
   );
+}
+
+/** Plain-language versions of the server's refusals. */
+function friendly(error: string): string {
+  if (error.includes("session has ended")) {
+    return "This session ended because training started in another tab or on another device.";
+  }
+  if (error.includes("too quickly"))
+    return "That answer came in too quickly to count. Start again.";
+  return `Something went wrong: ${error}`;
 }

@@ -349,6 +349,14 @@ export function FeedbackView({
             <Parts parts={f.note} />
           </p>
         )}
+        {f.integrityNote && (
+          <p
+            role="status"
+            className="rounded-md bg-amber-50 p-3 text-amber-900 dark:bg-amber-950 dark:text-amber-100"
+          >
+            {f.integrityNote}
+          </p>
+        )}
       </div>
 
       {f.correct && f.word.example ? (

@@ -7,6 +7,7 @@ const schema = z.strictObject({
   questionId: z.uuid(),
   choice: z.enum(["got_it", "already_know"]),
   activeMs: z.int().min(0).max(3_600_000),
+  feedbackMs: z.int().min(0).max(3_600_000).optional(),
 });
 
 export async function POST(request: Request) {
