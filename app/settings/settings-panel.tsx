@@ -2,7 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Link from "next/link";
 import { Button, ErrorText, Field, focusRing, muted, Page, postJson } from "@/app/_components/ui";
+import { PreferencesPanel } from "./preferences-panel";
 
 export function SettingsPanel({
   role,
@@ -104,6 +106,17 @@ export function SettingsPanel({
           >
             I&apos;m a teacher
           </Button>
+        </section>
+      )}
+
+      <PreferencesPanel />
+
+      {role === "student" && (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-xl font-semibold">Classes</h2>
+          <Link href="/join" className={`inline-flex min-h-11 items-center underline ${focusRing}`}>
+            Join another class with a code
+          </Link>
         </section>
       )}
 

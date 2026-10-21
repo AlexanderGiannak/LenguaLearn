@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AudioButton, playAudio } from "@/app/_components/audio-button";
+import { getAutoplay } from "@/app/_components/preferences";
 import type { WordCore } from "@/lib/train/content";
 import type { NotePart } from "@/lib/engine/answer-check";
 import type { Feedback, PublicQuestion, SessionSummary } from "@/lib/train/types";
@@ -130,6 +131,11 @@ export function IntroView({
   onChoose: (choice: "got_it" | "already_know") => void;
   busy: boolean;
 }) {
+  // Settings: optional autoplay of each new word's audio.
+  useEffect(() => {
+    if (getAutoplay()) playAudio(word.lemmaAudioUrl, word.display);
+  }, [word.lemmaAudioUrl, word.display]);
+
   useKeys((e) => {
     if (busy) return;
     if (e.key === "1" || e.key === "Enter") onChoose("got_it");
@@ -452,9 +458,15 @@ export function SummaryView({
           </ul>
         </div>
       )}
-      <button type="button" className={`${primaryButton} self-start`} onClick={onAgain}>
-        Train again
-      </button>
+      <div className="flex flex-wrap gap-3">
+        <button type="button" className={primaryButton} onClick={onAgain}>
+          Train again
+        </button>
+        {/* A teacher trying training is sent on to /teacher from here. */}
+        <a href="/home" className={secondaryButton}>
+          Home
+        </a>
+      </div>
     </section>
   );
 }

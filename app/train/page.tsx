@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { currentUser } from "@/lib/auth/session";
-import { TRAINING_ROLES } from "@/lib/train/roles";
+import { learnerPage } from "@/lib/train/page-gate";
 import { Trainer } from "./trainer";
 
 export const metadata: Metadata = { title: "Training · LenguaLearn" };
@@ -17,9 +14,7 @@ export default function TrainPage() {
 }
 
 async function Gate() {
-  const user = await currentUser(await headers());
-  if (!user || !(TRAINING_ROLES as readonly string[]).includes(user.role)) {
-    redirect("/sign-in?next=/train");
-  }
+  // Learners and class students place first (spec: Placement); teachers may try training.
+  await learnerPage("/train");
   return <Trainer />;
 }

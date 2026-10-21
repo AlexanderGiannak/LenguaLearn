@@ -2072,5 +2072,71 @@
         "bien#adverb#1"
       ]
     }
+  ],
+  "pseudowords": [
+    {
+      "text": "trelonda",
+      "status": "ai_checked"
+    },
+    {
+      "text": "cabastro",
+      "status": "ai_checked"
+    },
+    {
+      "text": "plimentar",
+      "status": "ai_checked"
+    },
+    {
+      "text": "desfangar",
+      "status": "ai_checked"
+    },
+    {
+      "text": "molupar",
+      "status": "ai_checked"
+    },
+    {
+      "text": "brentida",
+      "status": "ai_checked"
+    },
+    {
+      "text": "fasquelo",
+      "status": "ai_checked"
+    },
+    {
+      "text": "gorbento",
+      "status": "ai_checked"
+    },
+    {
+      "text": "tisarnal",
+      "status": "ai_checked"
+    },
+    {
+      "text": "zarpento",
+      "status": "ai_checked"
+    },
+    {
+      "text": "nofrecer",
+      "status": "ai_checked"
+    },
+    {
+      "text": "quebasto",
+      "status": "ai_checked"
+    },
+    {
+      "text": "vindorra",
+      "status": "ai_checked"
+    },
+    {
+      "text": "esplunda",
+      "status": "ai_checked"
+    },
+    {
+      "text": "trocimel",
+      "status": "ai_checked"
+    },
+    {
+      "text": "dulvecer",
+      "status": "ai_checked"
+    }
   ]
 }

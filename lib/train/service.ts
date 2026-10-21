@@ -31,6 +31,7 @@ import { INTEGRITY_CONFIG } from "@/lib/integrity/config";
 import { evaluateFlags, minReadingMs, type RecentAnswer } from "@/lib/integrity/rules";
 import { checkTiming, signQuestionToken, verifyQuestionToken } from "@/lib/integrity/server";
 import { getTrainingContent, type TrainingContent } from "./content";
+import { snapshotVocabulary } from "./learner";
 import { getProfile, loadProgress, saveProgress, type Progress, type Tx } from "./store";
 import type {
   AnswerResponse,
@@ -187,11 +188,25 @@ async function nextScreen(ctx: Ctx, activeMs: number, plannedMs: number): Promis
     if (!memories.has(id) && !newWords.includes(id)) newWords.push(id);
     if (newWords.length === 10) break;
   }
+  // After placement, words well below the starting level are "probably known": they are
+  // checked with a production question instead of taught, alternating with new words.
+  const placed = profile.placementSource === "test" || profile.placementSource === "teacher";
+  const atLevel: number[] = [];
+  const below: number[] = [];
   for (const id of ctx.content.order) {
-    if (newWords.length >= 10) break;
+    if (atLevel.length >= 10 && (below.length >= 10 || !placed)) break;
     const s = ctx.content.byId.get(id)!;
-    if (s.frequencyRank >= firstRank && !memories.has(id) && !newWords.includes(id))
-      newWords.push(id);
+    if (memories.has(id) || newWords.includes(id)) continue;
+    if (s.frequencyRank >= firstRank) {
+      if (atLevel.length < 10) atLevel.push(id);
+    } else if (placed && below.length < 10) below.push(id);
+  }
+  // The list is rebuilt for every pick, so the group that goes first switches after each
+  // new word; otherwise every below-level word would come before any at-level one.
+  const [first, second] = ctx.data.lastNewBelow ? [atLevel, below] : [below, atLevel];
+  for (let i = 0; newWords.length < 10 && (i < first.length || i < second.length); i++) {
+    if (first[i] !== undefined) newWords.push(first[i]!);
+    if (second[i] !== undefined && newWords.length < 10) newWords.push(second[i]!);
   }
 
   // A word that stopped being live mid-session is dropped from the waiting lists.
@@ -211,6 +226,14 @@ async function nextScreen(ctx: Ctx, activeMs: number, plannedMs: number): Promis
   const sense = ctx.content.byId.get(item.senseId)!;
 
   if (item.kind === "new") {
+    ctx.data.lastNewBelow = placed && sense.frequencyRank < firstRank;
+    if (ctx.data.lastNewBelow) {
+      // A probably-known word: straight to the "I already know this" production question.
+      // Right: scheduled as known. Wrong: the word page and its check follow, as a new word.
+      const type = introQuestionType("already_know", sense);
+      const q = buildQuestion({ type, sense, pool: ctx.content.senses, rng });
+      return questionScreen(ctx, "intro_known", item, q);
+    }
     if (guessFirst(sense)) {
       ctx.data.forced.unshift({ stage: "intro", senseId: sense.id });
       const q = buildQuestion({ type: "meaning_choice", sense, pool: ctx.content.senses, rng });
@@ -742,6 +765,8 @@ export async function endSession(
       .returning();
     session = updated!;
     await countTime(db, userId, sessionId, endedAt, last);
+    // Today's vocabulary estimate, for the progress chart.
+    await snapshotVocabulary(userId, endedAt);
   }
 
   const content = await getTrainingContent();

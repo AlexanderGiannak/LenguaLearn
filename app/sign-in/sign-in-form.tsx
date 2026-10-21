@@ -25,7 +25,8 @@ export function SignInForm({
     setBusy(false);
     if (!r.ok) return setError(r.error);
     const next = new URLSearchParams(window.location.search).get("next");
-    window.location.assign(safeNext(next) ?? (student ? "/train" : "/"));
+    // /home sends a teacher on to /teacher and an unplaced learner to /placement.
+    window.location.assign(safeNext(next) ?? "/home");
   }
 
   return (

@@ -95,18 +95,18 @@ throwaway Postgres, the database tests, a build, and Playwright (which seeds the
 |---|---|
 | `docs/SPEC.md` | Product spec (source of truth) |
 | `docs/DECISIONS.md` | Decisions beyond the spec, plus open questions |
-| `app/` | Next.js App Router pages and route handlers. `app/api/health` is the health check; `app/api/admin/` holds the import and status endpoints; `app/word/[id]` is the word page; `app/train` is the training session (client) and `app/api/train/*` its API; `app/join`, `app/student`, `app/sign-in`, `app/sign-up`, `app/teacher` and `app/settings` are the account pages; `app/_components` holds shared client components |
+| `app/` | Next.js App Router pages and route handlers. `app/api/health` is the health check; `app/api/admin/` holds the import and status endpoints; `app/word/[id]` is the word page; `app/train` is the training session (client) and `app/api/train/*` its API; `app/join`, `app/student`, `app/sign-in`, `app/sign-up`, `app/teacher` and `app/settings` are the account pages; `app/placement`, `app/home`, `app/words` and `app/progress` are the learner pages; `app/_components` holds shared client components |
 | `lib/db/` | Drizzle client (`client.ts`, lazy pool) and table definitions (`schema/content.ts` for the content model) |
 | `lib/content/` | Content rules shared by the API and pages: allowed values (`constants.ts`), import validation and loading, the status flow (`status.ts`), and the live-only word page query (`word-page.ts`) |
 | `lib/admin/` | Admin API token check and request helpers |
-| `lib/train/` | Training on the server: live content cache (`content.ts`), card storage (`store.ts`), the session flow (`service.ts`), shared types, and who may train (`roles.ts`) |
+| `lib/train/` | Training on the server: live content cache (`content.ts`), card storage (`store.ts`), the session flow (`service.ts`), placement (`placement.ts`), the learner's own stats (`learner.ts`), shared types, and `page-gate.ts` |
 | `lib/auth/` | Better Auth setup (`auth.ts`), sign-up, sign-in and seat codes (`accounts.ts`), limits, device cookie, handles and codes, and `session.ts` (`currentUser`, `requireUser`) |
 | `lib/teacher/` | `scope.ts` is the one shared teacher-scope helper: every class, seat, dashboard and grade query goes through it. Also `stats.ts` (queries it calls), `week.ts` (class weeks by time zone), `grades.ts` (grade formula and status chips), `demo.ts` (demo class) and `page-gate.ts` |
 | `lib/account/` | Data export and account deletion, including district deletions |
 | `lib/email/` | Outgoing email (console in development; SES later) |
 | `lib/http/` | The Origin check and `handle()`, the wrapper every browser-facing API route uses (Origin, role, Zod, errors) |
 | `lib/integrity/` | Integrity: every threshold (`config.ts`), the flag rules (`rules.ts`) and the server checks (`server.ts`: signed question tokens, timing bounds) |
-| `lib/engine/` | Pure TypeScript learning engine: `config.ts` (every threshold), `cards.ts` (two FSRS cards per sense), `rating.ts`, `answer-check.ts`, `questions.ts` and `distractors.ts`, `next-item.ts` (session order and new-word gate), `ability.ts` (ability and vocabulary size), `intro.ts`, and `simulator/`. Imports only its own files (with `.ts` extensions) and ts-fsrs; `boundaries.test.ts` enforces it |
+| `lib/engine/` | Pure TypeScript learning engine: `config.ts` (every threshold), `cards.ts` (two FSRS cards per sense), `rating.ts`, `answer-check.ts`, `questions.ts` and `distractors.ts`, `next-item.ts` (session order and new-word gate), `ability.ts` (ability and vocabulary size), `intro.ts`, `placement.ts` (the level test), and `simulator/`. Imports only its own files (with `.ts` extensions) and ts-fsrs; `boundaries.test.ts` enforces it |
 | `drizzle/` | Generated SQL migrations, committed |
 | `scripts/` | Node scripts. `migrate.mts` runs migrations. `scripts/content/` (Phase 9) runs on the owner's laptop, never touches the database, and uploads JSON through the admin import endpoint |
 | `e2e/` | Playwright tests. `seed.setup.ts` loads the fixture words before the browser tests |

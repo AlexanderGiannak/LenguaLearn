@@ -8,6 +8,7 @@ import {
   hook,
   image,
   lemma,
+  pseudoword,
   relation,
   sense,
   wordList,
@@ -41,6 +42,7 @@ export const CONTENT_TABLES = {
   image,
   audio,
   word_list: wordList,
+  pseudoword,
 } as const;
 export type ContentTableName = keyof typeof CONTENT_TABLES;
 export const CONTENT_TABLE_NAMES = Object.keys(CONTENT_TABLES) as [
@@ -380,6 +382,12 @@ export async function importContent(db: Db, payload: ImportPayload): Promise<Imp
   return db.transaction(async (tx) => {
     const importer = new Importer(tx);
     for (const l of payload.lemmas) await importer.importLemma(l);
+
+    for (const p of payload.pseudowords) {
+      await importer.upsert("pseudoword", eq(pseudoword.text, p.text), { text: p.text }, p.status, {
+        key: p.text,
+      });
+    }
 
     const problems: string[] = [];
     for (const list of payload.lists) problems.push(...(await importer.importList(list)));
