@@ -267,3 +267,14 @@ export const contentRevision = pgTable(
   },
   (t) => [unique("content_revision_row_version").on(t.tableName, t.rowId, t.version)],
 );
+
+/**
+ * Made-up Spanish-looking words for the placement test (spec: Placement). Content like any
+ * other: reviewed through the status flow, because a "pseudoword" that turns out to be a real
+ * word would penalize students who know it.
+ */
+export const pseudoword = pgTable("pseudoword", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  text: text("text").notNull().unique(),
+  ...contentColumns(),
+});

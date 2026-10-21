@@ -29,6 +29,13 @@ export const learnerProfile = pgTable("learner_profile", {
   ability: real("ability").notNull(),
   abilityAnswers: integer("ability_answers").notNull().default(0),
   startLevel: integer("start_level").notNull().default(1),
+  /** How the starting level was set: beginner choice, placement test, or the teacher. */
+  placementSource: text("placement_source", { enum: ["beginner", "test", "teacher"] }),
+  placedAt: timestamp("placed_at", { withTimezone: true }),
+  /** Independent learners set their own weekly goal (spec: Student experience). */
+  weeklyGoalMinutes: integer("weekly_goal_minutes").notNull().default(45),
+  /** For an independent learner's week; class students use their class's. */
+  timeZone: text("time_zone").notNull().default("America/Chicago"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -218,4 +225,29 @@ export const activeTime = pgTable(
     index("active_time_user_at_idx").on(t.userId, t.at),
     check("active_time_ms", sql`${t.ms} >= 0`),
   ],
+);
+
+/** A placement test in progress or finished. Item IDs in `state` are opaque to the browser. */
+export const placement = pgTable("placement", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  state: jsonb("state").notNull(),
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+  finishedAt: timestamp("finished_at", { withTimezone: true }),
+  result: jsonb("result"),
+});
+
+/** Estimated vocabulary size, one row per learner per day, for the progress chart. */
+export const vocabSnapshot = pgTable(
+  "vocab_snapshot",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    day: text("day").notNull(),
+    size: integer("size").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.day] })],
 );

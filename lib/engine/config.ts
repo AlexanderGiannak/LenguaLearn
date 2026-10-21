@@ -81,6 +81,20 @@ export const ENGINE_CONFIG = {
     vocabularyMaxRank: 10_000,
   },
 
+  placement: {
+    /** About 40 items, of which about 10 are made-up pseudowords (spec: Placement). */
+    items: 40,
+    pseudowords: 10,
+    /** Slope of P(know) against (ability - ln rank) for "Do you know this word?". */
+    slope: 1.5,
+    /** The starting level is where the learner knows about this share of words. */
+    knownShareAtStart: 0.8,
+    /** Saying yes to this share of pseudowords makes the result unreliable: start at level 1. */
+    maxFalseAlarms: 0.5,
+    /** First real items, spread across the bank before the test adapts (frequency ranks). */
+    probeRanks: [50, 300, 1000, 2500, 5000, 9000],
+  },
+
   /** Words per level band, mirrored from the content model (lib/content/constants.ts). */
   levelBandSize: 500,
 } as const;

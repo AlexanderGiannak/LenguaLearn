@@ -250,6 +250,19 @@ export const importPayloadSchema = z
     note: z.string().max(500).optional(),
     lemmas: z.array(lemmaSchema).max(MAX_LEMMAS_PER_IMPORT),
     lists: z.array(listSchema).max(50).default([]),
+    /** Made-up words for the placement test: lowercase letters only, never real words. */
+    pseudowords: z
+      .array(
+        z.strictObject({
+          text: z
+            .string()
+            .regex(/^[a-záéíóúüñ]{4,14}$/, "must be 4–14 lowercase letters")
+            .refine((s) => s === s.normalize("NFC"), "must be NFC-normalized"),
+          status: z.enum(IMPORT_STATUSES),
+        }),
+      )
+      .max(200)
+      .default([]),
   })
   .superRefine((p, ctx) => {
     const flagDuplicates = (keys: { key: string; path: (string | number)[] }[]) => {

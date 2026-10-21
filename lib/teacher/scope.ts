@@ -213,8 +213,14 @@ export function teacherScope(teacherId: string) {
           userId: s.studentId,
           ability: ENGINE_CONFIG.ability.beginnerAbility,
           startLevel: level,
+          placementSource: "teacher",
+          placedAt: new Date(),
         })
-        .onConflictDoUpdate({ target: learnerProfile.userId, set: { startLevel: level } });
+        // The teacher's level stands in for the placement test (spec: Placement).
+        .onConflictDoUpdate({
+          target: learnerProfile.userId,
+          set: { startLevel: level, placementSource: "teacher", placedAt: new Date() },
+        });
     },
 
     /** One row per seat for a class week (spec: Dashboard). */
