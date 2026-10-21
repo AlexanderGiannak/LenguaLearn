@@ -24,6 +24,7 @@ export async function GET(request: Request, ctx: RouteContext<"/api/teacher/clas
     const scope = teacherScope(user.id);
     const c = await scope.getClass(classId);
     let range: { start: Date; end: Date };
+    let days = 7;
     if (q.from && q.to) {
       const [fy, fm, fd] = q.from.split("-").map(Number) as [number, number, number];
       const [ty, tm, td] = q.to.split("-").map(Number) as [number, number, number];
@@ -31,6 +32,7 @@ export async function GET(request: Request, ctx: RouteContext<"/api/teacher/clas
         start: zonedTimeToUtc(fy, fm, fd, 0, 0, c.timeZone),
         end: zonedTimeToUtc(ty, tm, td + 1, 0, 0, c.timeZone),
       };
+      days = (Date.UTC(ty, tm - 1, td) - Date.UTC(fy, fm - 1, fd)) / 86_400_000 + 1;
     } else {
       range = weekWindow(
         new Date(),
@@ -46,7 +48,7 @@ export async function GET(request: Request, ctx: RouteContext<"/api/teacher/clas
             flaggedDeduction: q.fd ?? c.gradeFlaggedDeduction,
           }
         : undefined;
-    const result = await scope.gradeRows(classId, range, formula);
+    const result = await scope.gradeRows(classId, range, formula, days);
     if (q.format === "json")
       return {
         ...result,

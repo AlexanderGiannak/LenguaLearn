@@ -358,7 +358,13 @@ export function teacherScope(teacherId: string) {
     },
 
     /** Grade rows for a date range (spec: Grade export). The goal is prorated by length. */
-    async gradeRows(classId: string, range: { start: Date; end: Date }, formula?: GradeFormula) {
+    async gradeRows(
+      classId: string,
+      range: { start: Date; end: Date },
+      formula?: GradeFormula,
+      /** Local calendar days in the range; a class week is 7 even across a clock change. */
+      days = 7,
+    ) {
       const c = await ownedClass(classId);
       const f = formula ?? {
         goalWeight: c.gradeGoalWeight,
@@ -371,7 +377,7 @@ export function teacherScope(teacherId: string) {
         minutesByStudent(ids, range),
         accuracyByStudent(ids, range),
       ]);
-      const goal = round1(c.weeklyGoalMinutes * (daysBetween(range.start, range.end) / 7));
+      const goal = round1(c.weeklyGoalMinutes * (days / 7));
       return {
         formula: f,
         goalMinutes: goal,

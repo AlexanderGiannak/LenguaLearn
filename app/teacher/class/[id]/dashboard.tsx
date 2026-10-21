@@ -177,7 +177,7 @@ export function Dashboard({ initial }: { initial: Data }) {
                     <td className="py-2 pr-3">
                       {r.flaggedMinutes > 0 ? (
                         <Link
-                          className="underline"
+                          className={`inline-flex min-h-11 min-w-11 items-center underline ${focusRing}`}
                           href={`/teacher/class/${data.class.id}/student/${r.seatId}`}
                         >
                           {r.flaggedMinutes}
@@ -195,7 +195,7 @@ export function Dashboard({ initial }: { initial: Data }) {
                     <td className="py-2 pr-3">
                       <Link
                         href={`/teacher/class/${data.class.id}/student/${r.seatId}`}
-                        className={`inline-flex min-h-8 items-center rounded-full px-3 text-sm font-medium ${STATUS[r.status]!.className} ${focusRing}`}
+                        className={`inline-flex min-h-11 items-center rounded-full px-4 text-sm font-medium ${STATUS[r.status]!.className} ${focusRing}`}
                       >
                         {STATUS[r.status]!.label}
                       </Link>

@@ -153,6 +153,8 @@ async function nextScreen(ctx: Ctx, activeMs: number, plannedMs: number): Promis
   // bank in frequency order from the student's starting level.
   const newWords: number[] = [];
   for (const id of ctx.data.focus ?? []) {
+    // A focus word retired since the session started is skipped.
+    if (!ctx.content.byId.has(id)) continue;
     if (!memories.has(id) && !newWords.includes(id)) newWords.push(id);
     if (newWords.length === 10) break;
   }
