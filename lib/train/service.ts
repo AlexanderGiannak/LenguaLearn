@@ -1,7 +1,15 @@
 import { and, desc, eq, sql } from "drizzle-orm";
 import { Rating, type Card, type Grade } from "ts-fsrs";
 import { getDb } from "@/lib/db/client";
-import { answerEvent, issuedQuestion, learnerProfile, studySession } from "@/lib/db/schema";
+import {
+  answerEvent,
+  classroom,
+  issuedQuestion,
+  learnerProfile,
+  seat,
+  studySession,
+  wordListItem,
+} from "@/lib/db/schema";
 import { updateAbility } from "@/lib/engine/ability";
 import { checkTypedAnswer, normalizeAnswer, type NotePart } from "@/lib/engine/answer-check";
 import { applyReview, isLearned, markKnown, newSenseMemory } from "@/lib/engine/cards";
@@ -41,6 +49,10 @@ export class TrainingError extends Error {
     super(message);
   }
 }
+
+/** Where "now" comes from. Tests and the demo class pass a simulated clock. */
+export type Clock = () => Date;
+const realClock: Clock = () => new Date();
 
 const APP_VERSION = process.env.RAILWAY_GIT_COMMIT_SHA?.slice(0, 7) ?? "dev";
 const WRONG_READ_MS = 3000;
@@ -137,11 +149,18 @@ async function nextScreen(ctx: Ctx, activeMs: number, plannedMs: number): Promis
   const memories = new Map([...progress].map(([id, p]) => [id, p.memory]));
   const profile = await getProfile(ctx.tx, ctx.userId);
   const firstRank = (profile.startLevel - 1) * ENGINE_CONFIG.levelBandSize + 1;
+  // A class focus list's words come first, at any level (spec: Class settings); then the
+  // bank in frequency order from the student's starting level.
   const newWords: number[] = [];
-  for (const id of ctx.content.order) {
-    const s = ctx.content.byId.get(id)!;
-    if (s.frequencyRank >= firstRank && !memories.has(id)) newWords.push(id);
+  for (const id of ctx.data.focus ?? []) {
+    if (!memories.has(id) && !newWords.includes(id)) newWords.push(id);
     if (newWords.length === 10) break;
+  }
+  for (const id of ctx.content.order) {
+    if (newWords.length >= 10) break;
+    const s = ctx.content.byId.get(id)!;
+    if (s.frequencyRank >= firstRank && !memories.has(id) && !newWords.includes(id))
+      newWords.push(id);
   }
 
   // A word that stopped being live mid-session is dropped from the waiting lists.
@@ -194,23 +213,51 @@ async function nextScreen(ctx: Ctx, activeMs: number, plannedMs: number): Promis
 
 // --- Session lifecycle ----------------------------------------------------------------
 
+/** A class student's settings come from their most recently joined class. */
+async function classSettingsFor(tx: Tx, userId: string, content: TrainingContent) {
+  const [c] = await tx
+    .select({ sessionMinutes: classroom.sessionMinutes, focusListId: classroom.focusListId })
+    .from(seat)
+    .innerJoin(classroom, eq(seat.classroomId, classroom.id))
+    .where(eq(seat.studentId, userId))
+    .orderBy(desc(seat.joinedAt))
+    .limit(1);
+  if (!c) return { sessionMinutes: null, focus: [] as number[] };
+  const focus = c.focusListId
+    ? (
+        await tx
+          .select({ senseId: wordListItem.senseId })
+          .from(wordListItem)
+          .where(eq(wordListItem.listId, c.focusListId))
+          .orderBy(wordListItem.position)
+      )
+        .map((r) => r.senseId)
+        .filter((id) => content.byId.has(id))
+    : [];
+  return { sessionMinutes: c.sessionMinutes, focus };
+}
+
 export async function startSession(
   userId: string,
   opts: { audio: boolean; minutes?: number },
+  clock: Clock = realClock,
 ): Promise<{ sessionId: string; plannedMs: number; screen: Screen }> {
   const content = await getTrainingContent();
-  const plannedMinutes = opts.minutes ?? ENGINE_CONFIG.session.defaultMinutes;
+  const now = clock();
   return getDb().transaction(async (tx) => {
     await getProfile(tx, userId);
+    const classSettings = await classSettingsFor(tx, userId, content);
+    const plannedMinutes =
+      opts.minutes ?? classSettings.sessionMinutes ?? ENGINE_CONFIG.session.defaultMinutes;
     // One open session per account: starting a new one ends any other.
     await tx
       .update(studySession)
-      .set({ endedAt: new Date() })
+      .set({ endedAt: now })
       .where(and(eq(studySession.userId, userId), sql`${studySession.endedAt} IS NULL`));
-    const data: SessionData = { engine: newSession(), forced: [] };
+    const data: SessionData = { engine: newSession(), forced: [], focus: classSettings.focus };
     const [row] = await tx
       .insert(studySession)
-      .values({ userId, plannedMinutes, state: data, audio: opts.audio })
+      .values({ userId, plannedMinutes, state: data, audio: opts.audio, startedAt: now })
       .returning({ id: studySession.id });
     const ctx: Ctx = {
       tx,
@@ -219,7 +266,7 @@ export async function startSession(
       data,
       audio: opts.audio,
       content,
-      now: new Date(),
+      now,
     };
     const plannedMs = plannedMinutes * 60_000;
     const screen = await nextScreen(ctx, 0, plannedMs);
@@ -252,6 +299,7 @@ function capActive(ms: number, mode: "choice" | "typed"): number {
 export async function chooseIntro(
   userId: string,
   body: { questionId: string; choice: "got_it" | "already_know"; activeMs: number },
+  clock: Clock = realClock,
 ): Promise<{ next: Screen; activeMs: number; plannedMs: number }> {
   const content = await getTrainingContent();
   return getDb().transaction(async (tx) => {
@@ -271,7 +319,7 @@ export async function chooseIntro(
       data: session.state as SessionData,
       audio: session.audio,
       content,
-      now: new Date(),
+      now: clock(),
     };
     const type = introQuestionType(body.choice, sense);
     const question = buildQuestion({ type, sense, pool: content.senses, rng });
@@ -310,9 +358,13 @@ function cardSnapshot(c: Card | null | undefined) {
     : null;
 }
 
-export async function answerQuestion(userId: string, input: AnswerInput): Promise<AnswerResponse> {
+export async function answerQuestion(
+  userId: string,
+  input: AnswerInput,
+  clock: Clock = realClock,
+): Promise<AnswerResponse> {
   const content = await getTrainingContent();
-  const receivedAt = new Date();
+  const receivedAt = clock();
   return getDb().transaction(async (tx) => {
     const { issued, session } = await lockIssued(tx, userId, input.questionId);
     if (issued.answeredAt) {
@@ -432,12 +484,12 @@ export async function answerQuestion(userId: string, input: AnswerInput): Promis
       case "review": {
         const memory = applyReview(current!.memory, q.card, rating, receivedAt).memory;
         after = memory[q.card];
-        await saveProgress(tx, userId, sense.id, memory, q.type);
+        await saveProgress(tx, userId, sense.id, memory, q.type, receivedAt);
         for (const partnerId of q.alsoReviews) {
           const partner = progress.get(partnerId);
           if (partner?.memory.production) {
             const m = applyReview(partner.memory, "production", rating, receivedAt).memory;
-            await saveProgress(tx, userId, partnerId, m, partner.lastType);
+            await saveProgress(tx, userId, partnerId, m, partner.lastType, receivedAt);
           }
         }
         break;
@@ -451,7 +503,7 @@ export async function answerQuestion(userId: string, input: AnswerInput): Promis
           receivedAt,
         ).memory;
         after = memory.recognition;
-        await saveProgress(tx, userId, sense.id, memory, q.type);
+        await saveProgress(tx, userId, sense.id, memory, q.type, receivedAt);
         await firstExposure(false);
         introDone = true;
         break;
@@ -465,7 +517,7 @@ export async function answerQuestion(userId: string, input: AnswerInput): Promis
           const memory = markKnown(newSenseMemory(receivedAt), receivedAt);
           loggedRating = Rating.Easy;
           after = memory.production;
-          await saveProgress(tx, userId, sense.id, memory, q.type);
+          await saveProgress(tx, userId, sense.id, memory, q.type, receivedAt);
           knownAlready = true;
           introDone = true;
         } else {
@@ -478,6 +530,7 @@ export async function answerQuestion(userId: string, input: AnswerInput): Promis
         throw new TrainingError(409, "not a question");
     }
 
+    const countedMs = capActive(input.activeMs, mode);
     await tx.insert(answerEvent).values({
       clientAnswerId: input.clientAnswerId,
       userId,
@@ -499,6 +552,7 @@ export async function answerQuestion(userId: string, input: AnswerInput): Promis
       fsrsAfter: cardSnapshot(after),
       fsrsParamsVersion: ENGINE_CONFIG.fsrs.paramsVersion,
       clientResponseMs: Math.max(0, Math.round(input.responseMs)),
+      activeMs: countedMs,
       serverIssuedAt: issued.issuedAt,
       serverReceivedAt: receivedAt,
       appVersion: APP_VERSION,
@@ -514,7 +568,7 @@ export async function answerQuestion(userId: string, input: AnswerInput): Promis
         knownAlready,
       });
     }
-    const activeMs = session.activeMs + capActive(input.activeMs, mode);
+    const activeMs = session.activeMs + countedMs;
     const plannedMs = session.plannedMinutes * 60_000;
     const next = await nextScreen(ctx, activeMs, plannedMs);
 
@@ -551,6 +605,7 @@ export async function endSession(
   sessionId: string,
   /** Visible time since the last answer (the last feedback screen, or an unanswered one). */
   activeMs = 0,
+  clock: Clock = realClock,
 ): Promise<SessionSummary> {
   const db = getDb();
   const [found] = await db
@@ -563,7 +618,7 @@ export async function endSession(
     // Attentive time on the last screen counts too, with the same per-screen cap.
     const [updated] = await db
       .update(studySession)
-      .set({ endedAt: new Date(), activeMs: session.activeMs + capActive(activeMs, "choice") })
+      .set({ endedAt: clock(), activeMs: session.activeMs + capActive(activeMs, "choice") })
       .where(eq(studySession.id, sessionId))
       .returning();
     session = updated!;
