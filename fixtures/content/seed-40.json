@@ -680,10 +680,6 @@
               "text": "exitoso"
             },
             {
-              "type": "confused_with",
-              "text": "salida"
-            },
-            {
               "type": "collocation",
               "text": "tener éxito"
             }
@@ -732,10 +728,6 @@
             {
               "type": "family",
               "text": "actualmente"
-            },
-            {
-              "type": "confused_with",
-              "text": "real"
             }
           ]
         }
@@ -943,11 +935,11 @@
           "status": "ai_checked",
           "examples": [
             {
-              "text": "Camarero, la cuenta, por favor.",
+              "text": "Disculpe, la cuenta, por favor.",
               "surfaceForm": "cuenta",
               "start": 13,
               "end": 19,
-              "translation": "Waiter, the check, please.",
+              "translation": "Excuse me, the check, please.",
               "distractors": ["nube", "lluvia", "semana"],
               "source": "ai"
             },
@@ -1259,8 +1251,8 @@
       "senses": [
         {
           "key": "deshacer#verb#1",
-          "gloss": "to undo, to unpack",
-          "definition": "To reverse something that was done, such as a knot or a suitcase.",
+          "gloss": "to undo",
+          "definition": "To reverse something that was done, such as a knot or a change.",
           "frequencyRank": 3500,
           "register": "neutral",
           "cognate": "none",
@@ -1268,11 +1260,11 @@
           "status": "ai_checked",
           "examples": [
             {
-              "text": "Tengo que deshacer la maleta.",
+              "text": "Voy a deshacer los cambios en el documento.",
               "surfaceForm": "deshacer",
-              "start": 10,
-              "end": 18,
-              "translation": "I have to unpack my suitcase.",
+              "start": 6,
+              "end": 14,
+              "translation": "I'm going to undo the changes in the document.",
               "distractors": ["dormir", "llover", "nacer"],
               "source": "ai"
             },
@@ -1514,7 +1506,6 @@
       "headword": "decisión",
       "partOfSpeech": "noun",
       "gender": "f",
-      "plural": "decisiones",
       "frequencyRank": 650,
       "status": "ai_checked",
       "senses": [
