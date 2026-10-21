@@ -78,6 +78,7 @@ npm run seed:fixtures          # load the 40 fixture words and publish them
 | `npm run db:generate` | Generate a SQL migration in `drizzle/` from schema changes. Review the SQL before committing |
 | `npm run db:migrate` | Apply migrations (Railway runs this as the pre-deploy step) |
 | `npm run admin:token` | Print a new admin API token and its hash (`ADMIN_API_TOKEN` stays on the laptop; the hash goes to the server) |
+| `npm run simulate` | Run the engine simulator (100 synthetic learners × 60 days per cohort) and rewrite `docs/simulator-report.md`. About 3 minutes |
 | `npm run seed:fixtures [-- <url>]` | Import the fixture words through the admin API and publish them. Default `http://localhost:3000`; refused in production |
 
 CI (`.github/workflows/ci.yml`) runs lint, format check, typecheck and unit tests, then, against a
@@ -93,7 +94,7 @@ throwaway Postgres, the database tests, a build, and Playwright (which seeds the
 | `lib/db/` | Drizzle client (`client.ts`, lazy pool) and table definitions (`schema/content.ts` for the content model) |
 | `lib/content/` | Content rules shared by the API and pages: allowed values (`constants.ts`), import validation and loading, the status flow (`status.ts`), and the live-only word page query (`word-page.ts`) |
 | `lib/admin/` | Admin API token check and request helpers |
-| `lib/engine/` | Pure TypeScript learning engine (Phase 2). No database, UI or Next.js imports |
+| `lib/engine/` | Pure TypeScript learning engine: `config.ts` (every threshold), `cards.ts` (two FSRS cards per sense), `rating.ts`, `answer-check.ts`, `questions.ts` and `distractors.ts`, `next-item.ts` (session order and new-word gate), `ability.ts` (ability and vocabulary size), `intro.ts`, and `simulator/`. Imports only its own files (with `.ts` extensions) and ts-fsrs; `boundaries.test.ts` enforces it |
 | `drizzle/` | Generated SQL migrations, committed |
 | `scripts/` | Node scripts. `migrate.mts` runs migrations. `scripts/content/` (Phase 9) runs on the owner's laptop, never touches the database, and uploads JSON through the admin import endpoint |
 | `e2e/` | Playwright tests. `seed.setup.ts` loads the fixture words before the browser tests |
