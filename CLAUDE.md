@@ -12,5 +12,5 @@
 
 ## Current phase
 
-Pre-Phase 0: docs scaffold done. Next: answer open questions in `docs/DECISIONS.md`, then propose the
-Phase 0 + Phase 1 plan (no code before the owner approves it).
+Phase 0 (setup) in review: PR from `phase-0/setup`. Phase 1 (content schema) starts after the owner
+merges Phase 0 and says to continue.

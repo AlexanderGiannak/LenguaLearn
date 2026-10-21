@@ -52,27 +52,53 @@ weekly minutes goal. Teachers see attentive minutes, accuracy, words learned and
 
 ## Commands
 
-_Filled in during Phase 0._ Planned: `npm run dev`, `npm run build`, `npm start`, `npm run lint`,
-`npm run typecheck`, `npm test` (Vitest), `npm run test:e2e` (Playwright), `npm run db:generate` /
-`npm run db:migrate` (Drizzle).
+First-time setup: Node 24 (`nvm use`), Docker running, then:
+
+```sh
+npm install
+cp .env.example .env.local     # local settings; never committed
+npm run db:up                  # local Postgres in Docker
+npm run db:migrate             # apply migrations
+npx playwright install chromium
+```
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | Dev server at http://localhost:3000 |
+| `npm run build` / `npm start` | Production build / serve it (what Railway runs) |
+| `npm run lint` | ESLint |
+| `npm run format` / `npm run format:check` | Prettier write / check |
+| `npm run typecheck` | Generate Next route types, then `tsc --noEmit` |
+| `npm test` | Vitest unit tests (`**/*.test.ts`) |
+| `npm run test:e2e` | Playwright tests in `e2e/` at Chromebook (1366×768) and phone (390px) sizes |
+| `npm run db:generate` | Generate a SQL migration in `drizzle/` from schema changes. Review the SQL before committing |
+| `npm run db:migrate` | Apply migrations (Railway runs this as the pre-deploy step) |
+
+CI (`.github/workflows/ci.yml`) runs lint, format check, typecheck and unit tests, then builds and runs
+Playwright against a throwaway Postgres, on every push.
 
 ## Repo map
-
-_Filled in as code lands._ Fixed locations from the spec:
 
 | Path | What lives there |
 |---|---|
 | `docs/SPEC.md` | Product spec (source of truth) |
 | `docs/DECISIONS.md` | Decisions beyond the spec, plus open questions |
-| `lib/engine/` | Pure TypeScript learning engine. No database, UI or Next.js imports |
-| `scripts/content/` | Content pipeline scripts. Run on the owner's laptop, never touch the database, upload JSON through the admin import endpoint |
-| `docs/` | Privacy policy, school IT data sheet, VPAT, COPPA notice, incident plan (later phases) |
+| `app/` | Next.js App Router pages and route handlers. `app/api/health` is the health check |
+| `lib/db/` | Drizzle client (`client.ts`, lazy pool) and table definitions (`schema/`) |
+| `lib/engine/` | Pure TypeScript learning engine (Phase 2). No database, UI or Next.js imports |
+| `drizzle/` | Generated SQL migrations, committed |
+| `scripts/` | Node scripts. `migrate.mts` runs migrations. `scripts/content/` (Phase 9) runs on the owner's laptop, never touches the database, and uploads JSON through the admin import endpoint |
+| `e2e/` | Playwright tests |
+| `.railway/railway.ts` | Railway infrastructure as code (services, database, region, health check) |
+| `docs/` | Also: privacy policy, school IT data sheet, VPAT, COPPA notice, incident plan (later phases) |
 
 ## Conventions
 
 - TypeScript strict mode. Zod validates every API input at the boundary.
 - Every teacher-facing query goes through the one shared teacher-scope helper. Never scope by hand in a route.
 - Engine thresholds (accent strictness, new-word gate, integrity limits) live in config, not inline.
+- Next 16 runs with Cache Components on: anything that reads the database or the request at request
+  time calls `await connection()` (or a request API) first, so the build never tries to prerender it.
 - Spanish text in the UI is marked `lang="es"`. Fonts via `next/font`. No external scripts, analytics or trackers.
 
 ## Code Review Rules
@@ -98,3 +124,13 @@ Priorities for automated PR review. Treat every item below as at least P1, and t
 - Hard-coded maximum level, or thresholds that the spec says belong in config written inline.
 - Accessibility regressions: missing alt text, missing `lang="es"` on Spanish text, no visible focus state,
   tap targets under 44px.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
