@@ -15,15 +15,17 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
+import { user } from "./auth";
 import { example, sense } from "./content";
 
-// Learner progress and the answer log (spec: Scheduling, Answer event log). User IDs are
-// text because Better Auth (Phase 4) uses string IDs; the foreign key to its user table is
-// added then.
+// Learner progress and the answer log (spec: Scheduling, Answer event log). Every row
+// belongs to a user and is deleted with the account.
 
 /** Per-learner numbers: ability score and starting level. */
 export const learnerProfile = pgTable("learner_profile", {
-  userId: text("user_id").primaryKey(),
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
   ability: real("ability").notNull(),
   abilityAnswers: integer("ability_answers").notNull().default(0),
   startLevel: integer("start_level").notNull().default(1),
@@ -34,7 +36,9 @@ export const learnerProfile = pgTable("learner_profile", {
 export const senseProgress = pgTable(
   "sense_progress",
   {
-    userId: text("user_id").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
     senseId: integer("sense_id")
       .notNull()
       .references(() => sense.id),
@@ -49,7 +53,9 @@ export const senseProgress = pgTable(
 export const card = pgTable(
   "card",
   {
-    userId: text("user_id").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
     senseId: integer("sense_id")
       .notNull()
       .references(() => sense.id),
@@ -77,7 +83,9 @@ export const studySession = pgTable(
   "study_session",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    userId: text("user_id").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
     plannedMinutes: integer("planned_minutes").notNull(),
     startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
     endedAt: timestamp("ended_at", { withTimezone: true }),
@@ -101,7 +109,9 @@ export const issuedQuestion = pgTable(
     studySessionId: uuid("study_session_id")
       .notNull()
       .references(() => studySession.id),
-    userId: text("user_id").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
     payload: jsonb("payload").notNull(),
     issuedAt: timestamp("issued_at", { withTimezone: true }).notNull().defaultNow(),
     answeredAt: timestamp("answered_at", { withTimezone: true }),
@@ -123,7 +133,9 @@ export const answerEvent = pgTable(
     id: bigint("id", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
     /** Client-generated ID: a retried answer is recognized and not counted twice. */
     clientAnswerId: uuid("client_answer_id").notNull().unique(),
-    userId: text("user_id").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
     senseId: integer("sense_id")
       .notNull()
       .references(() => sense.id),
