@@ -2,11 +2,13 @@ import { and, eq, inArray, isNull } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { getDb, getSql } from "@/lib/db/client";
 import { sentInDevelopment } from "@/lib/email/mailer";
+import { signUp } from "@/lib/auth/accounts";
 import { classroom, demoAccount, seat, user } from "@/lib/db/schema";
 import { seedFixtureContent } from "@/test/seed-content";
 import { DEMO_CONFIG } from "./config";
 import {
   cleanupDemoAccounts,
+  purgeAllDemoAccounts,
   refillTeacherPool,
   startDemoLearner,
   startDemoTeacher,
@@ -126,5 +128,17 @@ describe("demo accounts", () => {
       .from(user)
       .where(inArray(user.id, [...teacherIds, ...studentIds]));
     expect(none).toHaveLength(0);
+  }, 120_000);
+
+  it("purges every demo account at once, claimed or pooled, and nothing else", async () => {
+    const learner = (await (await startDemoLearner(at(40))).json()) as { user: { id: string } };
+    await refillTeacherPool(() => at(40), SMALL);
+    const real = `real-${Date.now()}@example.com`;
+    await signUp({ role: "teacher", name: "Real", email: real, password: "real-password-1" });
+
+    expect(await purgeAllDemoAccounts()).toBeGreaterThan(DEMO_CONFIG.teacherPoolSize);
+    expect(await getDb().select().from(demoAccount)).toHaveLength(0);
+    expect(await getDb().select().from(user).where(eq(user.id, learner.user.id))).toHaveLength(0);
+    expect(await getDb().select().from(user).where(eq(user.email, real))).toHaveLength(1);
   }, 120_000);
 });

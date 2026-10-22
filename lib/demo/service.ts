@@ -110,6 +110,15 @@ export function refillTeacherPool(
 }
 
 /**
+ * Deletes every demo account now, claimed or waiting in the pool: for switching a site's
+ * demo mode off (the admin "purge_demo_accounts" action).
+ */
+export async function purgeAllDemoAccounts(): Promise<number> {
+  // Far enough ahead that every claimed and unclaimed demo has expired.
+  return cleanupDemoAccounts(new Date("9999-01-01T00:00:00Z"));
+}
+
+/**
  * Deletes demo accounts a day after they were claimed, and pool classes that went stale
  * unclaimed. A teacher's classes go with their students (including any visitor who joined
  * one with a seat code); then the teacher.
