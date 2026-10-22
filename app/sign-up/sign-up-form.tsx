@@ -3,13 +3,20 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Button, ErrorText, Field, muted, Page, postJson } from "@/app/_components/ui";
+import { Button, ErrorText, Field, link, muted, Page, postJson } from "@/app/_components/ui";
 import { GoogleButton } from "../sign-in/google-button";
 
 // Teachers and independent learners. Class students never sign up here: they join with a
 // seat code at /join, and are never offered Google sign-in.
 
-export function SignUpForm({ googleEnabled }: { googleEnabled: boolean }) {
+export function SignUpForm({
+  googleEnabled,
+  demoSite = false,
+}: {
+  googleEnabled: boolean;
+  /** On the demo site teachers can't receive the verification email yet. */
+  demoSite?: boolean;
+}) {
   const router = useRouter();
   const [role, setRole] = useState<"learner" | "teacher">("learner");
   const [error, setError] = useState<string | null>(null);
@@ -74,6 +81,20 @@ export function SignUpForm({ googleEnabled }: { googleEnabled: boolean }) {
         </Link>
         .
       </p>
+
+      {demoSite && role === "teacher" && (
+        <p
+          role="status"
+          className="rounded-xl border-2 border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100"
+        >
+          This demo site can&apos;t send email yet, so a new teacher account can&apos;t be
+          confirmed. Use{" "}
+          <Link className={link} href="/">
+            Try as a teacher
+          </Link>{" "}
+          on the home page to see a class with a week of practice.
+        </p>
+      )}
 
       <form action={submit} className="flex flex-col gap-4">
         {role === "teacher" ? (

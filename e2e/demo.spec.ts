@@ -26,3 +26,10 @@ test("a visitor tries the app as a teacher and lands on a class with a week of d
   // A header row plus one row per student.
   await expect(page.getByRole("table").getByRole("row")).toHaveCount(26);
 });
+
+test("teacher sign-up on the demo site points to the teacher demo", async ({ page }) => {
+  await page.goto("/sign-up");
+  await page.getByRole("button", { name: "I'm a teacher" }).click();
+  await expect(page.getByRole("status")).toContainText("can't send email yet");
+  await expect(page.getByRole("link", { name: "Try as a teacher" })).toHaveAttribute("href", "/");
+});
