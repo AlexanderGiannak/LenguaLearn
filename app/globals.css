@@ -94,7 +94,10 @@ body {
   font-family: var(--font-sans), system-ui, sans-serif;
 }
 
-/* Chunky buttons: a solid lower edge that the button presses into. Size (height, padding,
+/* Hover styles apply only where there is a real pointer: on touchscreens a hover sticks to
+   whatever was tapped last, so the next question would show a highlighted answer.
+
+   Chunky buttons: a solid lower edge that the button presses into. Size (height, padding,
    text size) comes from the call site; these set shape, color and the press. */
 @utility btn {
   display: inline-flex;
@@ -122,8 +125,10 @@ body {
   background: var(--primary);
   color: #ffffff;
   box-shadow: 0 4px 0 var(--primary-edge);
-  &:hover:not(:disabled) {
-    background: var(--primary-hover);
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      background: var(--primary-hover);
+    }
   }
   &:active:not(:disabled) {
     box-shadow: 0 2px 0 var(--primary-edge);
@@ -135,9 +140,11 @@ body {
   color: var(--foreground);
   border: 2px solid var(--line);
   box-shadow: 0 4px 0 var(--line);
-  &:hover:not(:disabled) {
-    border-color: var(--line-strong);
-    box-shadow: 0 4px 0 var(--line-strong);
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      border-color: var(--line-strong);
+      box-shadow: 0 4px 0 var(--line-strong);
+    }
   }
   &:active:not(:disabled) {
     box-shadow: 0 2px 0 var(--line-strong);
@@ -148,8 +155,10 @@ body {
   background: var(--color-red-700);
   color: #ffffff;
   box-shadow: 0 4px 0 var(--color-red-900);
-  &:hover:not(:disabled) {
-    background: var(--color-red-800);
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      background: var(--color-red-800);
+    }
   }
 }
 
@@ -176,10 +185,12 @@ body {
     box-shadow 80ms ease-out,
     border-color 120ms,
     background-color 120ms;
-  &:hover:not(:disabled) {
-    border-color: var(--primary);
-    background: var(--primary-soft);
-    box-shadow: 0 4px 0 var(--primary);
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      box-shadow: 0 4px 0 var(--primary);
+    }
   }
   &:active:not(:disabled) {
     transform: translateY(2px);
@@ -197,8 +208,10 @@ body {
   border: 2px solid var(--line);
   border-radius: 0.875rem;
   padding-inline: 0.875rem;
-  &:hover {
-    border-color: var(--line-strong);
+  @media (hover: hover) {
+    &:hover {
+      border-color: var(--line-strong);
+    }
   }
   &:focus {
     border-color: var(--primary);
