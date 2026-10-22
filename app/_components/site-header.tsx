@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { focusRing } from "./ui";
+import { NAV } from "./nav";
+import { focusRing } from "./styles";
 
 /** The brand mark: a speech bubble with a tilde. */
 export function LogoMark({ className = "h-8 w-8" }: { className?: string }) {
@@ -26,29 +27,61 @@ export function LogoMark({ className = "h-8 w-8" }: { className?: string }) {
 // Training and the level test are full-screen tasks: no header to wander off through.
 const BARE = ["/train", "/placement"];
 
+/** What the header offers: on the real site a demo link, on the demo site sign-in. */
+export type HeaderProps = { demoHref: string | null };
+
 /**
  * The header for the current page. With Cache Components on, usePathname suspends on
  * routes with request-time params (/word/[id], the teacher pages), so the layout wraps
  * this in Suspense with <HeaderBar /> as the fallback. None of those routes hide it.
  */
-export function SiteHeader() {
+export function SiteHeader(props: HeaderProps) {
   const path = usePathname();
   if (BARE.some((p) => path === p || path.startsWith(`${p}/`))) return null;
-  return <HeaderBar />;
+  return <HeaderBar {...props} />;
 }
 
-export function HeaderBar() {
+const navLink = `inline-flex min-h-11 shrink-0 items-center rounded-lg px-3 font-semibold text-ink-600 hover:text-ink-900 dark:text-ink-400 dark:hover:text-ink-100 ${focusRing}`;
+
+export function HeaderBar({ demoHref }: HeaderProps) {
   return (
     <header className="border-b-2 border-ink-100 print:hidden dark:border-ink-900">
-      <div className="mx-auto flex h-16 w-full max-w-5xl items-center px-4">
+      <div className="mx-auto flex h-16 w-full max-w-5xl items-center gap-2 px-4">
         <Link
           href="/"
-          className={`inline-flex min-h-11 items-center gap-2 rounded-lg text-xl font-extrabold tracking-tight ${focusRing}`}
+          className={`mr-auto inline-flex min-h-11 items-center gap-2 rounded-lg text-xl font-extrabold tracking-tight lg:mr-4 ${focusRing}`}
         >
           <LogoMark />
           LenguaLearn
         </Link>
+        <nav aria-label="Site" className="hidden flex-1 items-center lg:flex">
+          {NAV.map(([href, label]) => (
+            <Link key={href} href={href} className={navLink}>
+              {label}
+            </Link>
+          ))}
+        </nav>
+        {demoHref ? (
+          <a href={demoHref} className={`btn btn-primary min-h-11 px-4 ${focusRing}`}>
+            Try the demo
+          </a>
+        ) : (
+          <Link href="/sign-in" className={`btn btn-secondary min-h-11 px-4 ${focusRing}`}>
+            Sign in
+          </Link>
+        )}
       </div>
+      {/* Phones and narrow windows: the same links on a second row that scrolls sideways. */}
+      <nav
+        aria-label="Site, compact"
+        className="mx-auto flex w-full max-w-5xl gap-1 overflow-x-auto px-2 pb-2 lg:hidden"
+      >
+        {NAV.map(([href, label]) => (
+          <Link key={href} href={href} className={navLink}>
+            {label}
+          </Link>
+        ))}
+      </nav>
     </header>
   );
 }

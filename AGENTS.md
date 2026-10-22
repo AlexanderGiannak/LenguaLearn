@@ -103,6 +103,7 @@ throwaway Postgres, the database tests, a build, and Playwright (which seeds the
 | `lib/auth/` | Better Auth setup (`auth.ts`), sign-up, sign-in and seat codes (`accounts.ts`), limits, device cookie, handles and codes, and `session.ts` (`currentUser`, `requireUser`) |
 | `lib/teacher/` | `scope.ts` is the one shared teacher-scope helper: every class, seat, dashboard and grade query goes through it. Also `stats.ts` (queries it calls), `week.ts` (class weeks by time zone), `grades.ts` (grade formula and status chips), `demo.ts` (demo class) and `page-gate.ts` |
 | `lib/account/` | Data export and account deletion, including district deletions |
+| `lib/site/` | `config.ts`: whether accounts are open (`signupsOpen`: "Opening soon" on the real site until `SIGNUPS_OPEN=1`) and where "Try the demo" goes. The public pages are `app/how-it-works`, `app/for-teachers`, `app/privacy` and `app/about`, built from `app/_components/marketing.tsx` |
 | `lib/demo/` | Demo site mode (`DEMO_SITE=1`): `config.ts` (the switch, pool size, limits) and `service.ts` (one-click learner and teacher accounts, the teacher pool, cleanup). `app/api/demo/start` is its route |
 | `lib/email/` | Outgoing email (console in development; SES later) |
 | `lib/http/` | The Origin check and `handle()`, the wrapper every browser-facing API route uses (Origin, role, Zod, errors) |

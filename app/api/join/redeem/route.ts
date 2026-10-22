@@ -2,6 +2,7 @@ import { z } from "zod";
 import { redeemJoinCode, redeemResetCode } from "@/lib/auth/accounts";
 import { deviceCookieHeader, requestContext } from "@/lib/auth/request";
 import { handle, HttpError, parse, withCookies } from "@/lib/http/handler";
+import { signupsOpen } from "@/lib/site/config";
 
 const schema = z.strictObject({
   code: z.string().min(1).max(20),
@@ -20,6 +21,10 @@ export async function POST(request: Request) {
       const r = await redeemResetCode({ code: input.code, password: input.password }, ctx);
       return withCookies(r.response, { handle: r.handle });
     }
+    // A signed-in student joining another class keeps their account; a new one needs
+    // accounts to be open.
+    if (!user && !signupsOpen(process.env))
+      throw new HttpError(403, "Accounts open soon. Meanwhile, try the demo.");
     const r = await redeemJoinCode({ code: input.code, password: input.password }, user, ctx);
     return withCookies(r.response, { handle: r.handle });
   });

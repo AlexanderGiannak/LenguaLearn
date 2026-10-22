@@ -14,15 +14,24 @@ import { localDay } from "./week";
 // class of 25 seeded students through a simulated week"). Students train through the real
 // training service with a simulated clock. Never available in production.
 
-type Profile = { trainDays: number; accuracy: number };
+type Profile = {
+  trainDays: number;
+  accuracy: number;
+  /** Share of the full session length this student trains. */
+  length: number;
+  /** Clicks through without reading in one session, so the integrity rules flag it. */
+  rushes?: boolean;
+};
 
-// A realistic spread: most students keep up, some fall behind, a couple never start.
+// A realistic spread: many keep up, some fall behind, two rush through a session, and a
+// couple never start.
 function profileFor(i: number, n: number, rng: () => number): Profile {
   const share = i / n;
-  if (share < 0.6) return { trainDays: 5, accuracy: 0.85 + rng() * 0.1 };
-  if (share < 0.8) return { trainDays: 3, accuracy: 0.75 + rng() * 0.1 };
-  if (share < 0.92) return { trainDays: 1, accuracy: 0.6 + rng() * 0.15 };
-  return { trainDays: 0, accuracy: 0 };
+  if (share < 0.4) return { trainDays: 5, accuracy: 0.85 + rng() * 0.1, length: 1 };
+  if (share < 0.64) return { trainDays: 4, accuracy: 0.75 + rng() * 0.1, length: 0.6 };
+  if (share < 0.8) return { trainDays: 2, accuracy: 0.6 + rng() * 0.15, length: 0.5 };
+  if (share < 0.88) return { trainDays: 3, accuracy: 0.8, length: 0.6, rushes: true };
+  return { trainDays: 0, accuracy: 0, length: 0 };
 }
 
 async function correctAnswer(questionId: string) {
@@ -40,6 +49,7 @@ async function simulateSession(
   minutes: number,
   p: Profile,
   rng: () => number,
+  rushing = false,
 ) {
   let t = start.getTime();
   const clock = () => new Date(t);
@@ -61,12 +71,20 @@ async function simulateSession(
       continue;
     }
     const q = await correctAnswer(screen.id);
-    const right = rng() < p.accuracy;
+    const right = rushing ? q.mode === "choice" && q.correctIndex === 0 : rng() < p.accuracy;
+    // Rushing: always the first option, well under the reading time. The real integrity
+    // rules then flag the stretch (fast and mostly wrong, same position repeatedly).
     const answer =
       q.mode === "choice"
-        ? { chosenIndex: right ? q.correctIndex! : (q.correctIndex! + 1) % q.options!.length }
+        ? {
+            chosenIndex: rushing
+              ? 0
+              : right
+                ? q.correctIndex!
+                : (q.correctIndex! + 1) % q.options!.length,
+          }
         : { typed: right ? q.expected! : "nada" };
-    const responseMs = 2500 + Math.floor(rng() * 4000);
+    const responseMs = rushing ? 450 + Math.floor(rng() * 250) : 2500 + Math.floor(rng() * 4000);
     screen = (
       await answerQuestion(
         userId,
@@ -76,7 +94,7 @@ async function simulateSession(
           clientAnswerId: randomUUID(),
           ...answer,
           responseMs,
-          activeMs: step(responseMs + 3000),
+          activeMs: step(responseMs + (rushing ? 3200 : 3000)),
         },
         clock,
       )
@@ -140,8 +158,11 @@ export async function seedDemoClass(opts: {
     const p = profileFor(i, ids.length, rng);
     // The most recent school days of the window.
     const trainOn = dayStarts.slice(dayStarts.length - Math.min(p.trainDays, dayStarts.length));
-    for (const day of trainOn) {
-      await simulateSession(id, new Date(day.getTime() + i * 60_000), minutesPerSession, p, rng);
+    const minutes = Math.max(1, Math.round(minutesPerSession * p.length));
+    for (const [d, day] of trainOn.entries()) {
+      // A rusher rushes their most recent session, so it shows in this week's dashboard.
+      const rushing = Boolean(p.rushes) && d === trainOn.length - 1;
+      await simulateSession(id, new Date(day.getTime() + i * 60_000), minutes, p, rng, rushing);
     }
   }
   return {

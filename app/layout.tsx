@@ -3,6 +3,9 @@ import { Figtree } from "next/font/google";
 import { Suspense } from "react";
 import { DemoBanner } from "./_components/demo-banner";
 import { HeaderBar, SiteHeader } from "./_components/site-header";
+import { SiteFooter } from "./_components/site-footer";
+import { isDemoSite } from "@/lib/demo/config";
+import { demoUrl } from "@/lib/site/config";
 import "./globals.css";
 
 // next/font downloads the font at build time and serves it from our own domain,
@@ -18,6 +21,8 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
+  // The real site points visitors at the demo; the demo site offers sign-in instead.
+  const demoHref = isDemoSite(process.env) ? null : demoUrl(process.env);
   return (
     <html lang="en" className={`${figtree.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
@@ -30,10 +35,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="flex min-h-full flex-col">
         <DemoBanner />
-        <Suspense fallback={<HeaderBar />}>
-          <SiteHeader />
+        <Suspense fallback={<HeaderBar demoHref={demoHref} />}>
+          <SiteHeader demoHref={demoHref} />
         </Suspense>
         {children}
+        <SiteFooter />
       </body>
     </html>
   );

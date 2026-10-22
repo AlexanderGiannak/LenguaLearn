@@ -4,6 +4,7 @@ import { getDb, getSql } from "@/lib/db/client";
 import { sentInDevelopment } from "@/lib/email/mailer";
 import { classroom, demoAccount, seat, user } from "@/lib/db/schema";
 import { seedFixtureContent } from "@/test/seed-content";
+import { DEMO_CONFIG } from "./config";
 import {
   cleanupDemoAccounts,
   refillTeacherPool,
@@ -51,7 +52,8 @@ describe("demo accounts", () => {
 
   it("fills the teacher pool, and two visitors at once get different classes", async () => {
     await refillTeacherPool(() => T0, SMALL);
-    expect(await readyTeachers(T0)).toHaveLength(2);
+    const pool = DEMO_CONFIG.teacherPoolSize;
+    expect(await readyTeachers(T0)).toHaveLength(pool);
 
     const [a, b] = await Promise.all([startDemoTeacher(T0, SMALL), startDemoTeacher(T0, SMALL)]);
     expect(a.ok && b.ok).toBe(true);
@@ -59,7 +61,7 @@ describe("demo accounts", () => {
       [a, b].map(async (r) => ((await r.json()) as { user: { id: string } }).user.id),
     );
     expect(new Set(ids).size).toBe(2);
-    expect(await readyTeachers(T0)).toHaveLength(0);
+    expect(await readyTeachers(T0)).toHaveLength(pool - 2);
     const classes = await getDb().select().from(classroom).where(inArray(classroom.teacherId, ids));
     expect(classes).toHaveLength(2);
   }, 120_000);

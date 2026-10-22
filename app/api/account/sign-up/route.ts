@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { signupsOpen } from "@/lib/site/config";
 import { signUp } from "@/lib/auth/accounts";
-import { handle, parse, withCookies } from "@/lib/http/handler";
+import { handle, HttpError, parse, withCookies } from "@/lib/http/handler";
 
 const password = z.string().min(8, "Use at least 8 characters.").max(128);
 const schema = z.discriminatedUnion("role", [
@@ -25,6 +26,8 @@ const schema = z.discriminatedUnion("role", [
 
 export async function POST(request: Request) {
   return handle(request, { roles: "public" }, async ({ body }) => {
+    if (!signupsOpen(process.env))
+      throw new HttpError(403, "Accounts open soon. Meanwhile, try the demo.");
     const res = await signUp(parse(schema, body));
     return withCookies(res, { ok: true });
   });
