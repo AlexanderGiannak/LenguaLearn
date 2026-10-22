@@ -96,7 +96,9 @@ export async function seedDemoClass(opts: {
   const rng = seededRng(seed);
   const db = getDb();
 
-  const email = `demo-teacher-${randomUUID().slice(0, 8)}@example.com`;
+  // A reserved .invalid address: the verification hook skips placeholder addresses, so no
+  // email is attempted (production has no transport for a made-up teacher anyway).
+  const email = `demo-teacher-${randomUUID().slice(0, 8)}@demo.invalid`;
   const password = "demo-teacher-password";
   await signUp({ role: "teacher", name: "Demo Teacher", email, password });
   const [teacher] = await db

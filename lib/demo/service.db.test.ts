@@ -1,6 +1,7 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { getDb, getSql } from "@/lib/db/client";
+import { sentInDevelopment } from "@/lib/email/mailer";
 import { classroom, demoAccount, seat, user } from "@/lib/db/schema";
 import { seedFixtureContent } from "@/test/seed-content";
 import {
@@ -72,6 +73,16 @@ describe("demo accounts", () => {
     expect(d!.claimedAt).toEqual(at(13));
   }, 120_000);
 
+  it("never tries to email a demo teacher", async () => {
+    // Better Auth sends verification mail as a background task, so a failure there would
+    // only log an error; once real email exists it would mail a made-up address.
+    const before = sentInDevelopment.length;
+    const res = await startDemoTeacher(at(13.5), SMALL);
+    expect(res.ok).toBe(true);
+    await new Promise((r) => setTimeout(r, 300));
+    expect(sentInDevelopment.length).toBe(before);
+  }, 120_000);
+
   it("deletes demo accounts a day after they were claimed, with their classes and students", async () => {
     const claimed = await getDb()
       .select({ userId: demoAccount.userId })
@@ -95,14 +106,15 @@ describe("demo accounts", () => {
     const late = await getDb()
       .select({ userId: demoAccount.userId })
       .from(demoAccount)
-      .where(eq(demoAccount.claimedAt, at(13)));
+      .where(inArray(demoAccount.claimedAt, [at(13), at(13.5)]));
+    const lateIds = late.map((l) => l.userId);
     const lateStudents = await getDb()
       .select({ id: seat.studentId })
       .from(seat)
       .innerJoin(classroom, eq(seat.classroomId, classroom.id))
-      .where(eq(classroom.teacherId, late[0]!.userId));
+      .where(inArray(classroom.teacherId, lateIds));
     expect(new Set(left.map((u) => u.id))).toEqual(
-      new Set([late[0]!.userId, ...lateStudents.map((s) => s.id!)]),
+      new Set([...lateIds, ...lateStudents.map((s) => s.id!)]),
     );
 
     // A day after that, the last one goes too.
