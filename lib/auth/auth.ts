@@ -5,6 +5,7 @@ import { username } from "better-auth/plugins";
 import { getDb } from "@/lib/db/client";
 import { account, session, user, verification } from "@/lib/db/schema";
 import { sendEmail } from "@/lib/email/mailer";
+import { signupsOpen } from "@/lib/site/config";
 import { hasAgeConfirmation } from "./age";
 import { authBaseUrl } from "./base-url";
 import { isPlaceholderEmail } from "./identifiers";
@@ -113,6 +114,9 @@ function createAuth() {
           // A Google sign-up (the OAuth callback) needs the 13-or-older confirmation from
           // the sign-up page. The app's own sign-up routes record it themselves.
           before: async (u, ctx) => {
+            // Before opening (lengualearn.com, "Opening soon"), no path may create an
+            // account: sign-up, Google, or a class join. The routes also refuse up front.
+            if (!signupsOpen(process.env)) return false;
             if (!ctx?.path?.startsWith("/callback")) return;
             const cookie = ctx.request?.headers.get("cookie") ?? ctx.headers?.get("cookie") ?? null;
             if (!hasAgeConfirmation(cookie, authSecret())) return false;

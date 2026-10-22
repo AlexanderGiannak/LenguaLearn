@@ -8,9 +8,13 @@ export function isDemoSite(env: Record<string, string | undefined>): boolean {
 
 export const DEMO_CONFIG = {
   /** Teacher demos kept ready, so a visitor rarely waits for one to be built. */
-  teacherPoolSize: 2,
-  /** The class each teacher demo gets: students trained through the real service. */
-  demoClass: { students: 25, days: 7, minutesPerSession: 3 },
+  teacherPoolSize: 3,
+  /**
+   * The class each teacher demo gets: students trained through the real service. Full
+   * sessions of 10 minutes put the keen students on track; others train less, two rush
+   * one session (flagged by the integrity rules), and a few never start.
+   */
+  demoClass: { students: 25, days: 7, minutesPerSession: 10 },
   /** Claimed demo accounts are deleted this long after the visitor took them. */
   claimedTtlMs: 24 * 3_600_000,
   /** An unclaimed pool class goes stale (its "this week" drifts), so it is rebuilt. */

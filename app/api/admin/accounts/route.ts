@@ -2,6 +2,7 @@ import { z } from "zod";
 import { adminDeleteClass, adminDeleteStudent } from "@/lib/account/data";
 import { denyAdminRequest, json, readJsonBody, zodIssues } from "@/lib/admin/route";
 import { fixturesAllowed } from "@/lib/admin/auth";
+import { purgeAllDemoAccounts } from "@/lib/demo/service";
 import { seedDemoClass } from "@/lib/teacher/demo";
 import { purgeScheduledDeletions } from "@/lib/teacher/scope";
 
@@ -16,6 +17,9 @@ const schema = z.discriminatedUnion("action", [
     withStudents: z.boolean().default(true),
   }),
   z.strictObject({ action: z.literal("purge_scheduled") }),
+  // Every demo account (demo_account), with its classes and students: for switching a
+  // site's demo mode off.
+  z.strictObject({ action: z.literal("purge_demo_accounts") }),
   // Demo class for local development and PR previews only (never production).
   z.strictObject({
     action: z.literal("seed_demo_class"),
@@ -36,6 +40,7 @@ export async function POST(request: Request) {
   if (a.action === "delete_student") await adminDeleteStudent(a.id);
   if (a.action === "delete_class") await adminDeleteClass(a.id, a.withStudents);
   if (a.action === "purge_scheduled") return json({ purged: await purgeScheduledDeletions() });
+  if (a.action === "purge_demo_accounts") return json({ purged: await purgeAllDemoAccounts() });
   if (a.action === "seed_demo_class") {
     if (!fixturesAllowed(process.env)) {
       return json({ error: "demo classes are not allowed in this environment" }, 403);
