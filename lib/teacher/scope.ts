@@ -104,16 +104,20 @@ export function teacherScope(teacherId: string) {
   }
 
   return {
+    // A join, not correlated subqueries: inside a sql`` subquery Drizzle writes the outer
+    // column as a bare "id", which then means the seat's id and every count comes out 0.
     listClasses: () =>
       db
         .select({
           id: classroom.id,
           name: classroom.name,
-          seats: sql<number>`(select count(*)::int from ${seat} where ${seat.classroomId} = ${classroom.id})`,
-          joined: sql<number>`(select count(*)::int from ${seat} where ${seat.classroomId} = ${classroom.id} and ${seat.studentId} is not null)`,
+          seats: sql<number>`count(${seat.id})::int`,
+          joined: sql<number>`count(${seat.studentId})::int`,
         })
         .from(classroom)
+        .leftJoin(seat, eq(seat.classroomId, classroom.id))
         .where(eq(classroom.teacherId, teacherId))
+        .groupBy(classroom.id)
         .orderBy(asc(classroom.createdAt)),
 
     getClass: (classId: string) => ownedClass(classId),

@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { link } from "@/app/_components/styles";
 import { Suspense } from "react";
 import { learnerProgress } from "@/lib/train/learner";
 import { learnerPage } from "@/lib/train/page-gate";
@@ -32,15 +34,9 @@ function LineChart({ points }: { points: { day: string; size: number }[] }) {
       role="img"
       aria-label={`Estimated vocabulary from ${points[0]!.size} to ${points.at(-1)!.size} words`}
     >
-      <path d={d} fill="none" strokeWidth="3" className="stroke-ink-900 dark:stroke-ink-100" />
+      <path d={d} fill="none" strokeWidth="3" className="stroke-brand-500" />
       {points.map((p, i) => (
-        <circle
-          key={p.day}
-          cx={x(i)}
-          cy={y(p.size)}
-          r="3"
-          className="fill-ink-900 dark:fill-ink-100"
-        >
+        <circle key={p.day} cx={x(i)} cy={y(p.size)} r="3" className="fill-brand-500">
           <title>{`${p.day}: ${p.size} words`}</title>
         </circle>
       ))}
@@ -54,15 +50,20 @@ async function Progress() {
   const maxMinutes = Math.max(1, ...p.minutesByWeek.map((m) => m.minutes));
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-4 py-10">
-      <h1 className="text-3xl font-semibold tracking-tight">Progress</h1>
+      <div className="flex flex-col gap-3">
+        <Link href="/home" className={`${link} self-start text-sm`}>
+          ← Home
+        </Link>
+        <h1 className="text-3xl font-extrabold tracking-tight">Progress</h1>
+      </div>
       <section aria-labelledby="vocab-h">
-        <h2 id="vocab-h" className="text-xl font-semibold">
+        <h2 id="vocab-h" className="text-xl font-bold">
           Estimated vocabulary
         </h2>
         <LineChart points={p.vocabulary} />
       </section>
       <section aria-labelledby="levels-h">
-        <h2 id="levels-h" className="text-xl font-semibold">
+        <h2 id="levels-h" className="text-xl font-bold">
           Words learned by level
         </h2>
         {p.learnedByLevel.length === 0 ? (
@@ -80,7 +81,7 @@ async function Progress() {
         )}
       </section>
       <section aria-labelledby="minutes-h">
-        <h2 id="minutes-h" className="text-xl font-semibold">
+        <h2 id="minutes-h" className="text-xl font-bold">
           Minutes per week
         </h2>
         <div
@@ -91,7 +92,7 @@ async function Progress() {
           {p.minutesByWeek.map((m) => (
             <div key={m.start} className="flex flex-1 flex-col items-center gap-1">
               <div
-                className="w-full rounded-t bg-ink-800 dark:bg-ink-200"
+                className="w-full rounded-t-md bg-brand-500"
                 style={{
                   height: `${(100 * m.minutes) / maxMinutes}%`,
                   minHeight: m.minutes ? 2 : 0,

@@ -30,7 +30,7 @@ async function Content({ params }: Pick<PageProps<"/teacher/class/[id]/insights"
         </p>
         <PrintButton label="Print word list" />
       </div>
-      <h2 className="hidden text-2xl font-semibold print:block">{c.name}: words to review</h2>
+      <h2 className="hidden text-2xl font-extrabold print:block">{c.name}: words to review</h2>
       {words.length === 0 ? (
         <p className="text-ink-600 dark:text-ink-400">Nothing missed yet.</p>
       ) : (

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
-import { focusRing, muted } from "./styles";
+import { focusRing, link, muted } from "./styles";
 
 export { focusRing, link, muted } from "./styles";
 
@@ -45,9 +45,23 @@ export function ErrorText({ children }: { children: ReactNode }) {
   );
 }
 
-export function Page({ title, children }: { title: string; children: ReactNode }) {
+export function Page({
+  title,
+  back,
+  children,
+}: {
+  title: string;
+  /** A small link above the title, such as back to the learner's home. */
+  back?: { href: string; label: string };
+  children: ReactNode;
+}) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-6 px-4 py-10">
+      {back && (
+        <a href={back.href} className={`${link} -mb-3 self-start text-sm`}>
+          ← {back.label}
+        </a>
+      )}
       <h1 className="text-3xl font-extrabold tracking-tight">{title}</h1>
       {children}
     </main>
