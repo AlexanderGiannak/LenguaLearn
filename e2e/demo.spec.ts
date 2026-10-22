@@ -20,7 +20,16 @@ test("a visitor tries the app as a teacher and lands on a class with a week of d
   await page.goto("/");
   await page.getByRole("button", { name: "Try as a teacher" }).click();
   await expect(page).toHaveURL(/\/teacher$/, { timeout: 150_000 });
+  await expect(page.getByRole("link", { name: /Demo class.*25 of 25 joined/ })).toBeVisible();
   await page.getByRole("link", { name: /Demo class/ }).click();
-  await expect(page.getByRole("table")).toBeVisible();
-  await expect(page.getByText(/of 25/)).toBeVisible();
+  await expect(page).toHaveURL(/\/teacher\/class\/[^/]+$/);
+  // A header row plus one row per student.
+  await expect(page.getByRole("table").getByRole("row")).toHaveCount(26);
+});
+
+test("teacher sign-up on the demo site points to the teacher demo", async ({ page }) => {
+  await page.goto("/sign-up");
+  await page.getByRole("button", { name: "I'm a teacher" }).click();
+  await expect(page.getByRole("status")).toContainText("can't send email yet");
+  await expect(page.getByRole("link", { name: "Try as a teacher" })).toHaveAttribute("href", "/");
 });

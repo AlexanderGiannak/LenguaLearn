@@ -93,7 +93,7 @@ export function WordView({ word }: { word: WordPageData }) {
         {/* 1. Headword with article, part of speech, audio */}
         <header className="flex items-start justify-between gap-4">
           <div>
-            <h1 lang="es" className="text-4xl font-semibold tracking-tight break-words">
+            <h1 lang="es" className="text-4xl font-extrabold tracking-tight break-words">
               {article && <span className={`font-normal ${muted}`}>{article} </span>}
               {lemma.headword}
               {lemma.feminine && (

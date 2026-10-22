@@ -23,7 +23,7 @@ export function PreferencesPanel() {
   }, []);
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-xl font-semibold">On this device</h2>
+      <h2 className="text-xl font-bold">On this device</h2>
       <label className="flex min-h-11 items-center gap-3">
         <input
           type="checkbox"

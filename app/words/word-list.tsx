@@ -51,7 +51,16 @@ export function WordList({ words }: { words: Word[] }) {
       : words;
   }, [q, words]);
 
-  if (words.length === 0) return <p className={muted}>No words yet. Start training to add some.</p>;
+  if (words.length === 0) {
+    return (
+      <div className="card flex flex-col items-start gap-4 p-6">
+        <p className={muted}>No words yet. Start training to add some.</p>
+        <a href="/train" className={`btn btn-primary ${focusRing}`}>
+          Start training
+        </a>
+      </div>
+    );
+  }
   return (
     <>
       <label className="flex flex-col gap-1">

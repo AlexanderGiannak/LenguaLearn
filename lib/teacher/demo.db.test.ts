@@ -24,6 +24,13 @@ afterAll(async () => {
 });
 
 describe("a simulated week for a class of 25", () => {
+  it("lists the class with its seat and joined counts", async () => {
+    const classes = await teacherScope(teacherId).listClasses();
+    expect(classes).toEqual([
+      expect.objectContaining({ id: demo.classId, name: "Demo class", seats: 25, joined: 25 }),
+    ]);
+  });
+
   it("fills the dashboard with a row per seat and a class summary", async () => {
     const d = await teacherScope(teacherId).dashboard(demo.classId, 0, NOW);
     expect(d.rows).toHaveLength(25);

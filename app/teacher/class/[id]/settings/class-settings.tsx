@@ -141,7 +141,7 @@ export function ClassSettings({
       <ErrorText>{error}</ErrorText>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-xl font-semibold">Starting levels</h2>
+        <h2 className="text-xl font-bold">Starting levels</h2>
         <p className={muted}>
           A student&apos;s new words start at this level. Placement sets it when they take the test.
         </p>

@@ -40,7 +40,7 @@ export function SettingsPanel({
   }
 
   return (
-    <Page title="Settings">
+    <Page title="Settings" back={{ href: "/home", label: "Home" }}>
       {needsVerification && (
         <div className="flex flex-col gap-3 rounded-md bg-amber-50 p-4 text-amber-900 dark:bg-amber-950 dark:text-amber-100">
           <p>Confirm your email address to set up classes. Check your inbox for our link.</p>
@@ -60,7 +60,7 @@ export function SettingsPanel({
       )}
 
       <section className="flex flex-col gap-1">
-        <h2 className="text-xl font-semibold">Account</h2>
+        <h2 className="text-xl font-bold">Account</h2>
         <p>
           {role === "student" ? "Handle" : "Name"}: <span className="font-mono">{handle}</span>
         </p>
@@ -71,7 +71,7 @@ export function SettingsPanel({
       <ErrorText>{error}</ErrorText>
 
       <form action={changePassword} className="flex flex-col gap-4">
-        <h2 className="text-xl font-semibold">Change password</h2>
+        <h2 className="text-xl font-bold">Change password</h2>
         <Field
           label="Current password"
           name="current"
@@ -94,7 +94,7 @@ export function SettingsPanel({
 
       {role === "learner" && email && (
         <section className="flex flex-col gap-3">
-          <h2 className="text-xl font-semibold">Teaching</h2>
+          <h2 className="text-xl font-bold">Teaching</h2>
           <p className={muted}>Switch to a teacher account to create classes.</p>
           <Button
             variant="secondary"
@@ -113,7 +113,7 @@ export function SettingsPanel({
 
       {role === "student" && (
         <section className="flex flex-col gap-2">
-          <h2 className="text-xl font-semibold">Classes</h2>
+          <h2 className="text-xl font-bold">Classes</h2>
           <Link href="/join" className={`inline-flex min-h-11 items-center underline ${focusRing}`}>
             Join another class with a code
           </Link>
@@ -121,7 +121,7 @@ export function SettingsPanel({
       )}
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-xl font-semibold">Your data</h2>
+        <h2 className="text-xl font-bold">Your data</h2>
         <a
           href="/api/account/export"
           className={`inline-flex min-h-11 items-center underline ${focusRing}`}
@@ -144,7 +144,7 @@ export function SettingsPanel({
         action={deleteAccount}
         className="flex flex-col gap-4 border-t border-ink-200 pt-6 dark:border-ink-800"
       >
-        <h2 className="text-xl font-semibold">Delete account</h2>
+        <h2 className="text-xl font-bold">Delete account</h2>
         <p className={muted}>
           This deletes your account and all your progress right away. It can&apos;t be undone.
           {role === "teacher" && " Your classes are deleted too."}

@@ -46,7 +46,7 @@ export function ClassList({ classes }: { classes: ClassRow[] }) {
         </ul>
       )}
       <form action={create} className="flex flex-col gap-4 card p-4">
-        <h2 className="text-xl font-semibold">New class</h2>
+        <h2 className="text-xl font-bold">New class</h2>
         <Field
           label="Class name"
           name="name"

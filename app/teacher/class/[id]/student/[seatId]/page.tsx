@@ -36,7 +36,7 @@ async function Content({
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-10">
       <ClassNav classId={id} className={c.name} current="" />
-      <h2 className="text-2xl font-semibold">
+      <h2 className="text-2xl font-extrabold">
         Seat {d.seatNumber} <SeatLabel classId={id} seatId={seatId} fallback={d.handle ?? ""} />
       </h2>
 
@@ -67,7 +67,7 @@ async function Content({
             <div
               key={m.day}
               title={`${m.day}: ${m.minutes} min`}
-              className="flex-1 rounded-t bg-ink-800 dark:bg-ink-200"
+              className="flex-1 rounded-t-md bg-brand-500"
               style={{
                 height: `${(100 * m.minutes) / maxMinutes}%`,
                 minHeight: m.minutes > 0 ? 2 : 0,
