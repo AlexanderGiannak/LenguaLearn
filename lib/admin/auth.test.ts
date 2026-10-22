@@ -53,6 +53,16 @@ describe("fixturesAllowed", () => {
     ["a Railway PR environment", { RAILWAY_ENVIRONMENT_NAME: "LenguaLearn-pr-12" }, true],
     ["Railway production", { RAILWAY_ENVIRONMENT_NAME: "production" }, false],
     ["any other Railway environment", { RAILWAY_ENVIRONMENT_NAME: "staging" }, false],
+    [
+      "production running as the demo site",
+      { RAILWAY_ENVIRONMENT_NAME: "production", DEMO_SITE: "1" },
+      true,
+    ],
+    [
+      "production with demo mode set to anything else",
+      { RAILWAY_ENVIRONMENT_NAME: "production", DEMO_SITE: "true" },
+      false,
+    ],
   ])("%s -> %s", (_label, env, expected) => {
     expect(fixturesAllowed(env)).toBe(expected);
   });

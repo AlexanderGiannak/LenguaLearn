@@ -1,4 +1,5 @@
 import { createHash, timingSafeEqual } from "node:crypto";
+import { isDemoSite } from "@/lib/demo/config";
 
 // The admin API (content import and status changes) is called by scripts on the owner's
 // laptop, not by browsers, so it uses a bearer token instead of a login session. The
@@ -31,10 +32,11 @@ export function isBrowserRequest(request: Request): boolean {
 }
 
 /**
- * Fixture content (AI-written test words) may load locally, in CI, and in Railway PR
- * environments, never in production or any other named environment.
+ * Fixture content (AI-written test words) may load locally, in CI, in Railway PR
+ * environments, and on the demo site (DEMO_SITE=1, which the owner sets on purpose), never
+ * in production or any other named environment.
  */
 export function fixturesAllowed(env: Record<string, string | undefined>): boolean {
   const name = env.RAILWAY_ENVIRONMENT_NAME;
-  return name === undefined || /-pr-\d+$/.test(name);
+  return name === undefined || /-pr-\d+$/.test(name) || isDemoSite(env);
 }

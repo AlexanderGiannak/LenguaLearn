@@ -44,6 +44,9 @@ jobs:
           --health-retries 15
     env:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/lengualearn
+      # Demo mode on, so the browser tests cover the "Try it" buttons. The landing page reads
+      # this at build time.
+      DEMO_SITE: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
