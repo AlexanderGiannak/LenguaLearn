@@ -142,5 +142,11 @@ export async function seedDemoClass(opts: {
       await simulateSession(id, new Date(day.getTime() + i * 60_000), minutesPerSession, p, rng);
     }
   }
-  return { classId: c.id, teacherEmail: email, teacherPassword: password, studentIds: ids };
+  return {
+    classId: c.id,
+    teacherId: teacher!.id,
+    teacherEmail: email,
+    teacherPassword: password,
+    studentIds: ids,
+  };
 }

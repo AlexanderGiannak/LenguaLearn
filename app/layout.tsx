@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Figtree } from "next/font/google";
 import { Suspense } from "react";
+import { DemoBanner } from "./_components/demo-banner";
 import { HeaderBar, SiteHeader } from "./_components/site-header";
 import "./globals.css";
 
@@ -28,6 +29,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         />
       </head>
       <body className="flex min-h-full flex-col">
+        <DemoBanner />
         <Suspense fallback={<HeaderBar />}>
           <SiteHeader />
         </Suspense>

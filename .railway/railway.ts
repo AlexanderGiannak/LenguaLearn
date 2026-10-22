@@ -30,6 +30,8 @@ export default defineRailway(() => {
       DATABASE_URL: db.env.DATABASE_URL,
       // PR environments copy this but use their own generated domain (lib/auth/base-url.ts).
       BETTER_AUTH_URL: "https://lengualearn.com",
+      // Demo site until real users arrive; switch off and wipe the database before the pilot.
+      DEMO_SITE: "1",
       // Set by hand with `railway variables`, never written in source (see .env.example).
       ADMIN_API_TOKEN_HASH: preserve(),
       BETTER_AUTH_SECRET: preserve(),

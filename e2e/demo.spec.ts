@@ -1,0 +1,26 @@
+import { expect, test } from "@playwright/test";
+
+// The demo site's one-click entry (DEMO_SITE=1, set in CI and in local .env.local).
+
+test("a visitor tries the app as a learner in one click", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByText(/^Demo site:/)).toBeVisible();
+  const learner = page.getByRole("button", { name: "Try as a learner" });
+  await expect(learner).toBeDisabled();
+  await page.getByLabel("I am 13 or older.").check();
+  await learner.click();
+  await expect(page.getByRole("heading", { name: "Find your level" })).toBeVisible();
+});
+
+test("a visitor tries the app as a teacher and lands on a class with a week of data", async ({
+  page,
+}) => {
+  // With an empty pool the class is built on the spot: 25 students through a simulated week.
+  test.setTimeout(180_000);
+  await page.goto("/");
+  await page.getByRole("button", { name: "Try as a teacher" }).click();
+  await expect(page).toHaveURL(/\/teacher$/, { timeout: 150_000 });
+  await page.getByRole("link", { name: /Demo class/ }).click();
+  await expect(page.getByRole("table")).toBeVisible();
+  await expect(page.getByText(/of 25/)).toBeVisible();
+});

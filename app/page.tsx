@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { DemoTry } from "./_components/demo-try";
 import { focusRing, link } from "./_components/styles";
+import { isDemoSite } from "@/lib/demo/config";
 
 const features = [
   {
@@ -127,6 +129,11 @@ export default function Home() {
         <div className="flex justify-center">
           <Illustration />
         </div>
+        {isDemoSite(process.env) && (
+          <div className="md:col-span-2">
+            <DemoTry />
+          </div>
+        )}
       </section>
 
       <section className="border-t-2 border-ink-100 bg-ink-50 dark:border-ink-900 dark:bg-ink-950">
