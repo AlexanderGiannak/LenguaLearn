@@ -51,6 +51,9 @@ test("a session from the first new word to the summary", async ({ page }) => {
   await page.goto("/train");
   await page.getByRole("button", { name: "Start training" }).click();
   await expect(page.getByRole("progressbar", { name: "Session time" })).toBeVisible();
+  // Training is full-screen: no site header or footer to wander off through.
+  await expect(page.getByRole("banner")).toHaveCount(0);
+  await expect(page.getByRole("contentinfo")).toHaveCount(0);
 
   // The first word in teaching order is new, so the session opens with its word page
   // (or, for a cognate, a guess-first question).

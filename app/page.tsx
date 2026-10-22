@@ -3,7 +3,7 @@ import { CardGrid, CtaBand, Faq, InlineLink, Steps } from "./_components/marketi
 import { DemoTry } from "./_components/demo-try";
 import { focusRing, link } from "./_components/styles";
 import { isDemoSite } from "@/lib/demo/config";
-import { demoUrl } from "@/lib/site/config";
+import { demoUrl, signupsOpen } from "@/lib/site/config";
 
 /** Decorative: a lesson card with answer choices, one picked right. No real content. */
 function Illustration() {
@@ -117,6 +117,9 @@ const pillars = [
   },
 ];
 
+/** Only asked while accounts are closed. */
+const SIGN_UP_QUESTION = "When can I sign up?";
+
 const faq = [
   {
     q: "Is it really free?",
@@ -145,13 +148,15 @@ const faq = [
     a: "Yes. It's a web app built and tested at Chromebook and phone sizes, and every action works by keyboard and by touch.",
   },
   {
-    q: "When can I sign up?",
+    q: SIGN_UP_QUESTION,
     a: "Soon. The first 500 words come next, each reviewed by hand, and accounts open when they're ready. Until then the demo shows everything working with sample words.",
   },
 ];
 
 export default function Home() {
   const demo = isDemoSite(process.env);
+  // Accounts open: sign-up links. Closed (the real site before opening): the demo instead.
+  const open = signupsOpen(process.env);
   const demoHref = demoUrl(process.env);
   return (
     <main className="flex flex-1 flex-col">
@@ -164,7 +169,7 @@ export default function Home() {
             Short daily sessions, smart reviews that arrive just before you forget, and questions
             that grow with you, from your first words to AP and beyond.
           </p>
-          {demo ? (
+          {open ? (
             <>
               <div className="flex flex-wrap gap-3">
                 <Link
@@ -187,6 +192,11 @@ export default function Home() {
                 <Link href="/student" className={`${link} inline-flex min-h-11 items-center`}>
                   Student sign in
                 </Link>
+                {!demo && (
+                  <a href={demoHref} className={`${link} inline-flex min-h-11 items-center`}>
+                    Try the demo
+                  </a>
+                )}
               </p>
             </>
           ) : (
@@ -241,7 +251,7 @@ export default function Home() {
 
       <section className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pb-14">
         <h2 className="text-3xl font-extrabold tracking-tight">Questions</h2>
-        <Faq items={faq} />
+        <Faq items={open ? faq.filter((f) => f.q !== SIGN_UP_QUESTION) : faq} />
       </section>
 
       {!demo && (

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Figtree } from "next/font/google";
 import { Suspense } from "react";
 import { DemoBanner } from "./_components/demo-banner";
-import { HeaderBar, SiteHeader } from "./_components/site-header";
+import { HeaderBar, HideOnBare, SiteHeader } from "./_components/site-header";
 import { SiteFooter } from "./_components/site-footer";
 import { isDemoSite } from "@/lib/demo/config";
 import { demoUrl } from "@/lib/site/config";
@@ -39,7 +39,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <SiteHeader demoHref={demoHref} />
         </Suspense>
         {children}
-        <SiteFooter />
+        <Suspense fallback={<SiteFooter />}>
+          <HideOnBare>
+            <SiteFooter />
+          </HideOnBare>
+        </Suspense>
       </body>
     </html>
   );

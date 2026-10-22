@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { ReactNode } from "react";
 import { NAV } from "./nav";
 import { focusRing } from "./styles";
 
@@ -42,6 +43,16 @@ export function SiteHeader(props: HeaderProps) {
 }
 
 const navLink = `inline-flex min-h-11 shrink-0 items-center rounded-lg px-3 font-semibold text-ink-600 hover:text-ink-900 dark:text-ink-400 dark:hover:text-ink-100 ${focusRing}`;
+
+/**
+ * Renders its children except on the full-screen routes. Used for the footer, which the
+ * layout wraps in Suspense with the footer itself as the fallback, like the header.
+ */
+export function HideOnBare({ children }: { children: ReactNode }) {
+  const path = usePathname();
+  if (BARE.some((p) => path === p || path.startsWith(`${p}/`))) return null;
+  return children;
+}
 
 export function HeaderBar({ demoHref }: HeaderProps) {
   return (
