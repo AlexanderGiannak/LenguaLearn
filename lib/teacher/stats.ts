@@ -13,6 +13,7 @@ import { toCard } from "@/lib/train/store";
 
 // Per-student numbers for teacher views. Only lib/teacher/scope.ts calls these, with the
 // student IDs it has already scoped to the teacher's class (spec: shared teacher scope).
+// The learner pages call countedMinutesByDay with the learner's own ID.
 //
 // A student in two classes shows the same practice in both: minutes are the student's
 // training, not a class's.
@@ -56,6 +57,40 @@ export async function minutesByStudent(ids: string[], w: Window) {
   for (const a of active) out.get(a.userId)!.activeMs = a.ms;
   for (const f of flagged) out.get(f.userId)!.flaggedMs = f.ms;
   return out;
+}
+
+/**
+ * Counted minutes (active minus flagged) per slice, summed over these students: the
+ * minutes-per-day charts. Slices are consecutive (see weekDays).
+ */
+export async function countedMinutesByDay(ids: string[], slices: Window[]): Promise<number[]> {
+  const out = slices.map(() => 0);
+  if (ids.length === 0 || slices.length === 0) return out;
+  const w = { start: slices[0]!.start, end: slices.at(-1)!.end };
+  const db = getDb();
+  const [active, flagged] = await Promise.all([
+    db
+      .select({ at: activeTime.at, ms: activeTime.ms })
+      .from(activeTime)
+      .where(
+        and(inArray(activeTime.userId, ids), gte(activeTime.at, w.start), lt(activeTime.at, w.end)),
+      ),
+    db
+      .select({ at: answerEvent.serverReceivedAt, ms: answerEvent.activeMs })
+      .from(answerEvent)
+      .innerJoin(answerFlag, eq(answerFlag.answerEventId, answerEvent.id))
+      .where(
+        and(
+          inArray(answerEvent.userId, ids),
+          gte(answerEvent.serverReceivedAt, w.start),
+          lt(answerEvent.serverReceivedAt, w.end),
+        ),
+      ),
+  ]);
+  const slot = (at: Date) => slices.findIndex((s) => at >= s.start && at < s.end);
+  for (const a of active) out[slot(a.at)]! += a.ms;
+  for (const f of flagged) out[slot(f.at)]! -= f.ms;
+  return out.map((ms) => Math.round(Math.max(0, ms) / 6000) / 10);
 }
 
 export async function accuracyByStudent(ids: string[], w: Window) {

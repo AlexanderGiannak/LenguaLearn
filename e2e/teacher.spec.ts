@@ -28,7 +28,8 @@ test("dashboard, student detail, insights and grade export for a class week", as
 
   await page.goto(`/teacher/class/${classId}`);
   const dashboard = page.getByRole("region", { name: "Dashboard" });
-  await expect(dashboard.locator("tbody tr")).toHaveCount(25);
+  const students = dashboard.getByRole("table", { name: "Students" });
+  await expect(students.locator("tbody tr")).toHaveCount(25);
   await expect(dashboard.getByText("Not started").first()).toBeVisible();
   await expect(page.getByText(/passed a review after a gap of at least 7 days/)).toBeVisible();
 
@@ -40,8 +41,8 @@ test("dashboard, student detail, insights and grade export for a class week", as
   );
 
   // Student detail from a status chip.
-  await dashboard.locator("tbody tr").first().getByRole("link").last().click();
-  await expect(page.getByRole("heading", { name: "Minutes per day, last 4 weeks" })).toBeVisible();
+  await students.locator("tbody tr").first().getByRole("link").last().click();
+  await expect(page.getByRole("heading", { name: "Minutes per day" })).toBeVisible();
   await expect(page.getByText("Current level")).toBeVisible();
 
   await page.goto(`/teacher/class/${classId}/insights`);
@@ -72,5 +73,5 @@ test("class settings save, and a focus list can be chosen", async ({ page }) => 
   await page.getByRole("button", { name: "Save settings" }).click();
   await expect(page.getByRole("status")).toHaveText("Saved.");
   await page.goto(`/teacher/class/${classId}`);
-  await expect(page.getByText("60 min")).toBeVisible();
+  await expect(page.getByText("Goal 60 min", { exact: true })).toBeVisible();
 });

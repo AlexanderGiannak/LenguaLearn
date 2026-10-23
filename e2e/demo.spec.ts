@@ -24,7 +24,7 @@ test("a visitor tries the app as a teacher and lands on a class with a week of d
   await page.getByRole("link", { name: /Demo class/ }).click();
   await expect(page).toHaveURL(/\/teacher\/class\/[^/]+$/);
   // A header row plus one row per student.
-  await expect(page.getByRole("table").getByRole("row")).toHaveCount(26);
+  await expect(page.getByRole("table", { name: "Students" }).getByRole("row")).toHaveCount(26);
 });
 
 test("teacher sign-up on the demo site points to the teacher demo", async ({ page }) => {

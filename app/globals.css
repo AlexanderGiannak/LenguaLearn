@@ -58,6 +58,21 @@
   --primary-hover: var(--color-brand-700);
   --primary-edge: var(--color-brand-800);
   --primary-soft: var(--color-brand-50);
+  /* Charts. One series is brand; word stages are an ordinal brand ramp (new -> learned);
+     status colors only ever mean on track / behind / flagged, always with a label. All
+     checked with the data-viz palette validator against the surface of each mode. */
+  --chart-1: var(--color-brand-500);
+  --chart-1-hover: var(--color-brand-600);
+  --chart-wash: rgb(111 92 241 / 0.1);
+  --chart-grid: var(--color-ink-100);
+  --chart-goal: var(--color-ink-500);
+  --stage-new: var(--color-brand-300);
+  --stage-learning: var(--color-brand-500);
+  --stage-learned: var(--color-brand-800);
+  --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-critical: #d03b3b;
+  --status-none: var(--color-ink-300);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -72,6 +87,15 @@
     --primary-hover: var(--color-brand-600);
     --primary-edge: var(--color-brand-700);
     --primary-soft: rgb(111 92 241 / 0.16);
+    --chart-1: var(--color-brand-400);
+    --chart-1-hover: var(--color-brand-300);
+    --chart-wash: rgb(139 124 250 / 0.12);
+    --chart-grid: var(--color-ink-800);
+    --chart-goal: var(--color-ink-400);
+    --stage-new: var(--color-brand-600);
+    --stage-learning: var(--color-brand-400);
+    --stage-learned: var(--color-brand-200);
+    --status-none: var(--color-ink-600);
   }
 }
 
@@ -86,6 +110,15 @@
   --primary-hover: var(--color-brand-600);
   --primary-edge: var(--color-brand-700);
   --primary-soft: rgb(111 92 241 / 0.16);
+  --chart-1: var(--color-brand-400);
+  --chart-1-hover: var(--color-brand-300);
+  --chart-wash: rgb(139 124 250 / 0.12);
+  --chart-grid: var(--color-ink-800);
+  --chart-goal: var(--color-ink-400);
+  --stage-new: var(--color-brand-600);
+  --stage-learning: var(--color-brand-400);
+  --stage-learned: var(--color-brand-200);
+  --status-none: var(--color-ink-600);
 }
 
 body {

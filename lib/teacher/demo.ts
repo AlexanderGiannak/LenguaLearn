@@ -5,6 +5,7 @@ import { generateHandle, studentPlaceholderEmail } from "@/lib/auth/identifiers"
 import { getDb } from "@/lib/db/client";
 import { issuedQuestion, seat, user } from "@/lib/db/schema";
 import { seededRng } from "@/lib/engine/types";
+import { startPlacement } from "@/lib/train/placement";
 import { answerQuestion, chooseIntro, endSession, startSession } from "@/lib/train/service";
 import type { IssuedPayload, Screen } from "@/lib/train/types";
 import { teacherScope } from "./scope";
@@ -172,4 +173,30 @@ export async function seedDemoClass(opts: {
     teacherPassword: password,
     studentIds: ids,
   };
+}
+
+/**
+ * An independent learner who trained on most of the last `days` days, through the real
+ * training service, so the learner pages have history to show. Same environments as the
+ * demo class (never production).
+ */
+export async function seedDemoLearner(opts: { days?: number; now?: Date; seed?: number }) {
+  const { days = 21, now = new Date(), seed = 1 } = opts;
+  const rng = seededRng(seed);
+  const username = `demo-learner-${randomUUID().slice(0, 6)}`;
+  const password = "demo-learner-password";
+  const res = await signUp({ role: "learner", username, password, ageConfirmed: true });
+  const { user: created } = (await res.json()) as { user: { id: string } };
+  await startPlacement(created.id, "beginner", "America/Chicago");
+  // Accuracy climbs as the words settle, like a real first month.
+  const p: Profile = { trainDays: days, accuracy: 0.7, length: 1 };
+  for (let d = days - 1; d >= 0; d--) {
+    // Skips about one day in four, but keeps the last three days for a current streak.
+    if (d > 2 && rng() < 0.25) continue;
+    p.accuracy = 0.7 + 0.2 * (1 - d / days);
+    const start = new Date(now.getTime() - d * 86_400_000 - 3 * 3_600_000);
+    const minutes = 5 + Math.round(rng() * 7);
+    await simulateSession(created.id, start, minutes, p, rng);
+  }
+  return { userId: created.id, username, password };
 }

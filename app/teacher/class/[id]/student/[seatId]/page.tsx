@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { BarList, ChartCard, ColumnChart, StatTile } from "@/app/_components/charts";
 import { ClassNav } from "@/app/teacher/class-nav";
 import { isUuid, orNotFound, teacherPage } from "@/lib/teacher/page-gate";
 import { SeatLabel } from "./seat-label";
@@ -17,6 +18,20 @@ export default function StudentPage({ params }: PageProps<"/teacher/class/[id]/s
 
 const muted = "text-ink-600 dark:text-ink-400";
 
+const short = (iso: string) =>
+  new Date(iso.length === 10 ? `${iso}T12:00:00Z` : iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: iso.length === 10 ? "UTC" : undefined,
+  });
+const long = (day: string) =>
+  new Date(`${day}T12:00:00Z`).toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+
 const REASONS: Record<string, string> = {
   fast: "Answers faster than reading time, mostly wrong",
   same_position: "Same answer position chosen again and again while wrong",
@@ -32,7 +47,8 @@ async function Content({
   const [c, d] = await orNotFound(() =>
     Promise.all([scope.getClass(id), scope.studentDetail(id, seatId)]),
   );
-  const maxMinutes = Math.max(1, ...d.minutesPerDay.map((m) => m.minutes));
+  const total = d.minutesPerDay.reduce((n, m) => n + m.minutes, 0);
+  const daysActive = d.minutesPerDay.filter((m) => m.minutes > 0).length;
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-10">
       <ClassNav classId={id} className={c.name} current="" />
@@ -40,87 +56,72 @@ async function Content({
         Seat {d.seatNumber} <SeatLabel classId={id} seatId={seatId} fallback={d.handle ?? ""} />
       </h2>
 
-      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {[
-          ["Current level", String(d.level)],
-          ["Words learned", String(d.learned)],
-          ["In progress", String(d.inProgress)],
-          ["Handle", d.handle ?? "–"],
-        ].map(([label, v]) => (
-          <div key={label} className="card p-3">
-            <dt className={`text-sm ${muted}`}>{label}</dt>
-            <dd className="text-xl font-semibold">{v}</dd>
-          </div>
-        ))}
+      <dl className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatTile label="Current level" value={d.level} note="Where new words come from" />
+        <StatTile label="Words learned" value={d.learned} note="Right after a week or more" />
+        <StatTile label="In progress" value={d.inProgress} note="Met, not yet learned" />
+        <StatTile
+          label="Minutes, 4 weeks"
+          value={Math.round(total)}
+          note={`${daysActive} ${daysActive === 1 ? "day" : "days"} with practice`}
+        />
       </dl>
 
-      <section aria-labelledby="minutes-h">
-        <h3 id="minutes-h" className="text-lg font-semibold">
-          Minutes per day, last 4 weeks
-        </h3>
-        <div
-          className="mt-3 flex h-32 items-end gap-1"
-          role="img"
-          aria-label={`Minutes per day: ${d.minutesPerDay.map((m) => `${m.day} ${m.minutes}`).join(", ")}`}
-        >
-          {d.minutesPerDay.map((m) => (
-            <div
-              key={m.day}
-              title={`${m.day}: ${m.minutes} min`}
-              className="flex-1 rounded-t-md bg-brand-500"
-              style={{
-                height: `${(100 * m.minutes) / maxMinutes}%`,
-                minHeight: m.minutes > 0 ? 2 : 0,
-              }}
+      <ChartCard title="Minutes per day" subtitle="Last 4 weeks, including flagged time">
+        <ColumnChart
+          label="Minutes per day, last 4 weeks"
+          unit=" min"
+          xLabelEvery={7}
+          emphasis={d.minutesPerDay.at(-1)?.day}
+          data={d.minutesPerDay.map((m) => ({
+            key: m.day,
+            label: short(m.day),
+            value: m.minutes,
+            detail: long(m.day),
+          }))}
+        />
+      </ChartCard>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <ChartCard title="Accuracy by week" subtitle="Answers right on the first try">
+          <ColumnChart
+            label="Accuracy by week"
+            unit="%"
+            height={170}
+            emphasis={d.accuracyByWeek.at(-1)?.start}
+            data={d.accuracyByWeek.map((w) => ({
+              key: w.start,
+              label: short(w.start),
+              value: w.accuracy,
+              detail: `Week of ${short(w.start)}`,
+            }))}
+          />
+        </ChartCard>
+        <ChartCard title="Most-missed words" subtitle="Share of answers missed, all time">
+          {d.mostMissed.length === 0 ? (
+            <p className={muted}>None yet.</p>
+          ) : (
+            <BarList
+              items={d.mostMissed.map((m) => ({
+                key: m.display,
+                label: (
+                  <>
+                    <span lang="es" className="font-semibold">
+                      {m.display}
+                    </span>{" "}
+                    <span className={muted}>{m.gloss}</span>
+                  </>
+                ),
+                value: m.missed / Math.max(1, m.answered),
+                max: 1,
+                valueLabel: `${m.missed} of ${m.answered}`,
+              }))}
             />
-          ))}
-        </div>
-      </section>
+          )}
+        </ChartCard>
+      </div>
 
-      <section aria-labelledby="acc-h">
-        <h3 id="acc-h" className="text-lg font-semibold">
-          Accuracy by week
-        </h3>
-        <ol className="mt-2 flex gap-4">
-          {d.accuracyByWeek.map((w) => (
-            <li key={w.start} className="flex flex-col">
-              <span className={`text-sm ${muted}`}>
-                {new Date(w.start).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-              </span>
-              <span className="text-lg font-semibold">
-                {w.accuracy === null ? "–" : `${w.accuracy}%`}
-              </span>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <section aria-labelledby="missed-h">
-        <h3 id="missed-h" className="text-lg font-semibold">
-          Most-missed words
-        </h3>
-        {d.mostMissed.length === 0 ? (
-          <p className={muted}>None yet.</p>
-        ) : (
-          <ul className="mt-2 divide-y divide-ink-200 dark:divide-ink-800">
-            {d.mostMissed.map((m) => (
-              <li key={m.display} className="flex justify-between py-2">
-                <span>
-                  <span lang="es" className="font-medium">
-                    {m.display}
-                  </span>{" "}
-                  <span className={muted}>{m.gloss}</span>
-                </span>
-                <span className={muted}>
-                  missed {m.missed} of {m.answered}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section aria-labelledby="integrity-h">
+      <section aria-labelledby="integrity-h" className="card p-5">
         <h3 id="integrity-h" className="text-lg font-semibold">
           Integrity events
         </h3>

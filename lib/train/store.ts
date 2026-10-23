@@ -87,6 +87,8 @@ export async function saveProgress(
       senseId,
       bestRecognitionPassDays: memory.bestRecognitionPassDays,
       lastQuestionType: lastType,
+      // The service's clock, so simulated sessions (demo data, tests) date words correctly.
+      introducedAt: now,
       firstLearnedAt: learnedNow,
     })
     .onConflictDoUpdate({
