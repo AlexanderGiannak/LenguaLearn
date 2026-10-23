@@ -95,3 +95,38 @@ export function localDay(date: Date, timeZone: string): string {
 export function daysBetween(start: Date, end: Date): number {
   return (end.getTime() - start.getTime()) / DAY_MS;
 }
+
+/**
+ * The week as seven 24-hour slices from the reset moment, each named by the local day it
+ * mostly covers (for minutes-per-day charts). The last slice ends at the week's end, so a
+ * daylight-saving hour is never lost.
+ */
+export function weekDays(w: { start: Date; end: Date }, timeZone: string) {
+  return Array.from({ length: 7 }, (_, i) => {
+    const start = new Date(w.start.getTime() + i * DAY_MS);
+    const end = i === 6 ? w.end : new Date(w.start.getTime() + (i + 1) * DAY_MS);
+    return { start, end, day: localDay(new Date(start.getTime() + DAY_MS / 2), timeZone) };
+  });
+}
+
+/** The calendar date before a YYYY-MM-DD date. */
+function dayBefore(day: string): string {
+  const d = new Date(`${day}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Days in a row with practice, ending today, or yesterday when today has none yet. Walks
+ * local calendar dates, so a daylight-saving change never repeats or skips a day.
+ */
+export function streakDays(days: Set<string>, now: Date, timeZone: string): number {
+  let day = localDay(now, timeZone);
+  if (!days.has(day)) day = dayBefore(day);
+  let n = 0;
+  while (days.has(day)) {
+    n += 1;
+    day = dayBefore(day);
+  }
+  return n;
+}

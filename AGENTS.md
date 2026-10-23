@@ -95,7 +95,7 @@ throwaway Postgres, the database tests, a build, and Playwright (which seeds the
 |---|---|
 | `docs/SPEC.md` | Product spec (source of truth) |
 | `docs/DECISIONS.md` | Decisions beyond the spec, plus open questions |
-| `app/` | Next.js App Router pages and route handlers. `app/api/health` is the health check; `app/api/admin/` holds the import and status endpoints; `app/word/[id]` is the word page; `app/train` is the training session (client) and `app/api/train/*` its API; `app/join`, `app/student`, `app/sign-in`, `app/sign-up`, `app/teacher` and `app/settings` are the account pages; `app/placement`, `app/home`, `app/words` and `app/progress` are the learner pages; `app/_components` holds shared client components |
+| `app/` | Next.js App Router pages and route handlers. `app/api/health` is the health check; `app/api/admin/` holds the import and status endpoints; `app/word/[id]` is the word page; `app/train` is the training session (client) and `app/api/train/*` its API; `app/join`, `app/student`, `app/sign-in`, `app/sign-up`, `app/teacher` and `app/settings` are the account pages; `app/placement`, `app/home`, `app/words` and `app/progress` are the learner pages; `app/_components` holds shared client components (`charts.tsx`: the SVG charts, stat tiles and chart cards) |
 | `lib/db/` | Drizzle client (`client.ts`, lazy pool) and table definitions (`schema/content.ts` for the content model) |
 | `lib/content/` | Content rules shared by the API and pages: allowed values (`constants.ts`), import validation and loading, the status flow (`status.ts`), and the live-only word page query (`word-page.ts`) |
 | `lib/admin/` | Admin API token check and request helpers |

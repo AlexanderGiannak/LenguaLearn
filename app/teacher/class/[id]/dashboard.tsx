@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { ChartCard, ColumnChart, DotStrip, StackedBar, StatTile } from "@/app/_components/charts";
 import { focusRing, muted } from "@/app/_components/ui";
 import { loadLabels, type Labels } from "@/app/teacher/labels";
 import type { teacherScope } from "@/lib/teacher/scope";
@@ -10,24 +11,48 @@ type Data = Awaited<ReturnType<ReturnType<typeof teacherScope>["dashboard"]>>;
 type Row = Data["rows"][number];
 type SortKey = "seat" | "minutes" | "flagged" | "accuracy" | "learned" | "lastActive" | "status";
 
-const STATUS: Record<string, { label: string; className: string }> = {
+// Status colors mean only these states, and always come with their label.
+const STATUS: Record<string, { label: string; className: string; color: string }> = {
   on_track: {
     label: "On track",
+    color: "var(--status-good)",
     className: "bg-green-100 text-green-900 dark:bg-green-950 dark:text-green-100",
   },
   behind: {
     label: "Behind",
+    color: "var(--status-warning)",
     className: "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-100",
   },
   not_started: {
     label: "Not started",
+    color: "var(--status-none)",
     className: "bg-ink-100 text-ink-800 dark:bg-ink-800 dark:text-ink-100",
   },
   flagged: {
     label: "Flagged",
+    color: "var(--status-critical)",
     className: "bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-100",
   },
 };
+
+const STATUS_ORDER = ["on_track", "behind", "flagged", "not_started"];
+
+const weekday = (day: string) =>
+  new Date(`${day}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" });
+const longDay = (day: string) =>
+  new Date(`${day}T12:00:00Z`).toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+/** Today's date in the class's time zone, as YYYY-MM-DD. */
+const today = (timeZone: string) => new Date().toLocaleDateString("en-CA", { timeZone });
+function span(start: string, end: string) {
+  const f = (iso: string) =>
+    new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return `${f(start)} – ${f(new Date(new Date(end).getTime() - 60_000).toISOString())}`;
+}
 
 function relative(iso: string | null): string {
   if (!iso) return "Never";
@@ -82,6 +107,8 @@ export function Dashboard({ initial }: { initial: Data }) {
   }, [data.rows, sort]);
 
   const goal = data.class.weeklyGoalMinutes;
+  const joined = data.rows.filter((r) => r.joined);
+  const gained = joined.reduce((n, r) => n + r.gained, 0);
   const header = (key: SortKey, label: string) => (
     <th
       scope="col"
@@ -102,22 +129,9 @@ export function Dashboard({ initial }: { initial: Data }) {
   return (
     <section aria-label="Dashboard" className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {[
-            ["On track", `${data.summary.onTrack} of ${data.summary.students}`],
-            [
-              "Median minutes",
-              data.summary.medianMinutes === null ? "–" : `${data.summary.medianMinutes} / ${goal}`,
-            ],
-            ["Class accuracy", data.summary.accuracy === null ? "–" : `${data.summary.accuracy}%`],
-            ["Weekly goal", `${goal} min`],
-          ].map(([label, v]) => (
-            <div key={label} className="card p-3">
-              <dt className={`text-sm ${muted}`}>{label}</dt>
-              <dd className="text-xl font-semibold">{v}</dd>
-            </div>
-          ))}
-        </dl>
+        <p className={muted}>
+          {span(data.week.start, data.week.end)} · goal {goal} minutes
+        </p>
         <label className="flex flex-col gap-1">
           <span className={`text-sm ${muted}`}>Week</span>
           <select
@@ -134,8 +148,73 @@ export function Dashboard({ initial }: { initial: Data }) {
         </label>
       </div>
 
+      <dl className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatTile
+          label="On track"
+          value={`${data.summary.onTrack} of ${data.summary.students}`}
+          note="Keeping pace with the goal"
+        />
+        <StatTile
+          label="Median minutes"
+          value={data.summary.medianMinutes === null ? "–" : data.summary.medianMinutes}
+          note={`Goal ${goal} min`}
+        />
+        <StatTile
+          label="Class accuracy"
+          value={data.summary.accuracy === null ? "–" : `${data.summary.accuracy}%`}
+          note="Right on the first try"
+        />
+        <StatTile label="Words learned" value={gained} note="New this week, whole class" />
+      </dl>
+
+      <div className="grid gap-6 lg:grid-cols-5">
+        <ChartCard
+          className="lg:col-span-3"
+          title="Minutes by student"
+          subtitle="Each dot is one student; hover for the seat"
+        >
+          <StackedBar
+            label="Students by status"
+            segments={STATUS_ORDER.map((k) => ({
+              key: k,
+              label: STATUS[k]!.label,
+              value: joined.filter((r) => r.status === k).length,
+              color: STATUS[k]!.color,
+            }))}
+          />
+          <DotStrip
+            label="Minutes this week, one dot per student"
+            unit=" min"
+            goal={{ value: goal, label: `Goal ${goal}` }}
+            dots={joined.map((r) => ({
+              key: r.seatId,
+              value: r.minutes,
+              color: STATUS[r.status]!.color,
+              title: `Seat ${r.seatNumber} ${labels[r.seatId] ?? r.handle} · ${STATUS[r.status]!.label}`,
+            }))}
+          />
+        </ChartCard>
+        <ChartCard
+          className="lg:col-span-2"
+          title="Class minutes per day"
+          subtitle="All students together"
+        >
+          <ColumnChart
+            label="Class minutes per day"
+            unit=" min"
+            emphasis={data.week.offset === 0 ? today(data.class.timeZone) : undefined}
+            data={data.byDay.map((d) => ({
+              key: d.day,
+              label: weekday(d.day),
+              value: d.minutes,
+              detail: longDay(d.day),
+            }))}
+          />
+        </ChartCard>
+      </div>
+
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px] text-left">
+        <table aria-label="Students" className="w-full min-w-[720px] text-left">
           <thead className={`text-sm ${muted}`}>
             <tr>
               {header("seat", "Seat")}

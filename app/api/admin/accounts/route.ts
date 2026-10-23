@@ -3,7 +3,7 @@ import { adminDeleteClass, adminDeleteStudent } from "@/lib/account/data";
 import { denyAdminRequest, json, readJsonBody, zodIssues } from "@/lib/admin/route";
 import { fixturesAllowed } from "@/lib/admin/auth";
 import { purgeAllDemoAccounts } from "@/lib/demo/service";
-import { seedDemoClass } from "@/lib/teacher/demo";
+import { seedDemoClass, seedDemoLearner } from "@/lib/teacher/demo";
 import { purgeScheduledDeletions } from "@/lib/teacher/scope";
 
 // District deletion requests and the scheduled purge (spec: Deletion and export). Admin
@@ -25,6 +25,11 @@ const schema = z.discriminatedUnion("action", [
     action: z.literal("seed_demo_class"),
     students: z.int().min(1).max(40).default(25),
     days: z.int().min(1).max(28).default(7),
+  }),
+  // A learner with a few weeks of practice, same environments as the demo class.
+  z.strictObject({
+    action: z.literal("seed_demo_learner"),
+    days: z.int().min(1).max(28).default(21),
   }),
 ]);
 
@@ -51,6 +56,13 @@ export async function POST(request: Request) {
       teacherEmail: demo.teacherEmail,
       teacherPassword: demo.teacherPassword,
     });
+  }
+  if (a.action === "seed_demo_learner") {
+    if (!fixturesAllowed(process.env)) {
+      return json({ error: "demo learners are not allowed in this environment" }, 403);
+    }
+    const demo = await seedDemoLearner({ days: a.days });
+    return json({ username: demo.username, password: demo.password });
   }
   return json({ ok: true });
 }

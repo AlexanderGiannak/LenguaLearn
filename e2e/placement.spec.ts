@@ -38,7 +38,7 @@ test("the learner home is one click from the level page", async ({ page }) => {
   await signUpThroughForm(page);
   await page.getByRole("button", { name: "I'm a total beginner" }).click();
   await page.getByRole("link", { name: "Go to your home page" }).click();
-  await expect(page.getByText(/You know about [\d,]+ Spanish words/)).toBeVisible();
+  await expect(page.getByText("Spanish words you know")).toBeVisible();
   await expect(page.getByRole("link", { name: "My words" })).toBeVisible();
 });
 

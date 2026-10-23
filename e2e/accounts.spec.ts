@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { signUpTeacher } from "./helpers";
+import { signUpLearner, signUpTeacher } from "./helpers";
 
 test("training needs an account", async ({ page }) => {
   await page.goto("/train");
@@ -96,4 +96,17 @@ test("name labels never leave the browser", async ({ page }) => {
     expect(all).not.toContain(encodeURIComponent(label));
   }
   expect(sent.length).toBeGreaterThan(3);
+});
+
+test("the header follows the session: My home when signed in, back after signing out", async ({
+  page,
+}) => {
+  await signUpLearner(page);
+  await page.goto("/home");
+  const header = page.getByRole("banner");
+  await expect(header.getByRole("link", { name: "My home" })).toBeVisible();
+  await page.goto("/settings");
+  await page.getByRole("button", { name: "Sign out" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(header.getByRole("link", { name: "My home" })).toHaveCount(0);
 });

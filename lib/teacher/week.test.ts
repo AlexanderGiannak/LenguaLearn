@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { localDay, weekWindow, zonedTimeToUtc } from "./week";
+import { localDay, streakDays, weekDays, weekWindow, zonedTimeToUtc } from "./week";
 
 const CHICAGO = "America/Chicago";
 const sundayNight = { resetDay: 0, resetTime: "23:59", timeZone: CHICAGO };
@@ -62,5 +62,58 @@ describe("localDay", () => {
   it("gives the calendar day in the class time zone", () => {
     expect(localDay(new Date("2026-10-21T03:00:00Z"), CHICAGO)).toBe("2026-10-20");
     expect(localDay(new Date("2026-10-21T17:00:00Z"), CHICAGO)).toBe("2026-10-21");
+  });
+});
+
+describe("weekDays", () => {
+  it("splits a week into seven 24-hour slices named by their local day", () => {
+    const w = weekWindow(new Date("2026-10-21T17:00:00Z"), sundayNight);
+    const days = weekDays(w, CHICAGO);
+    expect(days.map((d) => d.day)).toEqual([
+      "2026-10-19",
+      "2026-10-20",
+      "2026-10-21",
+      "2026-10-22",
+      "2026-10-23",
+      "2026-10-24",
+      "2026-10-25",
+    ]);
+    expect(days[0]!.start).toEqual(w.start);
+    expect(days[6]!.end).toEqual(w.end);
+  });
+
+  it("covers the whole week across the daylight-saving change", () => {
+    // The week of 2 November 2026 ends an hour later in UTC than it starts.
+    const w = weekWindow(new Date("2026-11-04T17:00:00Z"), sundayNight);
+    const days = weekDays(w, CHICAGO);
+    expect(days[6]!.end).toEqual(w.end);
+    expect(days.map((d) => d.day)[0]).toBe("2026-11-02");
+  });
+});
+
+describe("streakDays", () => {
+  const now = new Date("2026-10-21T17:00:00Z"); // Wednesday, Chicago
+  it("counts days in a row ending today", () => {
+    const days = new Set(["2026-10-19", "2026-10-20", "2026-10-21", "2026-10-17"]);
+    expect(streakDays(days, now, CHICAGO)).toBe(3);
+  });
+  it("keeps yesterday's streak alive until today is over", () => {
+    expect(streakDays(new Set(["2026-10-19", "2026-10-20"]), now, CHICAGO)).toBe(2);
+  });
+  it("counts each local date once across the fall-back change", () => {
+    // 23:30 on Sunday 1 November 2026 in Chicago, the day the clocks went back.
+    const late = new Date("2026-11-02T05:30:00Z");
+    const days = new Set(["2026-10-30", "2026-10-31", "2026-11-01"]);
+    expect(streakDays(days, late, CHICAGO)).toBe(3);
+  });
+  it("skips no local date across the spring-forward change", () => {
+    // 00:30 on Monday 9 March 2026 in Chicago, the day after the clocks went forward.
+    const early = new Date("2026-03-09T05:30:00Z");
+    const days = new Set(["2026-03-07", "2026-03-08", "2026-03-09"]);
+    expect(streakDays(days, early, CHICAGO)).toBe(3);
+  });
+  it("is zero after a missed day", () => {
+    expect(streakDays(new Set(["2026-10-19"]), now, CHICAGO)).toBe(0);
+    expect(streakDays(new Set(), now, CHICAGO)).toBe(0);
   });
 });

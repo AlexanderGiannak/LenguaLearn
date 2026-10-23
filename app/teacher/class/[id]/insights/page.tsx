@@ -51,7 +51,24 @@ async function Content({ params }: Pick<PageProps<"/teacher/class/[id]/insights"
                 </td>
                 <td className="py-2 pr-3">{w.gloss}</td>
                 <td className="py-2 pr-3 print:hidden">
-                  {w.missed} of {w.answered}
+                  <span className="flex items-center gap-2">
+                    {/* Share missed, as a short bar; the numbers beside it carry the value. */}
+                    <span
+                      aria-hidden="true"
+                      className="h-2.5 w-20 rounded-[3px] bg-ink-100 dark:bg-ink-800"
+                    >
+                      <span
+                        className="block h-full rounded-[3px]"
+                        style={{
+                          width: `${(100 * w.missed) / Math.max(1, w.answered)}%`,
+                          background: "var(--chart-1)",
+                        }}
+                      />
+                    </span>
+                    <span className="tabular-nums">
+                      {w.missed} of {w.answered}
+                    </span>
+                  </span>
                 </td>
                 <td className="py-2 print:hidden">{w.topWrongAnswer ?? "–"}</td>
               </tr>

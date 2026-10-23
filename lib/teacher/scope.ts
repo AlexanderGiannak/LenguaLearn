@@ -8,6 +8,7 @@ import { percentOfGoal, seatStatus, suggestedGrade, type GradeFormula } from "./
 import {
   abilityByStudent,
   accuracyByStudent,
+  countedMinutesByDay,
   integrityEvents,
   lastActiveByStudent,
   minutesByStudent,
@@ -15,7 +16,7 @@ import {
   sessionsForStudent,
   wordsByStudent,
 } from "./stats";
-import { daysBetween, localDay, weekWindow } from "./week";
+import { daysBetween, localDay, weekDays, weekWindow } from "./week";
 
 // The one place teacher data is read or changed (spec: "Every teacher query is scoped by
 // teacher ID in one shared helper"). Every function takes the teacher's ID first and only
@@ -233,12 +234,14 @@ export function teacherScope(teacherId: string) {
       const week = weekWindow(now, weekSettings(c), weekOffset);
       const seats = await seatStudents(classId);
       const ids = seats.flatMap((s) => (s.studentId ? [s.studentId] : []));
-      const [minutes, accuracy, lastActive, words, profiles] = await Promise.all([
+      const slices = weekDays(week, c.timeZone);
+      const [minutes, accuracy, lastActive, words, profiles, perDay] = await Promise.all([
         minutesByStudent(ids, week),
         accuracyByStudent(ids, week),
         lastActiveByStudent(ids),
         wordsByStudent(ids, now, week),
         abilityByStudent(ids),
+        countedMinutesByDay(ids, slices),
       ]);
       const elapsed = Math.min(
         1,
@@ -285,6 +288,8 @@ export function teacherScope(teacherId: string) {
           timeZone: c.timeZone,
         },
         week: { start: week.start.toISOString(), end: week.end.toISOString(), offset: weekOffset },
+        // Class total of counted minutes per day of this week.
+        byDay: slices.map((d, i) => ({ day: d.day, minutes: perDay[i]! })),
         summary: {
           students: joined.length,
           onTrack: joined.filter((r) => r.status === "on_track").length,

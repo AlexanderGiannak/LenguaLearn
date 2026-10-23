@@ -12,12 +12,15 @@ import {
 } from "@/lib/db/schema";
 import { estimateVocabularySize } from "@/lib/engine/ability";
 import { isLearned, recall } from "@/lib/engine/cards";
-import { localDay, weekWindow, type WeekSettings } from "@/lib/teacher/week";
+import { countedMinutesByDay } from "@/lib/teacher/stats";
+import { localDay, streakDays, weekDays, weekWindow, type WeekSettings } from "@/lib/teacher/week";
 import { getTrainingContent } from "./content";
 import { getProfile, toCard } from "./store";
 
 // A learner's own numbers (spec: Student experience): home, progress and My words. These
 // read only the signed-in learner's data.
+
+const DAY_MS = 86_400_000;
 
 async function weekSettingsFor(userId: string) {
   const db = getDb();
@@ -114,7 +117,8 @@ export async function learnerHome(userId: string, now = new Date()) {
   const { week, goal, inClass, profile } = await weekSettingsFor(userId);
   const w = weekWindow(now, week);
   const db = getDb();
-  const [minutes, [acc], days, vocabulary] = await Promise.all([
+  const slices = weekDays(w, week.timeZone);
+  const [minutes, [acc], days, vocabulary, perDay, recentDays, trend, words] = await Promise.all([
     countedMinutes(userId, w),
     db
       .select({
@@ -137,7 +141,25 @@ export async function learnerHome(userId: string, now = new Date()) {
         and(eq(activeTime.userId, userId), gte(activeTime.at, w.start), lt(activeTime.at, w.end)),
       ),
     vocabularySize(userId, now),
+    countedMinutesByDay([userId], slices),
+    db
+      .selectDistinct({ at: activeTime.at })
+      .from(activeTime)
+      .where(
+        and(
+          eq(activeTime.userId, userId),
+          gte(activeTime.at, new Date(now.getTime() - 120 * DAY_MS)),
+        ),
+      ),
+    db
+      .select({ size: vocabSnapshot.size })
+      .from(vocabSnapshot)
+      .where(eq(vocabSnapshot.userId, userId))
+      .orderBy(desc(vocabSnapshot.day))
+      .limit(14),
+    myWords(userId, now),
   ]);
+  const today = localDay(now, week.timeZone);
   return {
     goalMinutes: goal,
     goalEditable: !inClass,
@@ -146,11 +168,24 @@ export async function learnerHome(userId: string, now = new Date()) {
     daysTrained: new Set(days.map((d) => localDay(d.at, week.timeZone))).size,
     vocabulary,
     startLevel: profile.startLevel,
+    week: slices.map((d, i) => ({ day: d.day, minutes: perDay[i]!, today: d.day === today })),
+    streak: streakDays(
+      new Set(recentDays.map((d) => localDay(d.at, week.timeZone))),
+      now,
+      week.timeZone,
+    ),
+    vocabularyTrend: trend.map((t) => t.size).reverse(),
+    words: {
+      new: words.filter((x) => x.stage === "new").length,
+      learning: words.filter((x) => x.stage === "learning").length,
+      learned: words.filter((x) => x.stage === "learned").length,
+      due: words.filter((x) => x.state === "due").length,
+    },
   };
 }
 
 export async function learnerProgress(userId: string, now = new Date()) {
-  const { week } = await weekSettingsFor(userId);
+  const { week, goal } = await weekSettingsFor(userId);
   const db = getDb();
   const content = await getTrainingContent();
   const [snapshots, rows] = await Promise.all([
@@ -178,12 +213,32 @@ export async function learnerProgress(userId: string, now = new Date()) {
   const weeks = [];
   for (let o = -7; o <= 0; o++) {
     const w = weekWindow(now, week, o);
+    const [[acc], minutes] = await Promise.all([
+      db
+        .select({
+          answered: sql<number>`count(*)::int`,
+          correct: sql<number>`count(*) filter (where ${answerEvent.correct})::int`,
+        })
+        .from(answerEvent)
+        .where(
+          and(
+            eq(answerEvent.userId, userId),
+            eq(answerEvent.isPretest, false),
+            gte(answerEvent.serverReceivedAt, w.start),
+            lt(answerEvent.serverReceivedAt, w.end),
+          ),
+        ),
+      countedMinutes(userId, w),
+    ]);
     weeks.push({
       start: w.start.toISOString(),
-      minutes: Math.round((await countedMinutes(userId, w)) * 10) / 10,
+      minutes: Math.round(minutes * 10) / 10,
+      accuracy: acc!.answered ? Math.round((100 * acc!.correct) / acc!.answered) : null,
     });
   }
   return {
+    goalMinutes: goal,
+    studied: rows.length,
     vocabulary: snapshots.map((s) => ({ day: s.day, size: s.size })),
     learnedByLevel: [...perLevel]
       .sort((a, b) => a[0] - b[0])
@@ -206,19 +261,20 @@ export async function myWords(userId: string, now = new Date()) {
       bestRecognitionPassDays: r.bestRecognitionPassDays,
     };
     const due = [r.recognition, r.production].some((c) => c && c.due.getTime() <= now.getTime());
-    const state: WordState = due
-      ? "due"
-      : isLearned(memory, now)
-        ? "learned"
-        : now.getTime() - r.introducedAt.getTime() < 86_400_000
-          ? "new"
-          : "learning";
+    // Stage ignores whether a review is due: new, then learning, then learned.
+    const stage: Exclude<WordState, "due"> = isLearned(memory, now)
+      ? "learned"
+      : now.getTime() - r.introducedAt.getTime() < DAY_MS
+        ? "new"
+        : "learning";
+    const state: WordState = due ? "due" : stage;
     return [
       {
         senseId: r.senseId,
         display: core.display,
         gloss: core.gloss,
         state,
+        stage,
         recognition: Math.round(100 * recall(r.recognition, now)),
         production: r.production ? Math.round(100 * recall(r.production, now)) : 0,
       },

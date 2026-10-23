@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { NAV } from "./nav";
 import { focusRing } from "./styles";
 
@@ -54,7 +54,31 @@ export function HideOnBare({ children }: { children: ReactNode }) {
   return children;
 }
 
+/**
+ * Where a signed-in visitor's home is, or null. Asked from the browser because the header
+ * is part of the static shell; the session cookie is HTTP-only. Signing in, signing out and
+ * deleting an account all end in a full page load, so asking once per load is enough.
+ */
+function useHomeHref(): string | null {
+  const [home, setHome] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    fetch("/api/auth/get-session")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((s: { user?: { role?: string } } | null) => {
+        if (!live) return;
+        setHome(s?.user ? (s.user.role === "teacher" ? "/teacher" : "/home") : null);
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, []);
+  return home;
+}
+
 export function HeaderBar({ demoHref }: HeaderProps) {
+  const home = useHomeHref();
   return (
     <header className="border-b-2 border-ink-100 print:hidden dark:border-ink-900">
       <div className="mx-auto flex h-16 w-full max-w-5xl items-center gap-2 px-4">
@@ -72,7 +96,11 @@ export function HeaderBar({ demoHref }: HeaderProps) {
             </Link>
           ))}
         </nav>
-        {demoHref ? (
+        {home ? (
+          <Link href={home} className={`btn btn-secondary min-h-11 px-4 ${focusRing}`}>
+            My home
+          </Link>
+        ) : demoHref ? (
           <a href={demoHref} className={`btn btn-primary min-h-11 px-4 ${focusRing}`}>
             Try the demo
           </a>

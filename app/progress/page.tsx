@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { link } from "@/app/_components/styles";
 import { Suspense } from "react";
+import { BarList, ChartCard, ColumnChart, LineChart, StatTile } from "@/app/_components/charts";
+import { link, muted } from "@/app/_components/styles";
 import { learnerProgress } from "@/lib/train/learner";
 import { learnerPage } from "@/lib/train/page-gate";
 
@@ -15,96 +16,116 @@ export default function ProgressPage() {
   );
 }
 
-const muted = "text-ink-600 dark:text-ink-400";
-
-function LineChart({ points }: { points: { day: string; size: number }[] }) {
-  if (points.length < 2) return <p className={muted}>The chart appears after a few sessions.</p>;
-  const w = 600;
-  const h = 200;
-  const max = Math.max(...points.map((p) => p.size), 10);
-  const x = (i: number) => (i / (points.length - 1)) * (w - 20) + 10;
-  const y = (v: number) => h - 10 - (v / max) * (h - 30);
-  const d = points
-    .map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.size).toFixed(1)}`)
-    .join(" ");
-  return (
-    <svg
-      viewBox={`0 0 ${w} ${h}`}
-      className="w-full"
-      role="img"
-      aria-label={`Estimated vocabulary from ${points[0]!.size} to ${points.at(-1)!.size} words`}
-    >
-      <path d={d} fill="none" strokeWidth="3" className="stroke-brand-500" />
-      {points.map((p, i) => (
-        <circle key={p.day} cx={x(i)} cy={y(p.size)} r="3" className="fill-brand-500">
-          <title>{`${p.day}: ${p.size} words`}</title>
-        </circle>
-      ))}
-    </svg>
-  );
-}
+const short = (iso: string) =>
+  new Date(iso.length === 10 ? `${iso}T12:00:00Z` : iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: iso.length === 10 ? "UTC" : undefined,
+  });
 
 async function Progress() {
   const u = await learnerPage("/progress");
   const p = await learnerProgress(u.id);
-  const maxMinutes = Math.max(1, ...p.minutesByWeek.map((m) => m.minutes));
+  const learned = p.learnedByLevel.reduce((n, l) => n + l.words, 0);
+  const vocabulary = p.vocabulary.at(-1)?.size;
+  const first = p.vocabulary[0]?.size;
+  const thisWeek = p.minutesByWeek.at(-1)!;
+  const maxLevel = Math.max(1, ...p.learnedByLevel.map((l) => l.words));
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-4 py-10">
+    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-4 py-10">
       <div className="flex flex-col gap-3">
         <Link href="/home" className={`${link} self-start text-sm`}>
           ← Home
         </Link>
         <h1 className="text-3xl font-extrabold tracking-tight">Progress</h1>
       </div>
-      <section aria-labelledby="vocab-h">
-        <h2 id="vocab-h" className="text-xl font-bold">
-          Estimated vocabulary
-        </h2>
-        <LineChart points={p.vocabulary} />
-      </section>
-      <section aria-labelledby="levels-h">
-        <h2 id="levels-h" className="text-xl font-bold">
-          Words learned by level
-        </h2>
+
+      <dl className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatTile
+          label="Vocabulary"
+          value={vocabulary === undefined ? "–" : `~${vocabulary.toLocaleString("en-US")}`}
+          note={
+            vocabulary !== undefined && first !== undefined && vocabulary > first
+              ? `+${vocabulary - first} since you started`
+              : "Spanish words you know"
+          }
+        />
+        <StatTile label="Words learned" value={learned} note="Right after a week or more" />
+        <StatTile label="Words studied" value={p.studied} note="Met in training so far" />
+        <StatTile
+          label="This week"
+          value={`${Math.round(thisWeek.minutes)} min`}
+          note={`Goal ${p.goalMinutes} min`}
+        />
+      </dl>
+
+      <ChartCard
+        title="Estimated vocabulary"
+        subtitle="How many Spanish words you know, updated after each session"
+      >
+        <LineChart
+          label="Estimated vocabulary by day"
+          unit=" words"
+          data={p.vocabulary.map((v) => ({
+            key: v.day,
+            label: short(v.day),
+            value: v.size,
+          }))}
+        />
+      </ChartCard>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <ChartCard title="Minutes per week" subtitle="Attentive practice, last 8 weeks">
+          <ColumnChart
+            label="Minutes per week"
+            unit=" min"
+            goal={{ value: p.goalMinutes, label: `Goal ${p.goalMinutes}` }}
+            emphasis={thisWeek.start}
+            xLabelEvery={2}
+            data={p.minutesByWeek.map((m) => ({
+              key: m.start,
+              label: short(m.start),
+              value: m.minutes,
+              detail: `Week of ${short(m.start)}`,
+            }))}
+          />
+        </ChartCard>
+        <ChartCard title="Accuracy per week" subtitle="Answers right on the first try">
+          <LineChart
+            label="Accuracy per week"
+            unit="%"
+            domain={[0, 100]}
+            height={180}
+            data={p.minutesByWeek.map((m) => ({
+              key: m.start,
+              label: short(m.start),
+              value: m.accuracy,
+              detail: `Week of ${short(m.start)}`,
+            }))}
+          />
+        </ChartCard>
+      </div>
+
+      <ChartCard
+        title="Words learned by level"
+        subtitle="Level 1 holds the most common words; each level up is rarer"
+      >
         {p.learnedByLevel.length === 0 ? (
           <p className={muted}>
             None yet. A word counts as learned after a successful review at least 7 days later.
           </p>
         ) : (
-          <ul className="mt-2">
-            {p.learnedByLevel.map((l) => (
-              <li key={l.level}>
-                Level {l.level}: {l.words}
-              </li>
-            ))}
-          </ul>
+          <BarList
+            items={p.learnedByLevel.map((l) => ({
+              key: String(l.level),
+              label: `Level ${l.level}`,
+              value: l.words,
+              max: maxLevel,
+              valueLabel: `${l.words} ${l.words === 1 ? "word" : "words"}`,
+            }))}
+          />
         )}
-      </section>
-      <section aria-labelledby="minutes-h">
-        <h2 id="minutes-h" className="text-xl font-bold">
-          Minutes per week
-        </h2>
-        <div
-          className="mt-3 flex h-40 items-end gap-2"
-          role="img"
-          aria-label={p.minutesByWeek.map((m) => `${m.minutes} minutes`).join(", ")}
-        >
-          {p.minutesByWeek.map((m) => (
-            <div key={m.start} className="flex flex-1 flex-col items-center gap-1">
-              <div
-                className="w-full rounded-t-md bg-brand-500"
-                style={{
-                  height: `${(100 * m.minutes) / maxMinutes}%`,
-                  minHeight: m.minutes ? 2 : 0,
-                }}
-              />
-              <span className={`text-xs ${muted}`}>
-                {new Date(m.start).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
+      </ChartCard>
     </main>
   );
 }
