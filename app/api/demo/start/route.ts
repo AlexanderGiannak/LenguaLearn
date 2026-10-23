@@ -1,13 +1,14 @@
 import { after } from "next/server";
 import { z } from "zod";
 import { deviceCookieHeader, requestContext } from "@/lib/auth/request";
-import { isDemoSite } from "@/lib/demo/config";
+import { demoPrebuild, isDemoSite } from "@/lib/demo/config";
 import { DemoLimits } from "@/lib/demo/limits";
 import {
   cleanupDemoAccounts,
-  refillTeacherPool,
+  refillDemoPools,
   startDemoLearner,
   startDemoTeacher,
+  startFreshDemoLearner,
 } from "@/lib/demo/service";
 import { handle, HttpError, json, parse, withCookies } from "@/lib/http/handler";
 
@@ -18,6 +19,8 @@ const schema = z.discriminatedUnion("role", [
   z.strictObject({
     role: z.literal("learner"),
     ageConfirmed: z.literal(true, "You must be 13 or older to try it."),
+    /** A brand-new learner who takes the level check, instead of one with weeks of history. */
+    fresh: z.boolean().optional(),
   }),
   z.strictObject({ role: z.literal("teacher") }),
 ]);
@@ -34,12 +37,19 @@ export async function POST(request: Request) {
       throw new HttpError(429, "The demo is busy. Try again in a little while.");
     }
 
-    const res = input.role === "teacher" ? await startDemoTeacher() : await startDemoLearner();
+    const fresh = input.role === "learner" && input.fresh === true;
+    const res =
+      input.role === "teacher"
+        ? await startDemoTeacher()
+        : fresh
+          ? await startFreshDemoLearner()
+          : await startDemoLearner();
     // Housekeeping after the visitor has their reply: expire old demos, rebuild the pool.
     after(async () => {
       await cleanupDemoAccounts();
-      await refillTeacherPool();
+      if (demoPrebuild(process.env)) await refillDemoPools();
     });
-    return withCookies(res, { next: input.role === "teacher" ? "/teacher" : "/placement" });
+    const next = input.role === "teacher" ? "/teacher" : fresh ? "/placement" : "/home";
+    return withCookies(res, { next });
   });
 }

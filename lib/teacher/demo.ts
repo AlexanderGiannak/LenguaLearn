@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { signUp } from "@/lib/auth/accounts";
 import { generateHandle, studentPlaceholderEmail } from "@/lib/auth/identifiers";
@@ -8,8 +8,8 @@ import { seededRng } from "@/lib/engine/types";
 import { startPlacement } from "@/lib/train/placement";
 import { answerQuestion, chooseIntro, endSession, startSession } from "@/lib/train/service";
 import type { IssuedPayload, Screen } from "@/lib/train/types";
-import { teacherScope } from "./scope";
-import { localDay } from "./week";
+import { teacherScope, weekSettings } from "./scope";
+import { localDay, weekWindow } from "./week";
 
 // A demo class for local development, PR previews and the Phase 5 test (spec: "run a fake
 // class of 25 seeded students through a simulated week"). Students train through the real
@@ -33,6 +33,20 @@ function profileFor(i: number, n: number, rng: () => number): Profile {
   if (share < 0.8) return { trainDays: 2, accuracy: 0.6 + rng() * 0.15, length: 0.5 };
   if (share < 0.88) return { trainDays: 3, accuracy: 0.8, length: 0.6, rushes: true };
   return { trainDays: 0, accuracy: 0, length: 0 };
+}
+
+/** Students simulated at once: leaves most of the pool of 10 connections for visitors. */
+const SEED_CONCURRENCY = 4;
+
+async function inParallel<T>(items: T[], limit: number, fn: (item: T, i: number) => Promise<void>) {
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const i = next++;
+      await fn(items[i]!, i);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
 }
 
 async function correctAnswer(questionId: string) {
@@ -143,29 +157,64 @@ export async function seedDemoClass(opts: {
     });
     await db
       .update(seat)
-      .set({ studentId: id, code: null, codeKind: null, joinedAt: now })
+      .set({
+        studentId: id,
+        code: null,
+        codeKind: null,
+        joinedAt: new Date(now.getTime() - days * 86_400_000),
+      })
       .where(eq(seat.id, s.id));
     ids.push(id);
   }
 
-  // School days only, oldest first, at staggered times in the class period.
-  const dayStarts: Date[] = [];
+  // School days only, oldest first, at staggered times in the class period, grouped by the
+  // class's own weeks (0 = this week, 1 = last week, ...) so each week has its own pattern.
+  const dayStarts: { start: Date; week: number }[] = [];
+  const weekOf = (d: Date) => {
+    for (let k = 0; ; k++) {
+      if (d >= weekWindow(now, weekSettings(c), -k).start) return k;
+    }
+  };
   for (let d = days - 1; d >= 0; d--) {
     const day = new Date(now.getTime() - d * 86_400_000 - 2 * 3_600_000);
     const weekday = new Date(`${localDay(day, c.timeZone)}T12:00:00Z`).getUTCDay();
-    if (weekday !== 0 && weekday !== 6) dayStarts.push(day);
+    if (weekday !== 0 && weekday !== 6) dayStarts.push({ start: day, week: weekOf(day) });
   }
-  for (const [i, id] of ids.entries()) {
-    const p = profileFor(i, ids.length, rng);
-    // The most recent school days of the window.
-    const trainOn = dayStarts.slice(dayStarts.length - Math.min(p.trainDays, dayStarts.length));
-    const minutes = Math.max(1, Math.round(minutesPerSession * p.length));
-    for (const [d, day] of trainOn.entries()) {
-      // A rusher rushes their most recent session, so it shows in this week's dashboard.
-      const rushing = Boolean(p.rushes) && d === trainOn.length - 1;
-      await simulateSession(id, new Date(day.getTime() + i * 60_000), minutes, p, rng, rushing);
+  const weeks = Math.max(0, ...dayStarts.map((d) => d.week));
+  const profiles = ids.map((_, i) => profileFor(i, ids.length, rng));
+  // Students train independently, so a few at a time; each has its own random stream so
+  // the result doesn't depend on the order they finish in.
+  await inParallel(ids, SEED_CONCURRENCY, async (id, i) => {
+    const p = profiles[i]!;
+    const r = seededRng(seed * 1_000 + i + 1);
+    const sessions: { start: Date; accuracy: number }[] = [];
+    for (let k = weeks; k >= 0; k--) {
+      const inWeek = dayStarts.filter((d) => d.week === k);
+      // This week follows the profile exactly (the dashboard's spread). Earlier weeks vary a
+      // day either way, students who haven't started this week had tried it before or not,
+      // and accuracy was a little lower further back.
+      const planned =
+        k === 0
+          ? p.trainDays
+          : p.trainDays === 0
+            ? i % 2 === 0
+              ? 0
+              : 1 + Math.floor(r() * 2)
+            : Math.min(5, Math.max(1, p.trainDays + Math.floor(r() * 3) - 1));
+      // The most recent school days of the week.
+      for (const d of inWeek.slice(inWeek.length - Math.min(planned, inWeek.length))) {
+        sessions.push({ start: d.start, accuracy: Math.max(0.5, p.accuracy - 0.04 * k) });
+      }
     }
-  }
+    for (const [n, s] of sessions.entries()) {
+      // Sessions vary in length a little, as real ones do (stopping early, a long one).
+      const minutes = Math.max(1, Math.round(minutesPerSession * p.length * (0.8 + 0.4 * r())));
+      // A rusher rushes their most recent session, so it shows in this week's dashboard.
+      const rushing = Boolean(p.rushes) && n === sessions.length - 1;
+      const start = new Date(s.start.getTime() + i * 60_000);
+      await simulateSession(id, start, minutes, { ...p, accuracy: s.accuracy }, r, rushing);
+    }
+  });
   return {
     classId: c.id,
     teacherId: teacher!.id,
@@ -175,6 +224,9 @@ export async function seedDemoClass(opts: {
   };
 }
 
+/** Shared by every seeded learner: demo accounts hold no personal data and expire. */
+export const DEMO_LEARNER_PASSWORD = "demo-learner-password";
+
 /**
  * An independent learner who trained on most of the last `days` days, through the real
  * training service, so the learner pages have history to show. Same environments as the
@@ -183,8 +235,8 @@ export async function seedDemoClass(opts: {
 export async function seedDemoLearner(opts: { days?: number; now?: Date; seed?: number }) {
   const { days = 21, now = new Date(), seed = 1 } = opts;
   const rng = seededRng(seed);
-  const username = `demo-learner-${randomUUID().slice(0, 6)}`;
-  const password = "demo-learner-password";
+  const username = `${generateHandle()}-${randomBytes(2).toString("hex")}`;
+  const password = DEMO_LEARNER_PASSWORD;
   const res = await signUp({ role: "learner", username, password, ageConfirmed: true });
   const { user: created } = (await res.json()) as { user: { id: string } };
   await startPlacement(created.id, "beginner", "America/Chicago");

@@ -47,6 +47,8 @@ jobs:
       # Demo mode on, so the browser tests cover the "Try it" buttons. The landing page reads
       # this at build time.
       DEMO_SITE: "1"
+      # No ready-made demo accounts in the background: they would load the server mid-test.
+      DEMO_PREBUILD: "0"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

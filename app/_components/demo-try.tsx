@@ -1,20 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { Button, ErrorText, muted, postJson } from "./ui";
+import { Button, ErrorText, link, muted, postJson } from "./ui";
 
 /** The demo site's one-click entry: a fresh learner, or a teacher with a ready class. */
 export function DemoTry() {
   const [age, setAge] = useState(false);
-  const [busy, setBusy] = useState<"learner" | "teacher" | null>(null);
+  const [busy, setBusy] = useState<"learner" | "fresh" | "teacher" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function start(role: "learner" | "teacher") {
-    setBusy(role);
+  async function start(kind: "learner" | "fresh" | "teacher") {
+    setBusy(kind);
     setError(null);
     const r = await postJson<{ next: string }>(
       "/api/demo/start",
-      role === "learner" ? { role, ageConfirmed: true } : { role },
+      kind === "teacher"
+        ? { role: kind }
+        : { role: "learner", ageConfirmed: true, fresh: kind === "fresh" },
     );
     if (!r.ok) {
       setBusy(null);
@@ -28,7 +30,9 @@ export function DemoTry() {
       <h2 className="text-xl font-extrabold">Try the demo</h2>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-3">
-          <p className={muted}>Take the level check and train like a new learner.</p>
+          <p className={muted}>
+            Open a learner&apos;s home after three weeks of practice, then keep training.
+          </p>
           <label className="flex min-h-11 items-center gap-3">
             <input
               type="checkbox"
@@ -41,9 +45,17 @@ export function DemoTry() {
           <Button disabled={!age || busy !== null} onClick={() => start("learner")}>
             {busy === "learner" ? "Starting…" : "Try as a learner"}
           </Button>
+          <button
+            type="button"
+            disabled={!age || busy !== null}
+            onClick={() => start("fresh")}
+            className={`${link} min-h-11 self-start disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50`}
+          >
+            {busy === "fresh" ? "Starting…" : "Or start fresh with the level check"}
+          </button>
         </div>
         <div className="flex flex-col gap-3">
-          <p className={muted}>See a class of 25 students after a week of practice.</p>
+          <p className={muted}>See a class of 25 students after four weeks of practice.</p>
           <Button
             variant="secondary"
             className="mt-auto"
