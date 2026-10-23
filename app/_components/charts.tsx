@@ -10,7 +10,7 @@ import { muted } from "./styles";
 
 export type Point = { key: string; label: string; value: number | null; detail?: string };
 
-function useWidth<T extends HTMLElement>(fallback: number) {
+export function useWidth<T extends HTMLElement>(fallback: number) {
   const ref = useRef<T>(null);
   const [width, setWidth] = useState(fallback);
   useEffect(() => {
@@ -44,7 +44,17 @@ function compact(n: number): string {
   return n >= 1000 ? `${(n / 1000).toFixed(n >= 10_000 ? 0 : 1)}K` : String(n);
 }
 
-function Tooltip({ x, y, value, label }: { x: number; y: number; value: string; label: string }) {
+export function Tooltip({
+  x,
+  y,
+  value,
+  label,
+}: {
+  x: number;
+  y: number;
+  value: string;
+  label: string;
+}) {
   return (
     <div
       role="presentation"
@@ -64,8 +74,8 @@ export function NumbersTable({
   rows,
 }: {
   caption: string;
-  head: [string, string];
-  rows: [ReactNode, ReactNode][];
+  head: string[];
+  rows: ReactNode[][];
 }) {
   return (
     <details className="mt-2 text-sm">
@@ -76,15 +86,21 @@ export function NumbersTable({
         <caption className="sr-only">{caption}</caption>
         <thead className={muted}>
           <tr>
-            <th className="py-1 pr-4 font-medium">{head[0]}</th>
-            <th className="py-1 font-medium">{head[1]}</th>
+            {head.map((h, i) => (
+              <th key={i} className="py-1 pr-4 font-medium">
+                {h}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody className="divide-y divide-ink-100 dark:divide-ink-800">
-          {rows.map(([a, b], i) => (
+          {rows.map((r, i) => (
             <tr key={i}>
-              <td className="py-1 pr-4">{a}</td>
-              <td className="py-1">{b}</td>
+              {r.map((c, j) => (
+                <td key={j} className="py-1 pr-4">
+                  {c}
+                </td>
+              ))}
             </tr>
           ))}
         </tbody>
@@ -99,7 +115,7 @@ function columnPath(x: number, y: number, w: number, h: number) {
   return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`;
 }
 
-const AXIS_TEXT = "fill-ink-500 text-[11px] tabular-nums dark:fill-ink-400";
+export const AXIS_TEXT = "fill-ink-500 text-[11px] tabular-nums dark:fill-ink-400";
 
 /**
  * Columns over categories (days, weeks), with an optional goal line. `emphasis` labels one

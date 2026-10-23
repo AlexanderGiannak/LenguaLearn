@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { CtaBand, InfoPage, Section, Steps } from "../_components/marketing";
+import { ContentFlow } from "../_components/diagrams";
+import { CardGrid, CtaBand, Figure, InfoPage, Section, Steps } from "../_components/marketing";
 import { link } from "../_components/styles";
 import { tryDemoHref } from "@/lib/site/config";
 
@@ -11,6 +12,7 @@ export const metadata: Metadata = {
 export default function About() {
   return (
     <InfoPage
+      tone="coral"
       eyebrow="About"
       title="Vocabulary is the backbone of a language"
       intro={
@@ -21,24 +23,26 @@ export default function About() {
       }
     >
       <Section title="What we believe">
-        <ul className="ml-6 list-disc">
-          <li>
-            <strong>Free, with no ads and no selling data.</strong> The app is kept cheap to run so
-            it can stay that way.
-          </li>
-          <li>
-            <strong>Student privacy by design.</strong> Class students are anonymous to us, and
-            student data is never sent to an AI provider.
-          </li>
-          <li>
-            <strong>Accuracy over volume.</strong> No word reaches a student until a person has
-            reviewed it.
-          </li>
-          <li>
-            <strong>Original content.</strong> Every word page, example and memory hook is written
-            for LenguaLearn.
-          </li>
-        </ul>
+        <CardGrid
+          items={[
+            {
+              title: "Free, with no ads and no selling data",
+              text: "The app is kept cheap to run so it can stay that way.",
+            },
+            {
+              title: "Student privacy by design",
+              text: "Class students are anonymous to us, and student data is never sent to an AI provider.",
+            },
+            {
+              title: "Accuracy over volume",
+              text: "No word reaches a student until a person has reviewed it.",
+            },
+            {
+              title: "Original content",
+              text: "Every word page, example and memory hook is written for LenguaLearn.",
+            },
+          ]}
+        />
       </Section>
 
       <Section title="How the words are made" id="content">
@@ -46,6 +50,9 @@ export default function About() {
           This is the process every word follows. The app enforces the key rule already: a word is
           shown to students only after a person has approved it.
         </p>
+        <Figure tone="sky" title="Every word's path to a student">
+          <ContentFlow />
+        </Figure>
         <Steps
           items={[
             {

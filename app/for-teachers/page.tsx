@@ -1,6 +1,68 @@
 import type { Metadata } from "next";
-import { CardGrid, CtaBand, InfoPage, InlineLink, Section, Steps } from "../_components/marketing";
+import { DotStrip, StackedBar, StatTile } from "../_components/charts";
+import { MinutesBar } from "../_components/diagrams";
+import {
+  CardGrid,
+  CtaBand,
+  Figure,
+  InfoPage,
+  InlineLink,
+  Section,
+  Steps,
+} from "../_components/marketing";
 import { tryDemoHref } from "@/lib/site/config";
+
+// A made-up class for the dashboard picture: minutes per seat this week, against the
+// default goal. Status colors as on the real dashboard, always with their labels.
+const GOAL = 45;
+const EXAMPLE: { status: keyof typeof STATUS; minutes: number[] }[] = [
+  { status: "on_track", minutes: [46, 48, 51, 52, 55, 57, 60, 62, 47, 49, 66, 71] },
+  { status: "behind", minutes: [12, 18, 22, 27, 31, 35, 38, 41] },
+  { status: "flagged", minutes: [24, 39] },
+  { status: "not_started", minutes: [0, 0, 0] },
+];
+const STATUS = {
+  on_track: { label: "On track", color: "var(--status-good)" },
+  behind: { label: "Behind", color: "var(--status-warning)" },
+  flagged: { label: "Flagged", color: "var(--status-critical)" },
+  not_started: { label: "Not started", color: "var(--status-none)" },
+};
+
+function DashboardPicture() {
+  const seats = EXAMPLE.flatMap((g) => g.minutes.map((m) => ({ status: g.status, minutes: m })));
+  const sorted = [...seats].map((s) => s.minutes).sort((a, b) => a - b);
+  const median = sorted[Math.floor(sorted.length / 2)]!;
+  const onTrack = EXAMPLE[0]!.minutes.length;
+  return (
+    <div className="flex flex-col gap-5">
+      <dl className="grid grid-cols-3 gap-2 sm:gap-3">
+        <StatTile label="On track" value={`${onTrack}/${seats.length}`} />
+        <StatTile label="Median" value={`${median} min`} />
+        <StatTile label="Goal" value={`${GOAL} min`} />
+      </dl>
+      <StackedBar
+        label="Example class by status"
+        segments={EXAMPLE.map((g) => ({
+          key: g.status,
+          label: STATUS[g.status].label,
+          value: g.minutes.length,
+          color: STATUS[g.status].color,
+        }))}
+      />
+      <DotStrip
+        label="Example class: minutes this week by student"
+        unit=" min"
+        goal={{ value: GOAL, label: `Goal ${GOAL} min` }}
+        dots={seats.map((s, i) => ({
+          key: String(i),
+          value: s.minutes,
+          color: STATUS[s.status].color,
+          title: `Seat ${i + 1}: ${STATUS[s.status].label}`,
+        }))}
+      />
+    </div>
+  );
+}
 
 export const metadata: Metadata = {
   title: "For teachers · LenguaLearn",
@@ -11,6 +73,7 @@ export const metadata: Metadata = {
 export default function ForTeachers() {
   return (
     <InfoPage
+      tone="teal"
       eyebrow="For teachers"
       title="Five minutes a week to run it"
       intro={
@@ -20,7 +83,7 @@ export default function ForTeachers() {
         </p>
       }
     >
-      <Section title="Set up a class">
+      <Section n={1} title="Set up a class">
         <Steps
           items={[
             {
@@ -43,7 +106,7 @@ export default function ForTeachers() {
         </p>
       </Section>
 
-      <Section title="Settings, once">
+      <Section n={2} title="Settings, once">
         <CardGrid
           items={[
             {
@@ -66,8 +129,18 @@ export default function ForTeachers() {
         />
       </Section>
 
-      <Section title="The dashboard">
-        <p>One row per student, sortable by any column, with a week picker for past weeks:</p>
+      <Section n={3} title="The dashboard">
+        <Figure
+          tone="teal"
+          title="A week at a glance"
+          caption="An example class of 25. Each dot is one student's attentive minutes this week, colored by status; the line is the goal. Hover or tap a dot for its seat."
+        >
+          <DashboardPicture />
+        </Figure>
+        <p>
+          Below the charts, one row per student, sortable by any column, with a week picker for past
+          weeks:
+        </p>
         <ul className="ml-6 list-disc">
           <li>Minutes this week against the goal, counting only attentive time.</li>
           <li>Flagged minutes, shown separately.</li>
@@ -83,7 +156,7 @@ export default function ForTeachers() {
         </p>
       </Section>
 
-      <Section title="Know what to reteach">
+      <Section n={4} title="Know what to reteach">
         <p>
           Class insights list the 15 words your class misses most over the last four weeks, each
           with the wrong answer chosen most often, which tells you exactly which confusion to
@@ -91,7 +164,7 @@ export default function ForTeachers() {
         </p>
       </Section>
 
-      <Section title="Minutes you can trust" id="integrity">
+      <Section n={5} title="Minutes you can trust" id="integrity">
         <p>
           If minutes count toward a grade, they have to mean practice. Time counts only while a
           question or its feedback is on screen and the tab is visible. Each screen counts for at
@@ -103,6 +176,9 @@ export default function ForTeachers() {
           again and again while wrong, or answering the moment the tab comes back. The student sees
           one gentle note to slow down. Choosing I don&apos;t know is never flagged.
         </p>
+        <Figure tone="coral" title="An example session's minutes">
+          <MinutesBar />
+        </Figure>
         <p>
           Flags are patterns, not accusations. They&apos;re shown with times so you can decide. The
           server also checks each answer&apos;s timing against its own clock, which stops simple
@@ -110,7 +186,7 @@ export default function ForTeachers() {
         </p>
       </Section>
 
-      <Section title="Grades">
+      <Section n={6} title="Grades">
         <p>
           Build a suggested grade from simple parts: a weight on percent of goal (capped at 100%), a
           weight on accuracy, and an optional deduction per flagged minute. A live preview shows the
@@ -119,7 +195,7 @@ export default function ForTeachers() {
         </p>
       </Section>
 
-      <Section title="Student privacy">
+      <Section n={7} title="Student privacy">
         <p>
           Class students never give LenguaLearn a name, an email, or any other personal information,
           and they&apos;re never offered Google sign-in. If you want names next to seats on your
@@ -129,7 +205,7 @@ export default function ForTeachers() {
         </p>
       </Section>
 
-      <Section title="Coming later">
+      <Section n={8} title="Coming later">
         <p>
           Auto-graded assessments, personalized for each student from the words they have studied or
           fixed for the whole class, with the option to drop a bad question and regrade everyone.

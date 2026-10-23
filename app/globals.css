@@ -66,6 +66,9 @@
   --chart-wash: rgb(111 92 241 / 0.1);
   --chart-grid: var(--color-ink-100);
   --chart-goal: var(--color-ink-500);
+  /* Second and third series on the public pages' explainers; one step works in both modes. */
+  --chart-2: var(--color-teal-600);
+  --chart-3: var(--color-orange-600);
   --stage-new: var(--color-brand-300);
   --stage-learning: var(--color-brand-500);
   --stage-learned: var(--color-brand-800);
