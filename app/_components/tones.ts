@@ -9,7 +9,7 @@ export const TONES: Record<
   {
     /** Tinted panel background and border. */
     soft: string;
-    /** A filled badge or icon tile. */
+    /** A filled badge or icon tile. Light-mode steps keep white text at 4.5:1 or more. */
     badge: string;
     /** Text on the soft background. */
     ink: string;
@@ -28,14 +28,14 @@ export const TONES: Record<
   },
   coral: {
     soft: "bg-orange-50 border-orange-100 dark:bg-orange-950/40 dark:border-orange-900/70",
-    badge: "bg-orange-500 text-white dark:bg-orange-400 dark:text-orange-950",
+    badge: "bg-orange-700 text-white dark:bg-orange-400 dark:text-orange-950",
     ink: "text-orange-800 dark:text-orange-200",
     fill: "fill-orange-500 dark:fill-orange-400",
     edge: "border-t-orange-400",
   },
   teal: {
     soft: "bg-teal-50 border-teal-100 dark:bg-teal-950/40 dark:border-teal-900/70",
-    badge: "bg-teal-600 text-white dark:bg-teal-400 dark:text-teal-950",
+    badge: "bg-teal-700 text-white dark:bg-teal-400 dark:text-teal-950",
     ink: "text-teal-800 dark:text-teal-200",
     fill: "fill-teal-500 dark:fill-teal-400",
     edge: "border-t-teal-400",
@@ -49,7 +49,7 @@ export const TONES: Record<
   },
   sky: {
     soft: "bg-sky-50 border-sky-100 dark:bg-sky-950/40 dark:border-sky-900/70",
-    badge: "bg-sky-500 text-white dark:bg-sky-400 dark:text-sky-950",
+    badge: "bg-sky-700 text-white dark:bg-sky-400 dark:text-sky-950",
     ink: "text-sky-800 dark:text-sky-200",
     fill: "fill-sky-500 dark:fill-sky-400",
     edge: "border-t-sky-400",
