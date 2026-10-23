@@ -109,14 +109,24 @@ export function weekDays(w: { start: Date; end: Date }, timeZone: string) {
   });
 }
 
-/** Days in a row with practice, ending today, or yesterday when today has none yet. */
+/** The calendar date before a YYYY-MM-DD date. */
+function dayBefore(day: string): string {
+  const d = new Date(`${day}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Days in a row with practice, ending today, or yesterday when today has none yet. Walks
+ * local calendar dates, so a daylight-saving change never repeats or skips a day.
+ */
 export function streakDays(days: Set<string>, now: Date, timeZone: string): number {
-  const day = (back: number) => localDay(new Date(now.getTime() - back * DAY_MS), timeZone);
-  let back = days.has(day(0)) ? 0 : 1;
+  let day = localDay(now, timeZone);
+  if (!days.has(day)) day = dayBefore(day);
   let n = 0;
-  while (days.has(day(back))) {
+  while (days.has(day)) {
     n += 1;
-    back += 1;
+    day = dayBefore(day);
   }
   return n;
 }

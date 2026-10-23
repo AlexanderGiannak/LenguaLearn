@@ -36,7 +36,9 @@ export function SettingsPanel({
     setError(null);
     const r = await postJson("/api/account/delete", { confirm: String(form.get("confirm")) });
     if (!r.ok) return setError(r.error);
-    router.push("/");
+    // A full load on purpose: the header and the router's cached pages forget the account.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+    window.location.assign("/");
   }
 
   return (
@@ -134,7 +136,9 @@ export function SettingsPanel({
         variant="secondary"
         onClick={async () => {
           await postJson("/api/auth/sign-out", {});
-          router.push("/");
+          // A full load on purpose, as after deleting the account.
+          // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+          window.location.assign("/");
         }}
       >
         Sign out

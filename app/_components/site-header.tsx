@@ -56,7 +56,8 @@ export function HideOnBare({ children }: { children: ReactNode }) {
 
 /**
  * Where a signed-in visitor's home is, or null. Asked from the browser because the header
- * is part of the static shell; the session cookie is HTTP-only.
+ * is part of the static shell; the session cookie is HTTP-only. Signing in, signing out and
+ * deleting an account all end in a full page load, so asking once per load is enough.
  */
 function useHomeHref(): string | null {
   const [home, setHome] = useState<string | null>(null);
@@ -65,7 +66,8 @@ function useHomeHref(): string | null {
     fetch("/api/auth/get-session")
       .then((r) => (r.ok ? r.json() : null))
       .then((s: { user?: { role?: string } } | null) => {
-        if (live && s?.user) setHome(s.user.role === "teacher" ? "/teacher" : "/home");
+        if (!live) return;
+        setHome(s?.user ? (s.user.role === "teacher" ? "/teacher" : "/home") : null);
       })
       .catch(() => {});
     return () => {

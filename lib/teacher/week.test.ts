@@ -100,6 +100,18 @@ describe("streakDays", () => {
   it("keeps yesterday's streak alive until today is over", () => {
     expect(streakDays(new Set(["2026-10-19", "2026-10-20"]), now, CHICAGO)).toBe(2);
   });
+  it("counts each local date once across the fall-back change", () => {
+    // 23:30 on Sunday 1 November 2026 in Chicago, the day the clocks went back.
+    const late = new Date("2026-11-02T05:30:00Z");
+    const days = new Set(["2026-10-30", "2026-10-31", "2026-11-01"]);
+    expect(streakDays(days, late, CHICAGO)).toBe(3);
+  });
+  it("skips no local date across the spring-forward change", () => {
+    // 00:30 on Monday 9 March 2026 in Chicago, the day after the clocks went forward.
+    const early = new Date("2026-03-09T05:30:00Z");
+    const days = new Set(["2026-03-07", "2026-03-08", "2026-03-09"]);
+    expect(streakDays(days, early, CHICAGO)).toBe(3);
+  });
   it("is zero after a missed day", () => {
     expect(streakDays(new Set(["2026-10-19"]), now, CHICAGO)).toBe(0);
     expect(streakDays(new Set(), now, CHICAGO)).toBe(0);
