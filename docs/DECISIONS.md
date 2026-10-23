@@ -124,6 +124,7 @@ Decisions that go beyond [SPEC.md](SPEC.md), newest last. One line of reason eac
 | 2026-10-22 | Public pages: how it works, for teachers, privacy at a glance, about, plus a fuller landing page, header navigation and a footer. They describe only what is built; planned features (assessments, Google sign-in, reporting problems, reviewer volunteers, retention clean-up jobs) are labeled as coming. English only, no Spanish words in code | Owner: the site felt empty. Public claims must be true |
 | 2026-10-22 | The demo class is more varied: 40% train five 10-minute sessions (on track), 24% four shorter ones, 16% two, 8% rush one session through the real integrity rules (flagged), 8% never start. The pool keeps 3 classes ready | A demo where everyone is "Behind" undersells the dashboard; flags come from the real rules, not a shortcut |
 | 2026-10-22 | The no-deploys-during-school-hours rule (7am–4pm CT on school days) applies from the pilot onward; until then merges and deploys happen any time (owner) | No students use the app yet. Every merge to main deploys, so from the pilot, merges wait too |
+| 2026-10-23 | The demo moved to try.lengualearn.com: demo.lengualearn.com hit Let's Encrypt's rate limit (5 certificates per name per week, counted across deleting and re-adding the domain), and Railway can't retry until it lifts. demo.lengualearn.com stays attached; switch back or keep `try` once its certificate is issued (owner) | A different name has its own limit, so the demo works now instead of in up to a week |
 
 ## Open questions
 

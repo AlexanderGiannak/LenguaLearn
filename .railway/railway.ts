@@ -5,9 +5,9 @@ const REGION = "us-east4-eqdc4a";
 
 export default defineRailway((ctx) => {
   // Two environments from this one file: production (lengualearn.com, the real site) and
-  // demo (demo.lengualearn.com: sample words and one-click accounts, its own database).
+  // demo (try.lengualearn.com: sample words and one-click accounts, its own database).
   const demo = ctx.isEnvironment("demo");
-  const site = demo ? "demo.lengualearn.com" : "lengualearn.com";
+  const site = demo ? "try.lengualearn.com" : "lengualearn.com";
 
   // The app reaches Postgres only over Railway's private network. The public TCP
   // proxy Railway adds to new databases is removed (see docs/DECISIONS.md).
@@ -29,8 +29,9 @@ export default defineRailway((ctx) => {
     healthcheckTimeout: 120,
     // One server on purpose: in-memory rate limiting stays valid (spec, "One Railway server").
     replicas: { [REGION]: 1 },
-    // www redirects to the bare domain (next.config.ts).
-    domains: demo ? [site] : [site, "www.lengualearn.com"],
+    // www redirects to the bare domain (next.config.ts). demo.lengualearn.com stays attached
+    // until Let's Encrypt's rate limit lets its certificate through (docs/DECISIONS.md).
+    domains: demo ? [site, "demo.lengualearn.com"] : [site, "www.lengualearn.com"],
     env: {
       DATABASE_URL: db.env.DATABASE_URL,
       // PR environments copy this but use their own generated domain (lib/auth/base-url.ts).

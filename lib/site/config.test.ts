@@ -19,8 +19,8 @@ describe("signupsOpen", () => {
 });
 
 describe("demoUrl", () => {
-  it("defaults to the demo subdomain and can be overridden", () => {
-    expect(demoUrl({})).toBe("https://demo.lengualearn.com");
+  it("defaults to the demo site and can be overridden", () => {
+    expect(demoUrl({})).toBe("https://try.lengualearn.com");
     expect(demoUrl({ DEMO_URL: "http://localhost:3001" })).toBe("http://localhost:3001");
   });
 });
@@ -28,7 +28,7 @@ describe("demoUrl", () => {
 describe("tryDemoHref", () => {
   it("sends the real site to the demo, and the demo to its own landing page", () => {
     expect(tryDemoHref({ RAILWAY_ENVIRONMENT_NAME: "production" })).toBe(
-      "https://demo.lengualearn.com",
+      "https://try.lengualearn.com",
     );
     expect(tryDemoHref({ DEMO_SITE: "1" })).toBe("/");
   });
