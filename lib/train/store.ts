@@ -94,7 +94,8 @@ export async function saveProgress(
       set: {
         bestRecognitionPassDays: memory.bestRecognitionPassDays,
         lastQuestionType: lastType,
-        firstLearnedAt: sql`coalesce(${senseProgress.firstLearnedAt}, ${learnedNow})`,
+        // A Date inside raw sql isn't serialized by the driver, so it goes in as text.
+        firstLearnedAt: sql`coalesce(${senseProgress.firstLearnedAt}, ${learnedNow?.toISOString() ?? null}::timestamptz)`,
       },
     });
   for (const kind of ["recognition", "production"] as const satisfies CardKind[]) {
