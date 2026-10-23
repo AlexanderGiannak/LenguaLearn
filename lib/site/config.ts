@@ -14,7 +14,7 @@ export function signupsOpen(env: Record<string, string | undefined>): boolean {
 
 /** Where the real site's "Try the demo" buttons go. */
 export function demoUrl(env: Record<string, string | undefined>): string {
-  return env.DEMO_URL ?? "https://demo.lengualearn.com";
+  return env.DEMO_URL ?? "https://try.lengualearn.com";
 }
 
 /** "Try the demo" target: the demo site from the real site, its own landing page on the demo. */
