@@ -12,11 +12,13 @@
 
 ## Current phase
 
-Phases 0–7 are merged (2026-10-21). In progress: a design pass in a Brilliant-like direction
-(owner's choice): student screens first, owner approves screenshots, then the teacher pages.
+Phases 0–7 are merged (2026-10-21), and so is the design pass in a Brilliant-like direction
+(student, teacher and public pages, charts, demo accounts with history; through PR #21, 2026-10-23).
+Every merge to `main` deploys to both Railway environments: production (lengualearn.com, sign-ups
+closed) and demo (try.lengualearn.com, `DEMO_SITE=1`). Both demo domains are waiting on Let's Encrypt
+certificates (see DECISIONS open questions).
 Next: Phase 9 (content pipeline), which needs owner answers and keys (see DECISIONS open
-questions); Phase 8 is after the pilot. Production (lengualearn.com) has not deployed yet: Railway
-paused builds platform-wide on 2026-10-21; deploy `main` once they resume.
+questions); Phase 8 is after the pilot.
 Stop only for blockers or privacy, grading or money choices; batch questions when stopping.
 
 Environment notes: the repo is in iCloud-synced Documents and iCloud creates "* 2" duplicates (even
