@@ -489,7 +489,7 @@ export type ClassSettingsPatch = Partial<{
   gradeFlaggedDeduction: number;
 }>;
 
-function weekSettings(c: { weekResetDay: number; weekResetTime: string; timeZone: string }) {
+export function weekSettings(c: { weekResetDay: number; weekResetTime: string; timeZone: string }) {
   return { resetDay: c.weekResetDay, resetTime: c.weekResetTime, timeZone: c.timeZone };
 }
 

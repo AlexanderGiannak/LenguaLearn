@@ -3,19 +3,20 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { getDb, getSql } from "@/lib/db/client";
 import { sentInDevelopment } from "@/lib/email/mailer";
 import { signUp } from "@/lib/auth/accounts";
-import { classroom, demoAccount, seat, user } from "@/lib/db/schema";
+import { classroom, demoAccount, seat, studySession, user } from "@/lib/db/schema";
 import { seedFixtureContent } from "@/test/seed-content";
 import { DEMO_CONFIG } from "./config";
 import {
   cleanupDemoAccounts,
   purgeAllDemoAccounts,
-  refillTeacherPool,
+  refillDemoPools,
   startDemoLearner,
   startDemoTeacher,
+  startFreshDemoLearner,
 } from "./service";
 
-// A small class keeps these fast; the real demo uses DEMO_CONFIG.demoClass.
-const SMALL = { students: 3, days: 2, minutesPerSession: 1 };
+// Small demos keep these fast; the real ones use DEMO_CONFIG's sizes.
+const SMALL = { classSize: { students: 3, days: 2, minutesPerSession: 1 }, learnerDays: 2 };
 const HOUR = 3_600_000;
 // Far from other test files' data: pool rows older than 12 hours count as stale, so
 // anything they left behind is ignored here.
@@ -30,17 +31,18 @@ afterAll(async () => {
   await getSql().end();
 });
 
-async function readyTeachers(now: Date) {
+async function ready(kind: "learner" | "teacher", now: Date) {
   const rows = await getDb()
     .select({ userId: demoAccount.userId, createdAt: demoAccount.createdAt })
     .from(demoAccount)
-    .where(and(eq(demoAccount.kind, "teacher"), isNull(demoAccount.claimedAt)));
+    .where(and(eq(demoAccount.kind, kind), isNull(demoAccount.claimedAt)));
   return rows.filter((r) => r.createdAt.getTime() > now.getTime() - 12 * HOUR);
 }
+const readyTeachers = (now: Date) => ready("teacher", now);
 
 describe("demo accounts", () => {
-  it("makes a signed-in learner who still has to place, and records them as a demo", async () => {
-    const res = await startDemoLearner(T0);
+  it("makes a fresh signed-in learner who still has to place, and records them as a demo", async () => {
+    const res = await startFreshDemoLearner(T0);
     expect(res.ok).toBe(true);
     expect(res.headers.getSetCookie().join(";")).toContain("session_token");
     const { user: created } = (await res.json()) as { user: { id: string } };
@@ -52,8 +54,9 @@ describe("demo accounts", () => {
     expect(d!.claimedAt).toEqual(T0);
   });
 
-  it("fills the teacher pool, and two visitors at once get different classes", async () => {
-    await refillTeacherPool(() => T0, SMALL);
+  it("fills the pools, and two visitors at once get different classes", async () => {
+    await refillDemoPools(() => T0, SMALL);
+    expect(await ready("learner", T0)).toHaveLength(DEMO_CONFIG.learnerPoolSize);
     const pool = DEMO_CONFIG.teacherPoolSize;
     expect(await readyTeachers(T0)).toHaveLength(pool);
 
@@ -66,6 +69,30 @@ describe("demo accounts", () => {
     expect(await readyTeachers(T0)).toHaveLength(pool - 2);
     const classes = await getDb().select().from(classroom).where(inArray(classroom.teacherId, ids));
     expect(classes).toHaveLength(2);
+  }, 120_000);
+
+  it("hands a visitor a pooled learner with practice already done, signed in", async () => {
+    const res = await startDemoLearner(T0, SMALL);
+    expect(res.ok).toBe(true);
+    expect(res.headers.getSetCookie().join(";")).toContain("session_token");
+    const { user: u } = (await res.json()) as { user: { id: string } };
+    const [d] = await getDb().select().from(demoAccount).where(eq(demoAccount.userId, u.id));
+    expect(d!.claimedAt).toEqual(T0);
+    expect(d!.createdAt).toEqual(T0);
+    const sessions = await getDb()
+      .select({ id: studySession.id })
+      .from(studySession)
+      .where(eq(studySession.userId, u.id));
+    expect(sessions.length).toBeGreaterThan(0);
+    expect(await ready("learner", T0)).toHaveLength(DEMO_CONFIG.learnerPoolSize - 1);
+  }, 120_000);
+
+  it("builds a learner on the spot when the pool is empty or stale", async () => {
+    const res = await startDemoLearner(at(13), SMALL);
+    expect(res.ok).toBe(true);
+    const { user: u } = (await res.json()) as { user: { id: string } };
+    const [d] = await getDb().select().from(demoAccount).where(eq(demoAccount.userId, u.id));
+    expect(d).toMatchObject({ kind: "learner", claimedAt: at(13), createdAt: at(13) });
   }, 120_000);
 
   it("builds a class on the spot when the pool is empty or stale", async () => {
@@ -110,7 +137,9 @@ describe("demo accounts", () => {
     const late = await getDb()
       .select({ userId: demoAccount.userId })
       .from(demoAccount)
-      .where(inArray(demoAccount.claimedAt, [at(13), at(13.5)]));
+      .where(
+        and(eq(demoAccount.kind, "teacher"), inArray(demoAccount.claimedAt, [at(13), at(13.5)])),
+      );
     const lateIds = late.map((l) => l.userId);
     const lateStudents = await getDb()
       .select({ id: seat.studentId })
@@ -131,12 +160,16 @@ describe("demo accounts", () => {
   }, 120_000);
 
   it("purges every demo account at once, claimed or pooled, and nothing else", async () => {
-    const learner = (await (await startDemoLearner(at(40))).json()) as { user: { id: string } };
-    await refillTeacherPool(() => at(40), SMALL);
+    const learner = (await (await startFreshDemoLearner(at(40))).json()) as {
+      user: { id: string };
+    };
+    await refillDemoPools(() => at(40), SMALL);
     const real = `real-${Date.now()}@example.com`;
     await signUp({ role: "teacher", name: "Real", email: real, password: "real-password-1" });
 
-    expect(await purgeAllDemoAccounts()).toBeGreaterThan(DEMO_CONFIG.teacherPoolSize);
+    expect(await purgeAllDemoAccounts()).toBeGreaterThan(
+      DEMO_CONFIG.teacherPoolSize + DEMO_CONFIG.learnerPoolSize,
+    );
     expect(await getDb().select().from(demoAccount)).toHaveLength(0);
     expect(await getDb().select().from(user).where(eq(user.id, learner.user.id))).toHaveLength(0);
     expect(await getDb().select().from(user).where(eq(user.email, real))).toHaveLength(1);
