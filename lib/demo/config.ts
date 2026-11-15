@@ -12,9 +12,13 @@ export function demoPrebuild(env: Record<string, string | undefined>): boolean {
 }
 
 export const DEMO_CONFIG = {
-  /** Teacher and learner demos kept ready, so a visitor rarely waits for one to be built. */
-  teacherPoolSize: 3,
-  learnerPoolSize: 3,
+  /**
+   * Teacher and learner demos kept ready, so a visitor rarely waits for one to be built.
+   * One each: visits are rare, and every ready class is rebuilt twice a day when it goes
+   * stale, which is most of the demo's hosting cost (docs/DECISIONS.md).
+   */
+  teacherPoolSize: 1,
+  learnerPoolSize: 1,
   /**
    * The class each teacher demo gets: four weeks of students trained through the real
    * service. Full sessions of 10 minutes put the keen students on track; others train less,

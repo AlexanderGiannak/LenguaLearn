@@ -3,7 +3,15 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { getDb, getSql } from "@/lib/db/client";
 import { sentInDevelopment } from "@/lib/email/mailer";
 import { signUp } from "@/lib/auth/accounts";
-import { classroom, demoAccount, seat, studySession, user } from "@/lib/db/schema";
+import {
+  answerEvent,
+  classroom,
+  demoAccount,
+  issuedQuestion,
+  seat,
+  studySession,
+  user,
+} from "@/lib/db/schema";
 import { seedFixtureContent } from "@/test/seed-content";
 import { DEMO_CONFIG } from "./config";
 import {
@@ -66,10 +74,34 @@ describe("demo accounts", () => {
       [a, b].map(async (r) => ((await r.json()) as { user: { id: string } }).user.id),
     );
     expect(new Set(ids).size).toBe(2);
-    expect(await readyTeachers(T0)).toHaveLength(pool - 2);
+    // With a pool of one, the second visitor's class is built on the spot.
+    expect(await readyTeachers(T0)).toHaveLength(Math.max(0, pool - 2));
     const classes = await getDb().select().from(classroom).where(inArray(classroom.teacherId, ids));
     expect(classes).toHaveLength(2);
   }, 120_000);
+
+  it("keeps a seeded account's practice but not its stored questions", async () => {
+    const [d] = await getDb()
+      .select({ userId: demoAccount.userId })
+      .from(demoAccount)
+      .where(
+        and(
+          eq(demoAccount.kind, "learner"),
+          isNull(demoAccount.claimedAt),
+          eq(demoAccount.createdAt, T0),
+        ),
+      );
+    const answers = await getDb()
+      .select({ id: answerEvent.id })
+      .from(answerEvent)
+      .where(eq(answerEvent.userId, d!.userId));
+    expect(answers.length).toBeGreaterThan(0);
+    const stored = await getDb()
+      .select({ id: issuedQuestion.id })
+      .from(issuedQuestion)
+      .where(eq(issuedQuestion.userId, d!.userId));
+    expect(stored).toHaveLength(0);
+  });
 
   it("hands a visitor a pooled learner with practice already done, signed in", async () => {
     const res = await startDemoLearner(T0, SMALL);

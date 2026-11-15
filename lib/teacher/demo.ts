@@ -116,6 +116,9 @@ async function simulateSession(
     ).next;
   }
   await endSession(userId, sessionId, step(2000), clock);
+  // A stored question is only read while it is being answered, and this session is over.
+  // They are about 60% of a seeded class's size, and the demo rebuilds classes twice a day.
+  await getDb().delete(issuedQuestion).where(eq(issuedQuestion.studySessionId, sessionId));
 }
 
 export async function seedDemoClass(opts: {
