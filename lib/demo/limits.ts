@@ -6,6 +6,9 @@ import { DEMO_CONFIG } from "./config";
 
 const HOUR = 3_600_000;
 
+export type DemoVerdict =
+  { ok: true } | { ok: false; reason: "device" | "site"; retryAfterMs: number };
+
 export class DemoLimits {
   private readonly limiter: RateLimiter;
 
@@ -20,20 +23,28 @@ export class DemoLimits {
     this.limiter = new RateLimiter(now);
   }
 
-  /** Whether this browser may start a demo now. Counts the start when it may. */
-  allow(role: "learner" | "teacher", device: string): boolean {
+  /**
+   * Whether this browser may start a demo now. Counts the start when it may. A refusal says
+   * which cap was hit, so the visitor is told the truth: their own browser's cap is not
+   * "the demo is busy".
+   */
+  allow(role: "learner" | "teacher", device: string): DemoVerdict {
     const siteWide =
       role === "teacher" ? this.limits.teachersSiteWide : this.limits.learnersSiteWide;
     const deviceKey = `device:${device}`;
     const siteKey = `site:${role}`;
-    if (
-      !this.limiter.check(deviceKey, this.limits.perDevice, HOUR).allowed ||
-      !this.limiter.check(siteKey, siteWide, HOUR).allowed
-    ) {
-      return false;
+    const byDevice = this.limiter.check(deviceKey, this.limits.perDevice, HOUR);
+    const bySite = this.limiter.check(siteKey, siteWide, HOUR);
+    if (!byDevice.allowed || !bySite.allowed) {
+      // When both caps are full, the start frees up only once both have room again.
+      return {
+        ok: false,
+        reason: byDevice.allowed ? "site" : "device",
+        retryAfterMs: Math.max(byDevice.retryAfterMs, bySite.retryAfterMs),
+      };
     }
     this.limiter.record(deviceKey, HOUR);
     this.limiter.record(siteKey, HOUR);
-    return true;
+    return { ok: true };
   }
 }
