@@ -33,8 +33,16 @@ export async function POST(request: Request) {
     const input = parse(schema, body);
     const ctx = requestContext(request);
     if (ctx.setDeviceCookie) setCookie(deviceCookieHeader(ctx.setDeviceCookie));
-    if (!limits.allow(input.role, ctx.device)) {
-      throw new HttpError(429, "The demo is busy. Try again in a little while.");
+    const verdict = limits.allow(input.role, ctx.device);
+    if (!verdict.ok) {
+      const minutes = Math.max(1, Math.ceil(verdict.retryAfterMs / 60_000));
+      const wait = `Try again in ${minutes} minute${minutes === 1 ? "" : "s"}.`;
+      throw new HttpError(
+        429,
+        verdict.reason === "device"
+          ? `This browser has started several demos in the last hour. ${wait}`
+          : `The demo is busy. ${wait}`,
+      );
     }
 
     const fresh = input.role === "learner" && input.fresh === true;
