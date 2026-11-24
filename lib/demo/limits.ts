@@ -34,11 +34,15 @@ export class DemoLimits {
     const deviceKey = `device:${device}`;
     const siteKey = `site:${role}`;
     const byDevice = this.limiter.check(deviceKey, this.limits.perDevice, HOUR);
-    if (!byDevice.allowed) {
-      return { ok: false, reason: "device", retryAfterMs: byDevice.retryAfterMs };
-    }
     const bySite = this.limiter.check(siteKey, siteWide, HOUR);
-    if (!bySite.allowed) return { ok: false, reason: "site", retryAfterMs: bySite.retryAfterMs };
+    if (!byDevice.allowed || !bySite.allowed) {
+      // When both caps are full, the start frees up only once both have room again.
+      return {
+        ok: false,
+        reason: byDevice.allowed ? "site" : "device",
+        retryAfterMs: Math.max(byDevice.retryAfterMs, bySite.retryAfterMs),
+      };
+    }
     this.limiter.record(deviceKey, HOUR);
     this.limiter.record(siteKey, HOUR);
     return { ok: true };

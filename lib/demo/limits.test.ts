@@ -57,6 +57,21 @@ describe("demo start limits", () => {
     });
   });
 
+  it("waits for the later cap when both are full", () => {
+    const { demo, advance } = setup({ perDevice: 2, learnersSiteWide: 2, teachersSiteWide: 5 });
+    demo.allow("teacher", "a"); // t=0: browser "a" 1 of 2
+    advance(20 * 60_000);
+    demo.allow("learner", "a"); // t=20: browser "a" full; site learners 1 of 2
+    advance(10 * 60_000);
+    demo.allow("learner", "b"); // t=30: site learners full
+    // Browser "a" frees up at t=60, the learner cap only at t=80: wait the full 50 minutes.
+    expect(demo.allow("learner", "a")).toEqual({
+      ok: false,
+      reason: "device",
+      retryAfterMs: 50 * 60_000,
+    });
+  });
+
   it("frees starts again after an hour", () => {
     const { demo, advance } = setup();
     for (let i = 0; i < 3; i++) demo.allow("learner", "a");
