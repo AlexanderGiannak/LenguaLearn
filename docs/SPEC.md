@@ -59,7 +59,7 @@ These are judgment calls where a reasonable person could pick differently:
 - **One Railway server.** A single server in one region keeps in-memory rate limiting valid and avoids cold starts. An outage there takes the app down mid-class. Acceptable for the pilot.
 - **Two cards per sense.** Separate recognition and production strengths double the reviews per word. Check the cost in the simulator before committing.
 - **Bank size.** About 10,000 words is a guess at "near-native for reading". Real usage should decide how far past 5,000 the bank grows.
-- **Image source.** Openly licensed images, AI-generated images, or both. Ask me before choosing.
+- **Image source.** Both: openly licensed images first, AI-generated when none fits (decided 2026-11-24).
 
 ## Hosting and infrastructure
 
@@ -128,6 +128,7 @@ The unit of learning is a sense, not a spelling. Realizar meaning "to carry out"
 - **relation:** typed links between senses. Synonym, antonym, same family (aprovechar, provecho, aprovechable), commonly confused with (realizar versus darse cuenta), collocation (tomar una decisión).
 - **hook:** memory hook text for a sense, with source and status. Hooks can be mnemonics. They must not state false etymology as fact. Label a made-up association as a mnemonic. Hooks are optional per sense.
 - **image:** belongs to a sense. File key, alt text in English, source, license, attribution text, and status. Only for concrete senses at first.
+- **passage:** reading practice: a short sentence or a passage of 3–5 sentences, with its English translation, level, one comprehension question for passages, source, and status. Each word in it is linked to the sense it uses, so the app can work out what share of the words a learner already knows.
 - **audio:** file key for the lemma and for each example, with voice ID and generation date.
 - **word_list:** named, ordered sets of senses ("Level 3", "Food and cooking", "AP theme: Global Challenges", or a teacher's custom list). Themes, including AP themes, are optional lists, not the backbone of the bank.
 
@@ -487,7 +488,16 @@ A script generates audio with Amazon Polly Neural voices for each lemma and exam
 
 ### 7. Images
 
-Only concrete senses get an image at first. For each, use the image description from generation to find or create a picture that shows the meaning without text in it. Record source, license and attribution for every image, and keep a reviewer approval step like any other content. Ask me which source to use (an openly licensed library, AI generation, or both) before building this step. Images are optional: a sense without one still goes live.
+Only concrete senses get an image at first. For each, use the image description from generation to find or create a picture that shows the meaning without text in it. Record source, license and attribution for every image, and keep a reviewer approval step like any other content. Use both sources: an openly licensed library first, and AI generation when no suitable open image exists (owner, 2026-11-24). Images are optional: a sense without one still goes live. Part of the pilot (owner, 2026-11-24).
+
+### 8. Reading practice
+
+Short sentences and passages for learners who already know most of a level, so they read new Spanish built mostly from words they know.
+
+- Generated per level by the same script as step 2, only from live senses at or below that level plus at most one or two new ones, and each word is tagged with the sense it uses. Then the step 3 check, the automatic checks (every tagged sense exists and is live, sentence length), and human review, like any other content.
+- Written ahead of time and shared by everyone. Never generated per learner: a learner's known words are student data and never go to an AI provider, and only reviewed content reaches students.
+- The app offers a sentence or passage to a learner only when the share of its words they know is at least a threshold in config. It works this out on the server from their cards. The threshold and the level where reading practice unlocks are both in config.
+- A passage has one comprehension question. Reading practice gives no FSRS ratings, but a new word met in a passage can be added to study.
 
 ## Data and quality requirements
 
@@ -532,7 +542,7 @@ One admin page with:
 
 Build in this order. Stop at the end of each phase and wait for me. Start the content pipeline (Phase 9) right after Phase 2, alongside the other phases, because human review of words is the slowest part of the project.
 
-**Pilot scope.** The first goal is a pilot with one real class plus a small group of independent learners, built together. Build phases 0–7, run Phase 9 until the first 500 senses are live, then do the pilot items in Phase 10. Defer until after the pilot: Phase 8 (assessments), images (Phase 9 step 7), and the admin analytics page.
+**Pilot scope.** The first goal is a pilot with one real class plus a small group of independent learners, built together. Build phases 0–7, run Phase 9 until the first 500 senses are live, then do the pilot items in Phase 10. Defer until after the pilot: Phase 8 (assessments) and the admin analytics page. Images and reading practice (Phase 9 steps 7 and 8) are part of the pilot (owner, 2026-11-24).
 
 | Phase | Build | Done when |
 |---|---|---|
@@ -545,7 +555,7 @@ Build in this order. Stop at the end of each phase and wait for me. Start the co
 | 6. Integrity | Active time, idle pause, flagged-time detection, signed question tokens, server timing checks | Scripted fast-clicker and idle tests produce the expected flags |
 | 7. Placement and learner home | Beginner choice and adaptive calibration test, starting level, learner home, goals, vocabulary size on home and progress | A total beginner and an intermediate learner each go from sign-up to first question in under 5 minutes, at sensible levels |
 | 8. Assessments (after pilot) | Creation, personalized and fixed sources, taking, grading, item drop, results | A seeded class takes an assessment end to end |
-| 9. Content pipeline | Candidate list, generation, second-model check, automatic checks, admin review tool, reviewer role, reports, nightly stats flags, Polly audio upload to S3. Images after the pilot | The first 500 senses reach live status through the full pipeline |
+| 9. Content pipeline | Candidate list, generation, second-model check, automatic checks, admin review tool, reviewer role, reports, nightly stats flags, Polly audio upload to S3, images for concrete senses, reading practice (sentences and passages) and its reader | The first 500 senses reach live status through the full pipeline, concrete senses have a reviewed image where one could be found or made, and every live level has reviewed reading practice |
 | 10. Launch prep | Pilot items: privacy policy with retention schedule, school IT data sheet with allowlist domains, CloudFront audio subdomain, nightly pg_dump to S3 with a tested restore, uptime monitor, school-network test on a real Chromebook. Before public launch: landing page, accessibility audit and conformance report, load test at 300 simultaneous students | A pilot with one real class and independent learners for 2 weeks with no data loss, then public launch |
 
 > Editor's note (2026-10-20): `reference/prototype.html` does not exist. The Phase 1 seed set will be proposed in the Phase 1 plan instead. See [DECISIONS.md](DECISIONS.md).
@@ -559,13 +569,13 @@ After each phase, give me:
 
 ## Roadmap after the pilot
 
-Do not build anything in this section until I start that phase. It is here so early design choices leave room for it. After the pilot, finish Phase 8 (assessments) and Phase 9 step 7 (images) first, then continue in this order. Each phase ends with the same report as above.
+Do not build anything in this section until I start that phase. It is here so early design choices leave room for it. After the pilot, finish Phase 8 (assessments) first, then continue in this order. Each phase ends with the same report as above.
 
 | Phase | Build | Done when |
 |---|---|---|
 | 11. Fitting and analytics | The admin analytics page, FSRS parameter fitting from the answer log, the hook comparison, and tuning integrity and new-word-gate thresholds from real answer times | Fitted parameters predict recall better than the defaults on held-out reviews, and I have read the analytics |
 | 12. Coverage check | A learner pastes up to 2,000 characters of Spanish and sees the percent of its words they know, plus the unknown words with an "add to study" button. The pasted text is processed in memory, never stored, and never sent to an AI provider. Ask me before choosing a lemmatizer library | A news paragraph returns a result in under 2 seconds, and unknown inflected forms map to the right dictionary words |
-| 13. Reading passages | Passages of 3–4 sentences per level, written only from words at or below the reader's level plus one or two new ones, each with one comprehension question. Generated and reviewed through the content pipeline like any other content | 20 reviewed passages per level for the first three levels, served only to learners whose known words cover them |
+| 13. Reading passages | Moved into Phase 9 step 8 (owner, 2026-11-24) | |
 | 14. Audio-only sessions | A session type where every question is heard, not read: hear the word or sentence, pick the meaning. Large tap targets, playable with the screen dimmed | A learner can finish a 5-minute session using only audio and taps |
 | 15. Sentence practice | For learners above level 6: cloze questions across many reviewed example sentences for words already learned, to build speed in context | Advanced test learners report it is harder than regular reviews but fair |
 | 16. Level-score extras | Optional goals and milestones on estimated vocabulary size for independent learners ("Next milestone: 3,000 words"). Nothing competitive, and nothing shown to class students unless their teacher turns it on | Learners can turn it off completely, and no class student sees it by default |
