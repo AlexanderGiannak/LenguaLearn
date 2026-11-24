@@ -59,7 +59,7 @@ These are judgment calls where a reasonable person could pick differently:
 - **One Railway server.** A single server in one region keeps in-memory rate limiting valid and avoids cold starts. An outage there takes the app down mid-class. Acceptable for the pilot.
 - **Two cards per sense.** Separate recognition and production strengths double the reviews per word. Check the cost in the simulator before committing.
 - **Bank size.** About 10,000 words is a guess at "near-native for reading". Real usage should decide how far past 5,000 the bank grows.
-- **Image source.** Openly licensed images, AI-generated images, or both. Ask me before choosing.
+- **Image source.** Both: openly licensed images first, AI-generated when none fits (decided 2026-11-24).
 
 ## Hosting and infrastructure
 
@@ -488,7 +488,7 @@ A script generates audio with Amazon Polly Neural voices for each lemma and exam
 
 ### 7. Images
 
-Only concrete senses get an image at first. For each, use the image description from generation to find or create a picture that shows the meaning without text in it. Record source, license and attribution for every image, and keep a reviewer approval step like any other content. Ask me which source to use (an openly licensed library, AI generation, or both) before building this step. Images are optional: a sense without one still goes live. Part of the pilot (owner, 2026-11-24).
+Only concrete senses get an image at first. For each, use the image description from generation to find or create a picture that shows the meaning without text in it. Record source, license and attribution for every image, and keep a reviewer approval step like any other content. Use both sources: an openly licensed library first, and AI generation when no suitable open image exists (owner, 2026-11-24). Images are optional: a sense without one still goes live. Part of the pilot (owner, 2026-11-24).
 
 ### 8. Reading practice
 
