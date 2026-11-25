@@ -108,7 +108,8 @@ if (!yes) {
 
 for (const tool of ["ffmpeg", ...(local ? [] : ["aws"])]) {
   try {
-    await run(tool, ["-version"]);
+    // ffmpeg takes -version; the AWS CLI only --version.
+    await run(tool, [tool === "aws" ? "--version" : "-version"]);
   } catch {
     console.error(`${tool} is not installed (brew install ${tool === "aws" ? "awscli" : tool}).`);
     process.exit(1);
