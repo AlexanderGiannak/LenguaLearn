@@ -14,7 +14,7 @@ const KEPT_POS = {
   det: "determiner",
   phrase: "phrase",
   adv_phrase: "phrase",
-  // Wiktionary files "sí" (yes) as a particle; Spanish grammars call it an adverb.
+  // Wiktionary files the word for "yes" as a particle; Spanish grammars call it an adverb.
   particle: "adverb",
 } as const;
 
@@ -27,9 +27,9 @@ const KEPT_POS = {
 const FUNCTION_POS = new Set(["article", "prep", "prep_phrase", "pron", "conj", "contraction"]);
 
 /**
- * Senses that are not vocabulary of their own: letter names ("de" is also the letter D),
- * musical notes ("la", "mi"), and pointers to another spelling. Without this, "de", "te"
- * and "la" would survive as nouns.
+ * Senses that are not vocabulary of their own: letter names, musical notes and pointers to
+ * another spelling. Without this, prepositions and pronouns spelled like a letter or a note
+ * would survive as nouns (see the tests).
  */
 const IGNORED_GLOSS =
   /^(?:the )?name of the (?:latin[- ]script )?letter|\b(?:greek|hebrew|cyrillic) letter\b|note of the (?:musical )?scale|^(?:misspelling|alternative (?:form|spelling)|obsolete (?:form|spelling)|archaic spelling|abbreviation|initialism|acronym) of\b/i;
@@ -73,8 +73,8 @@ const NOT_AN_INFLECTION =
 
 /**
  * Whether a row of a headword's forms table is an inflection of that headword. The tables
- * also hold other words: a noun's other-gender word (madre lists padre), comparatives
- * (bueno lists mejor), and template notes ("conjugated like venir").
+ * also hold other words: a noun's other-gender word ("mother" lists "father"), irregular
+ * comparatives, and template notes ("conjugated like ..."). See the tests.
  */
 function isInflection(pos: string, tags: string[]): boolean {
   if (tags.length === 0 || tags.some((t) => NOT_AN_INFLECTION.test(t))) return false;
@@ -123,8 +123,8 @@ export class LemmaIndex {
     let unsuitable = 0;
     for (const sense of senses) {
       const tags = sense.tags ?? [];
-      // An apocopic adjective is a form of the full one (buen -> bueno, gran -> grande).
-      // Other apocopic words are words of their own: "muy" is not taught as "mucho".
+      // An apocopic adjective (a shortened form used before a noun) is a form of the full
+      // one. Other apocopic words, such as the adverb for "very", are words of their own.
       const altIsForm = !tags.includes("apocopic") || entry.pos === "adj";
       const targets = [...(sense.form_of ?? []), ...(altIsForm ? (sense.alt_of ?? []) : [])];
       if (targets.length > 0) {
@@ -174,7 +174,8 @@ export class LemmaIndex {
   /**
    * Headwords a form belongs to, keeping only headwords with senses of their own. A
    * headword whose only senses are unsuitable gives way to a clean one with the same
-   * spelling: "huevos" (vulgar) must not take the count of huevo's plural (eggs).
+   * spelling: a vulgar plural-only entry must not take the count of the plural of the
+   * everyday noun (see the tests).
    */
   candidates(form: string): string[] {
     const all = [...(this.formsOf.get(form) ?? [])].filter((h) => this.headwords.has(h)).sort();
@@ -183,9 +184,9 @@ export class LemmaIndex {
       return info.keptSenses + info.functionSenses > 0 || info.dropped.size > 0;
     });
     const pool = clean.length > 0 ? clean : all;
-    // "sabes", "vamos": verb forms that Wiktionary also lists as interjections. They are
+    // Verb forms that Wiktionary also lists as interjections ("you know", "let's go") are
     // taught as senses of the verb, not as separate cards. Only interjection-only entries
-    // fold: adverbs such as "así" (also a form of asir) are words of their own.
+    // fold: an adverb that is also a form of a rare verb is a word of its own.
     const hasVerb = pool.some((h) => h !== form && this.headwords.get(h)!.kept.has("verb"));
     if (!hasVerb) return pool;
     const words = pool.filter((h) => {
@@ -215,13 +216,12 @@ export type Dropped = { lemma: string; count: number; reason: string };
 /**
  * Turns form counts into lemma counts and ranks them. A form that belongs to one lemma
  * gives it its whole count. An ambiguous form follows two rules:
- * - If the form is itself a function word ("como", "para", "nada"), the count stays there:
- *   those uses dwarf the other readings ("I eat", "it stops", "it swims").
+ * - If the form is itself a function word (a preposition that is also "I eat"), the count
+ *   stays there: those uses dwarf the other readings.
  * - Otherwise the count is shared in proportion to each lemma's evidence: its unambiguous
- *   count, plus the count of its own spelling when that spelling is ambiguous too. Most of
- *   "era" goes to ser (whose es, soy, eres... dwarf it), most of "casa" to the noun
- *   (casar's casado, casó... are far rarer than "casa" itself), and most of "cosas" to cosa
- *   rather than to coser, although "cosa" is itself a form of coser.
+ *   count, plus the count of its own spelling when that spelling is ambiguous too. So a past
+ *   form of "to be" goes mostly to that verb, whose other forms dwarf it, and a noun that is
+ *   also a form of a rare verb keeps most of its count. The tests show each case.
  */
 export function rankLemmas(
   forms: FormCount[],
@@ -270,8 +270,8 @@ export function rankLemmas(
     const info = index.headwords.get(lemma)!;
     const rounded = Math.round(count);
     // A word used mostly as a function word is dropped even if it has a minor content
-    // use: "a" is a preposition (4 senses) and rarely an interjection (1). Ties drop too
-    // ("yo", "un"). Words like "nada", "qué" and "todo" have more content senses and stay.
+    // use, such as a preposition with a rare interjection sense. Ties drop too. Words with
+    // more content senses than function senses (for "nothing", "what", "all") stay.
     if (info.kept.size === 0 || info.functionSenses >= info.keptSenses) {
       const reason = info.dropped.size > 0 ? [...info.dropped].sort().join("|") : "unsuitable";
       dropped.push({ lemma, count: rounded, reason });
