@@ -27,6 +27,7 @@ content/state/
 content/reviewed/
 content/checked/
 content/import/
+content/voice-test/
 
 # misc
 .DS_Store
