@@ -12,6 +12,8 @@ export function locate(
   text: string,
   surface: string,
 ): { start: number; end: number } | { error: string } {
+  // An empty form would match everywhere (and indexOf("") never moves past the end).
+  if (surface.length === 0) return { error: "the target word is empty" };
   const found: number[] = [];
   for (let i = text.indexOf(surface); i >= 0; i = text.indexOf(surface, i + 1)) {
     if (!isWordChar(text[i - 1]) && !isWordChar(text[i + surface.length])) found.push(i);
