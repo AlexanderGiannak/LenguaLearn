@@ -93,15 +93,22 @@ export function reviewFailures(word: GeneratedWord, review: Review): Failure[] {
   if (review.lemmas.length !== word.lemmas.length) shapeError("lemmas");
   word.lemmas.forEach((l, li) => {
     const r = review.lemmas[li];
-    if (!r) return;
     const lp = `lemmas.${li}`;
+    // Every sense without a verdict of its own gets a failure, so it cannot pass unreviewed.
+    if (!r) {
+      l.senses.forEach((_, si) => shapeError(`${lp}.senses.${si}`));
+      return;
+    }
     for (const key of ["headword", "forms", "wordParts"] as const)
       if (!r[key].pass) add(`${lp}.${key}`, "reviewer", r[key].reason);
     if (r.senses.length !== l.senses.length) shapeError(`${lp}.senses`);
     l.senses.forEach((s, si) => {
       const rs = r.senses[si];
-      if (!rs) return;
       const sp = `${lp}.senses.${si}`;
+      if (!rs) {
+        shapeError(sp);
+        return;
+      }
       for (const key of [
         "gloss",
         "definition",
