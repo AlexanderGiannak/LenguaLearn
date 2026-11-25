@@ -1,4 +1,6 @@
 import { z } from "zod";
+import type { CandidateRow } from "./candidates.ts";
+import type { Usage } from "./run.ts";
 import {
   COGNATE_STATUSES,
   CONCRETENESS,
@@ -26,6 +28,8 @@ export const TAUGHT_POS = [
   "phrase",
 ] as const;
 
+/** Levels whose example sentences may use only words at or below their level. */
+export const VOCABULARY_LIMITED_LEVELS = 3;
 export const EXAMPLES_PER_SENSE = 4;
 export const MISUSES_PER_SENSE = 2;
 
@@ -84,3 +88,15 @@ export const generatedWordSchema = z.object({
 export type GeneratedWord = z.infer<typeof generatedWordSchema>;
 export type GeneratedLemma = GeneratedWord["lemmas"][number];
 export type GeneratedSense = GeneratedLemma["senses"][number];
+
+/** One file in content/generated/: the answer for one candidate, with what it cost. */
+export type GeneratedFile = {
+  candidate: CandidateRow;
+  model: string;
+  effort: string;
+  batch: boolean;
+  generatedAt: string;
+  usage: Usage;
+  costUsd: number;
+  output: GeneratedWord;
+};

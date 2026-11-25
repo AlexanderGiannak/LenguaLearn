@@ -15,13 +15,15 @@ import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { parseCandidates, type CandidateRow } from "./lib/candidates.ts";
-import { generatedWordSchema, type GeneratedWord } from "./lib/generated.ts";
+import {
+  generatedWordSchema,
+  VOCABULARY_LIMITED_LEVELS,
+  type GeneratedFile,
+} from "./lib/generated.ts";
 import { costUsd, estimateRunUsd, formatUsd, isOutOfCredit, type Usage } from "./lib/run.ts";
 
 const MODEL = "claude-opus-5-5";
 const MAX_TOKENS = 16_000;
-/** Levels whose example sentences are limited to the vocabulary list (spec: step 2). */
-const VOCABULARY_LIMITED_LEVELS = 3;
 /** Output tokens per word (thinking included), until generated words give a measurement. */
 const DEFAULT_OUTPUT_TOKENS = 5000;
 const NOW_CONCURRENCY = 3;
@@ -103,17 +105,6 @@ function params(c: CandidateRow): Anthropic.MessageCreateParamsNonStreaming {
 }
 
 // --- Output files ------------------------------------------------------------------------
-
-type GeneratedFile = {
-  candidate: CandidateRow;
-  model: string;
-  effort: string;
-  batch: boolean;
-  generatedAt: string;
-  usage: Usage;
-  costUsd: number;
-  output: GeneratedWord;
-};
 
 const fileName = (lemma: string) => `${encodeURIComponent(lemma)}.json`;
 const generatedPath = (lemma: string) => new URL(fileName(lemma), dirs.generated);
