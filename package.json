@@ -26,7 +26,8 @@
     "seed:demo-class": "node --env-file-if-exists=.env.local scripts/seed-demo-class.mts",
     "content:word-list": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/content/word-list.mts",
     "content:generate": "node --env-file-if-exists=.env.local --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/content/generate.mts",
-    "content:check": "node --env-file-if-exists=.env.local --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/content/check.mts"
+    "content:check": "node --env-file-if-exists=.env.local --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/content/check.mts",
+    "content:upload": "node --env-file-if-exists=.env.local --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/content/upload.mts"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.2.2",

@@ -50,11 +50,14 @@ reason: one short English sentence, required when pass is false, otherwise empty
   there, unless the word being taught is itself part of that tense. Formality must be consistent (tú forms with tú, usted forms with usted).
 - translation: accurate, natural English.
 - distractorsThatFit: the cloze question hides the surface form and offers it with the
-  three distractors. Put each distractor in the gap and read the whole sentence. List every
-  distractor (spelled exactly as given) that makes a grammatical sentence a fluent speaker
-  would accept as something a person could sensibly say, even if it changes the meaning.
-  A student who picks it would be marked wrong while being right, so this is the most
-  important check: be thorough here. An empty list means all three are clearly wrong.
+  three distractors. Put each distractor in the gap and read the whole sentence, including
+  every other clause. List a distractor (spelled exactly as given) only if the result is a
+  natural sentence a fluent speaker might actually say in some ordinary situation, so that
+  a student who picks it would be marked wrong while being right. A distractor does not fit
+  when the result is ungrammatical, absurd (something no one would say), or contradicts
+  another part of the sentence. Judge each one honestly both ways: missing a distractor
+  that fits harms students, and flagging one that does not wastes a reviewer's time. An
+  empty list means all three are clearly wrong.
 
 **Per misuse**
 
