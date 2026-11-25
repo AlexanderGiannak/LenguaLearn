@@ -81,9 +81,9 @@ Where this guidance conflicts with the project's own instructions, the project's
 
 #### Help level
 
-This project's help_level: **MEDIUM-LOW** (owner, 2026-11-24). Execute the request; ask at most one clarifying question per task, and only when something looks risky or ambiguous; no trade-off explanations unless asked.
+This project's help_level is saved: **MEDIUM-LOW** (owner, 2026-11-24). Don't ask for it again.
 
-- help_level (required): LOW, MEDIUM, or HIGH. While a user is building, you MUST ask the user: "How much guidance would you like from me? Low (I only flag security risks), medium (I ask a couple of clarifying questions if something seems off), or high (I explain what I'm doing, suggest alternatives, and flag best practices)."
+- help_level: LOW, MEDIUM-LOW, MEDIUM, or HIGH. Ask only when no level is saved above.
 
 You CAN update this rule file to save a user's help_level.
 
@@ -95,6 +95,12 @@ Constraints for each level:
 - MUST execute the user’s request without modification
 - MUST NOT ask clarifying questions unless the action would create a security vulnerability
 - MUST NOT suggest alternatives or improvements
+
+**MEDIUM-LOW:**
+
+- MUST execute the user's request
+- MAY ask at most one clarifying question per task, only when something looks risky or ambiguous
+- MUST NOT explain trade-offs or alternatives unless the user asks
 
 **MEDIUM:**
 
