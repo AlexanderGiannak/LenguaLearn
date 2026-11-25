@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { HttpError } from "@/lib/http/handler";
 import { getDb } from "@/lib/db/client";
 import { reviewerPage } from "@/lib/review/page-gate";
+import { mediaUrl, spokenHeadword } from "@/lib/content/display";
 import { getReviewWordPage } from "@/lib/content/word-page";
 import { previewQuestions, toEngineSense } from "@/lib/review/preview";
 import { nextInQueue, senseForReview, waitingRows } from "@/lib/review/service";
@@ -79,6 +80,25 @@ async function Sense({ params }: Pick<PageProps<"/review/[id]">, "params">) {
       misuses: v.misuses.map((m) => ({ text: m.text, explanation: m.explanation })),
     },
     images: v.images.map((i) => ({ fileKey: i.fileKey, alt: i.alt })),
+    recordings: [
+      {
+        label: "Headword",
+        text: spokenHeadword(v.lemma),
+        url: v.recordings.headword ? mediaUrl(v.recordings.headword.fileKey) : null,
+        status: v.recordings.headword?.status ?? null,
+        target: { owner: "lemma" as const },
+      },
+      ...v.examples.map((e, i) => {
+        const r = v.recordings.examples[i];
+        return {
+          label: `Sentence ${i + 1}`,
+          text: e.text,
+          url: r ? mediaUrl(r.fileKey) : null,
+          status: r?.status ?? null,
+          target: { owner: "example" as const, exampleId: e.id },
+        };
+      }),
+    ],
     log: v.log.map((l) => ({ ...l, at: l.at.toISOString() })),
     isAdmin: reviewer.isAdmin,
     nextId: await nextInQueue(getDb(), v.sense),

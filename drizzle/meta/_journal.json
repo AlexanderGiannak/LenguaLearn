@@ -71,6 +71,13 @@
       "when": 1795578374774,
       "tag": "0009_review",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1795613251181,
+      "tag": "0010_audio_text",
+      "breakpoints": true
     }
   ]
 }

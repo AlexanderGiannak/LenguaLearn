@@ -178,6 +178,11 @@ export function WordView({
           </section>
         )}
 
+        {/* The voice provider's terms ask for this, and listeners deserve to know. */}
+        {(word.lemmaAudioKey || examples.slice(0, 2).some((e) => e.audioKey)) && (
+          <p className={`-mt-4 text-sm ${muted}`}>Recordings use an AI-generated voice.</p>
+        )}
+
         {/* 5. Memory hook */}
         {hook && (
           <section aria-labelledby="hook-heading">

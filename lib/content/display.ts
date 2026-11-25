@@ -15,6 +15,15 @@ export function articleFor(lemma: LemmaGrammar): string | null {
   return "el/la";
 }
 
+/**
+ * What the headword recording says: the headword with its article for nouns ("el perro").
+ * A noun that takes either article is spoken bare, since "el/la" cannot be read aloud.
+ */
+export function spokenHeadword(lemma: LemmaGrammar & { headword: string }): string {
+  const article = articleFor(lemma);
+  return article && article !== "el/la" ? `${article} ${lemma.headword}` : lemma.headword;
+}
+
 const GENDER_WORD: Record<Gender, string> = {
   m: "masculine",
   f: "feminine",

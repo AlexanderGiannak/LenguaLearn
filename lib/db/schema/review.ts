@@ -3,12 +3,12 @@ import { check, index, integer, pgEnum, pgTable, text, timestamp } from "drizzle
 import { user } from "./auth";
 import { pseudoword, sense } from "./content";
 
-export const REVIEW_ACTIONS = ["edit", "approve", "reject", "publish"] as const;
+export const REVIEW_ACTIONS = ["edit", "approve", "reject", "publish", "flag_audio"] as const;
 export const reviewAction = pgEnum("review_action", REVIEW_ACTIONS);
 
 /**
  * Every action in the review tool: who edited, approved, rejected or published which sense
- * or pseudoword, and why (a rejection's reason). Content only; reviewers are adult
+ * or pseudoword, or flagged a recording, and why (a rejection's or flag's reason). Content only; reviewers are adult
  * volunteers or the admin, never students.
  */
 export const reviewLog = pgTable(

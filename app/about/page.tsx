@@ -69,7 +69,7 @@ export default function About() {
             },
             {
               title: "Human review",
-              text: "A person reviews each word as a student would see it, fixes what's wrong, and approves it. Volunteer Spanish teachers will be able to help as reviewers.",
+              text: "A person reviews each word as a student would see it, listens to its recordings, fixes what's wrong, and approves it. Volunteer Spanish teachers will be able to help as reviewers.",
             },
             {
               title: "Keep improving",
@@ -78,6 +78,10 @@ export default function About() {
           ]}
         />
         <p>Spanish is taught in a neutral Latin American variety, and regional words are marked.</p>
+        <p>
+          Recordings use an AI-generated voice (OpenAI). Only the word&apos;s own text is sent to
+          make them, never anything about a student.
+        </p>
       </Section>
 
       <Section title="Where things stand">
