@@ -28,6 +28,9 @@ content/reviewed/
 content/checked/
 content/import/
 content/voice-test/
+content/audio/
+# recordings the audio script copies in for the local app
+public/audio/
 
 # misc
 .DS_Store
