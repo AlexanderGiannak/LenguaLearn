@@ -256,6 +256,9 @@ export const audio = pgTable(
       .references(() => example.id),
     fileKey: text("file_key").notNull(),
     voiceId: text("voice_id").notNull(),
+    // Exactly what the recording says. When the headword or sentence changes, the recording
+    // no longer matches and is retired, then made again (see lib/content/audio.ts).
+    spokenText: text("spoken_text").notNull().default(""),
     generatedAt: timestamp("generated_at", { withTimezone: true }).notNull(),
     ...contentColumns(),
   },
