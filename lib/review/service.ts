@@ -32,6 +32,7 @@ import type { SenseEdit } from "./schema";
 // Every action is written to review_log.
 
 type Db = ReturnType<typeof getDb>;
+type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
 
 const OPEN = ["draft", "ai_checked", "approved"] as const satisfies ContentStatus[];
 
@@ -286,7 +287,7 @@ export function editToSenseInput(
   return { input: parsed.data, issues: [] };
 }
 
-async function lockSense(tx: Parameters<Parameters<Db["transaction"]>[0]>[0], senseId: number) {
+async function lockSense(tx: Tx, senseId: number) {
   const [s] = await tx.select().from(sense).where(eq(sense.id, senseId)).for("update");
   if (!s || s.status === "retired") throw new HttpError(404, "not found");
   return s;
@@ -322,43 +323,55 @@ export async function editSense(db: Db, reviewer: Reviewer, senseId: number, edi
   });
 }
 
-/** Approves a sense and the rows shown with it (draft or ai_checked; others are left). */
+/**
+ * The rows of a sense that wait for approval (draft or ai_checked): the sense itself and
+ * the rows shown with it. An edit to one example of a live sense leaves only that example
+ * waiting, so approval covers children too, not just the sense.
+ */
+export async function waitingRows(
+  db: Pick<Db, "select"> | Tx,
+  s: { id: number; lemmaId: number; status: ContentStatus },
+): Promise<StatusChange[]> {
+  const waiting = ["draft", "ai_checked"] as const;
+  const changes: StatusChange[] = [];
+  if ((waiting as readonly ContentStatus[]).includes(s.status))
+    changes.push({ table: "sense", id: s.id, to: "approved" });
+  const add = async (name: ContentTableName, where: ReturnType<typeof eq>) => {
+    const table = CONTENT_TABLES[name] as typeof lemma;
+    const rows = await db
+      .select({ id: table.id })
+      .from(table)
+      .where(and(where, inArray(table.status, waiting)));
+    for (const r of rows) changes.push({ table: name, id: r.id, to: "approved" });
+  };
+  await add("lemma", eq(lemma.id, s.lemmaId));
+  await add("word_part", eq(wordPart.lemmaId, s.lemmaId));
+  await add("audio", eq(audio.lemmaId, s.lemmaId));
+  for (const [name, table] of [
+    ["example", example],
+    ["hook", hook],
+    ["relation", relation],
+    ["misuse", misuse],
+    ["image", image],
+  ] as const) {
+    await add(name, eq(table.senseId, s.id));
+  }
+  const exampleIds = (
+    await db
+      .select({ id: example.id })
+      .from(example)
+      .where(and(eq(example.senseId, s.id), ne(example.status, "retired")))
+  ).map((r) => r.id);
+  if (exampleIds.length) await add("audio", inArray(audio.exampleId, exampleIds));
+  return changes;
+}
+
+/** Approves everything in a sense that waits for approval (see waitingRows). */
 export async function approveSense(db: Db, reviewer: Reviewer, senseId: number) {
   return db.transaction(async (tx) => {
     const s = await lockSense(tx, senseId);
-    if (s.status === "live" || s.status === "approved") {
-      throw new HttpError(409, `this sense is already ${s.status}`);
-    }
-    const waiting = ["draft", "ai_checked"] as const;
-    const changes: StatusChange[] = [{ table: "sense", id: senseId, to: "approved" }];
-    const add = async (name: ContentTableName, where: ReturnType<typeof eq>) => {
-      const table = CONTENT_TABLES[name] as typeof lemma;
-      const rows = await tx
-        .select({ id: table.id })
-        .from(table)
-        .where(and(where, inArray(table.status, waiting)));
-      for (const r of rows) changes.push({ table: name, id: r.id, to: "approved" });
-    };
-    await add("lemma", eq(lemma.id, s.lemmaId));
-    await add("word_part", eq(wordPart.lemmaId, s.lemmaId));
-    await add("audio", eq(audio.lemmaId, s.lemmaId));
-    for (const [name, table] of [
-      ["example", example],
-      ["hook", hook],
-      ["relation", relation],
-      ["misuse", misuse],
-      ["image", image],
-    ] as const) {
-      await add(name, eq(table.senseId, senseId));
-    }
-    const exampleIds = (
-      await tx
-        .select({ id: example.id })
-        .from(example)
-        .where(and(eq(example.senseId, senseId), ne(example.status, "retired")))
-    ).map((r) => r.id);
-    if (exampleIds.length) await add("audio", inArray(audio.exampleId, exampleIds));
-
+    const changes = await waitingRows(tx, s);
+    if (changes.length === 0) throw new HttpError(409, `nothing here waits for approval`);
     await applyStatusChanges(tx, changes, "human-review");
     await tx.insert(reviewLog).values({ reviewerId: reviewer.id, senseId, action: "approve" });
     return { approved: changes.length };

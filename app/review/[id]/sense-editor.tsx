@@ -56,6 +56,8 @@ export type EditorData = {
   isAdmin: boolean;
   /** The next sense in the same queue, opened after approving or rejecting this one. */
   nextId: number | null;
+  /** How many rows of this sense wait for approval (the sense, or only an edited child). */
+  waiting: number;
 };
 
 const STATUS_LABEL: Record<ContentStatus, string> = {
@@ -89,7 +91,14 @@ async function send(url: string, body: unknown) {
   }
 }
 
-export function SenseEditor({ data }: { data: EditorData }) {
+export function SenseEditor({
+  data,
+  studentView,
+}: {
+  data: EditorData;
+  /** The server-rendered student view, shown above the notes. */
+  studentView: ReactNode;
+}) {
   const router = useRouter();
   const [edit, setEdit] = useState<Edit>(data.edit);
   const [errors, setErrors] = useState<string[]>([]);
@@ -147,7 +156,7 @@ export function SenseEditor({ data }: { data: EditorData }) {
       const local = f.field.replace(/^lemmas\.\d+\.senses\.\d+\./, "");
       return local === prefix || local.startsWith(`${prefix}.`);
     });
-  const canDecide = data.status !== "live" && data.status !== "approved";
+  const canDecide = data.waiting > 0;
 
   // Keyboard: Ctrl/Cmd+S saves, Ctrl/Cmd+Enter approves (spec: step 4, shortcuts).
   const keys = useRef({ save, approve, dirty, canDecide, busy });
@@ -214,6 +223,8 @@ export function SenseEditor({ data }: { data: EditorData }) {
           </p>
         )}
       </header>
+
+      {studentView}
 
       {data.notes && (
         <section className="card flex flex-col gap-2 p-4" aria-labelledby="notes">
@@ -528,7 +539,8 @@ export function SenseEditor({ data }: { data: EditorData }) {
         </p>
         {data.status === "live" && (
           <p className={`text-sm ${muted}`}>
-            This sense is live. Saving a change sends the changed parts back through review.
+            This sense is live. A saved change waits for approval, and students keep seeing the rest
+            of the sense until the admin publishes it.
           </p>
         )}
         {data.status !== "live" && (

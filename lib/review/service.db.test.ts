@@ -26,6 +26,7 @@ import {
   nextInQueue,
   rejectSense,
   reviewQueue,
+  waitingRows,
   senseForReview,
 } from "./service";
 
@@ -231,7 +232,10 @@ describe("approving, rejecting and publishing", () => {
     expect(v.lemma.status).toBe("approved");
     expect(v.examples.map((e) => e.status)).toEqual(["approved"]);
     expect(v.hooks.map((h) => h.status)).toEqual(["approved"]);
-    await expect(approveSense(getDb(), r, senseId)).rejects.toMatchObject({ status: 409 });
+    await expect(approveSense(getDb(), r, senseId)).rejects.toMatchObject({
+      status: 409,
+      message: "nothing here waits for approval",
+    });
   });
 
   it("sends a rejected sense back to draft with the reason", async () => {
@@ -264,6 +268,29 @@ describe("approving, rejecting and publishing", () => {
       .from(lemma)
       .where(eq(lemma.id, v.lemma.id));
     expect(live[0]!.s).toBe("live");
+  });
+
+  it("approves an edit to one example of a live sense, and publishing puts it live", async () => {
+    const admin = await reviewerFor(await makeUser("admin"));
+    const reviewer = await reviewerFor(await makeUser("teacher", { canReview: true }));
+    const { senseId } = await importSense();
+    await approveSense(getDb(), reviewer, senseId);
+    await publishApproved(getDb(), admin);
+    await expect(approveSense(getDb(), reviewer, senseId)).rejects.toMatchObject({ status: 409 });
+
+    const edit = await editOf(senseId, reviewer.id);
+    edit.examples[0]!.translation = "The dog is asleep in its bed.";
+    await editSense(getDb(), reviewer, senseId, edit);
+    let v = await senseForReview(getDb(), senseId, reviewer.id);
+    expect([v.sense.status, v.examples[0]!.status]).toEqual(["live", "draft"]);
+    const sense = { id: senseId, lemmaId: v.lemma.id, status: v.sense.status };
+    expect((await waitingRows(getDb(), sense)).map((c) => c.table)).toContain("example");
+
+    await approveSense(getDb(), reviewer, senseId);
+    await publishApproved(getDb(), admin);
+    v = await senseForReview(getDb(), senseId, reviewer.id);
+    expect([v.sense.status, v.examples[0]!.status]).toEqual(["live", "live"]);
+    expect(v.examples[0]!.translation).toBe("The dog is asleep in its bed.");
   });
 
   it("drops the audio of a sentence that changed", async () => {
