@@ -153,6 +153,33 @@ describe("importContent", () => {
     ]);
   });
 
+  it("stores check notes without treating a re-check as a content change", async () => {
+    const p = prefix();
+    const notes = (message: string) => ({
+      checkedAt: "2026-11-25T00:00:00Z",
+      reviewerGloss: "house, home",
+      failures: [{ field: "lemmas.0.senses.0.gloss", check: "reviewer", message }],
+    });
+    const first = payload(p);
+    first.lemmas[0]!.senses[0]!.checkNotes = notes("Too narrow.");
+    await importContent(getDb(), first);
+    await getDb()
+      .update(sense)
+      .set({ status: "live" })
+      .where(eq(sense.key, `${p}casa#noun#1`));
+
+    const rechecked = payload(p);
+    rechecked.lemmas[0]!.senses[0]!.checkNotes = notes("Still too narrow.");
+    const report = await importContent(getDb(), rechecked);
+
+    expect(report.counts.updated).toBe(0);
+    expect(await senseRow(`${p}casa#noun#1`)).toMatchObject({
+      status: "live",
+      version: 1,
+      checkNotes: notes("Still too narrow."),
+    });
+  });
+
   it("stores misuse sentences in order and retires dropped ones", async () => {
     const p = prefix();
     const withMisuses = payload(p);
