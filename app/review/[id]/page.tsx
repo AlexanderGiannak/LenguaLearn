@@ -6,7 +6,7 @@ import { getDb } from "@/lib/db/client";
 import { reviewerPage } from "@/lib/review/page-gate";
 import { getReviewWordPage } from "@/lib/content/word-page";
 import { previewQuestions, toEngineSense } from "@/lib/review/preview";
-import { nextInQueue, senseForReview } from "@/lib/review/service";
+import { nextInQueue, senseForReview, waitingRows } from "@/lib/review/service";
 import { getTrainingContent } from "@/lib/train/content";
 import { StudentView } from "./student-view";
 import { SenseEditor, type EditorData } from "./sense-editor";
@@ -82,6 +82,7 @@ async function Sense({ params }: Pick<PageProps<"/review/[id]">, "params">) {
     log: v.log.map((l) => ({ ...l, at: l.at.toISOString() })),
     isAdmin: reviewer.isAdmin,
     nextId: await nextInQueue(getDb(), v.sense),
+    waiting: (await waitingRows(getDb(), v.sense)).length,
   };
   const [word, content] = await Promise.all([getReviewWordPage(v.sense.id), getTrainingContent()]);
   const studentView = word ? (
