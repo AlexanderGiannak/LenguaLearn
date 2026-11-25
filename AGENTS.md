@@ -85,6 +85,7 @@ npm run seed:fixtures          # load the 40 fixture words and publish them
 | `npm run simulate` | Run the engine simulator (100 synthetic learners × 60 days per cohort) and rewrite `docs/simulator-report.md`. About 3 minutes |
 | `npm run seed:demo-class [-- <url>]` | Create a demo teacher and a class of 25 students with a simulated week of practice (local and PR previews only); prints the sign-in |
 | `npm run seed:fixtures [-- <url>]` | Import the fixture words through the admin API and publish them. Default `http://localhost:3000`; refused in production |
+| `npm run content:word-list [-- --limit 12000]` | Content pipeline step 1: build `content/candidates.csv` (frequency-ranked lemmas) and `content/dropped.csv` from the sources in `content/SOURCES.md`. Downloads (~100 MB) are cached in `~/.cache/lengualearn` |
 
 CI (`.github/workflows/ci.yml`) runs lint, format check, typecheck and unit tests, then, against a
 throwaway Postgres, the database tests, a build, and Playwright (which seeds the fixtures first), on every push.
@@ -110,7 +111,8 @@ throwaway Postgres, the database tests, a build, and Playwright (which seeds the
 | `lib/integrity/` | Integrity: every threshold (`config.ts`), the flag rules (`rules.ts`) and the server checks (`server.ts`: signed question tokens, timing bounds) |
 | `lib/engine/` | Pure TypeScript learning engine: `config.ts` (every threshold), `cards.ts` (two FSRS cards per sense), `rating.ts`, `answer-check.ts`, `questions.ts` and `distractors.ts`, `next-item.ts` (session order and new-word gate), `ability.ts` (ability and vocabulary size), `intro.ts`, `placement.ts` (the level test), and `simulator/`. Imports only its own files (with `.ts` extensions) and ts-fsrs; `boundaries.test.ts` enforces it |
 | `drizzle/` | Generated SQL migrations, committed |
-| `scripts/` | Node scripts. `migrate.mts` runs migrations. `scripts/content/` (Phase 9) runs on the owner's laptop, never touches the database, and uploads JSON through the admin import endpoint |
+| `scripts/` | Node scripts. `migrate.mts` runs migrations. `scripts/content/` (Phase 9) runs on the owner's laptop, never touches the database, and uploads JSON through the admin import endpoint: `word-list.mts` (step 1), with its pure logic and tests in `scripts/content/lib/` |
+| `content/` | Content pipeline working files: `candidates.csv` and `dropped.csv` (step 1), `SOURCES.md` (sources, licenses, method). `content/raw/` (raw AI responses) is git-ignored |
 | `e2e/` | Playwright tests. `seed.setup.ts` loads the fixture words before the browser tests |
 | `fixtures/` | Test fixtures only, never production content. `fixtures/content/seed-40.json` holds the 40 AI-written seed words |
 | `test/` | Setup for the database tests (`vitest.db.config.mts`) |
