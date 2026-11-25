@@ -89,7 +89,14 @@ async function send(url: string, body: unknown) {
   }
 }
 
-export function SenseEditor({ data }: { data: EditorData }) {
+export function SenseEditor({
+  data,
+  studentView,
+}: {
+  data: EditorData;
+  /** The server-rendered student view, shown above the notes. */
+  studentView: ReactNode;
+}) {
   const router = useRouter();
   const [edit, setEdit] = useState<Edit>(data.edit);
   const [errors, setErrors] = useState<string[]>([]);
@@ -214,6 +221,8 @@ export function SenseEditor({ data }: { data: EditorData }) {
           </p>
         )}
       </header>
+
+      {studentView}
 
       {data.notes && (
         <section className="card flex flex-col gap-2 p-4" aria-labelledby="notes">

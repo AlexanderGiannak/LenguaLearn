@@ -63,7 +63,16 @@ function ChipGroup({ title, relations }: { title: string; relations: Relation[] 
   );
 }
 
-export function WordView({ word }: { word: WordPageData }) {
+export function WordView({
+  word,
+  embedded = false,
+}: {
+  word: WordPageData;
+  /** Inside another page (the review tool): no <main>, and the headword is an h2. */
+  embedded?: boolean;
+}) {
+  const Root = embedded ? "div" : "main";
+  const Title = embedded ? "h2" : "h1";
   const { lemma, sense, examples, hook, image, relations, wordParts } = word;
   const article = articleFor(lemma);
   const spoken = article && article !== "el/la" ? `${article} ${lemma.headword}` : lemma.headword;
@@ -88,12 +97,12 @@ export function WordView({ word }: { word: WordPageData }) {
     usage;
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12">
+    <Root className={embedded ? "w-full" : "mx-auto w-full max-w-2xl px-4 py-8 sm:py-12"}>
       <article className="flex flex-col gap-8">
         {/* 1. Headword with article, part of speech, audio */}
         <header className="flex items-start justify-between gap-4">
           <div>
-            <h1 lang="es" className="text-4xl font-extrabold tracking-tight break-words">
+            <Title lang="es" className="text-4xl font-extrabold tracking-tight break-words">
               {article && <span className={`font-normal ${muted}`}>{article} </span>}
               {lemma.headword}
               {lemma.feminine && (
@@ -102,7 +111,7 @@ export function WordView({ word }: { word: WordPageData }) {
                   {lemma.feminine}
                 </span>
               )}
-            </h1>
+            </Title>
             <p className={`mt-2 ${muted}`}>
               {partOfSpeechLabel(lemma)} · Level {sense.level}
             </p>
@@ -293,6 +302,6 @@ export function WordView({ word }: { word: WordPageData }) {
           </details>
         )}
       </article>
-    </main>
+    </Root>
   );
 }
