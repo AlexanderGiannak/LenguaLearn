@@ -36,6 +36,29 @@ type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
 
 const OPEN = ["draft", "ai_checked", "approved"] as const satisfies ContentStatus[];
 
+/**
+ * A live sense with something shown with it waiting for approval: an edited example, a
+ * new recording after a reviewer flagged one, a changed headword. Students keep seeing the
+ * live rows meanwhile (see waitingRows).
+ */
+const liveWithWaiting = sql`${sense.status} = 'live' and (
+  exists (select 1 from ${example} x where x.sense_id = ${sense.id} and x.status in ('draft', 'ai_checked'))
+  or exists (select 1 from ${hook} x where x.sense_id = ${sense.id} and x.status in ('draft', 'ai_checked'))
+  or exists (select 1 from ${relation} x where x.sense_id = ${sense.id} and x.status in ('draft', 'ai_checked'))
+  or exists (select 1 from ${misuse} x where x.sense_id = ${sense.id} and x.status in ('draft', 'ai_checked'))
+  or exists (select 1 from ${image} x where x.sense_id = ${sense.id} and x.status in ('draft', 'ai_checked'))
+  or exists (select 1 from ${audio} a join ${example} x on x.id = a.example_id
+             where x.sense_id = ${sense.id} and x.status <> 'retired' and a.status in ('draft', 'ai_checked'))
+  or exists (select 1 from ${lemma} x where x.id = ${sense.lemmaId} and x.status in ('draft', 'ai_checked'))
+  or exists (select 1 from ${wordPart} x where x.lemma_id = ${sense.lemmaId} and x.status in ('draft', 'ai_checked'))
+  or exists (select 1 from ${audio} x where x.lemma_id = ${sense.lemmaId} and x.status in ('draft', 'ai_checked'))
+)`;
+
+/** The senses in one queue tab. */
+function inQueue(status: QueueStatus) {
+  return status === "changed" ? liveWithWaiting : eq(sense.status, status);
+}
+
 export type QueueRow = {
   senseId: number;
   key: string;
@@ -58,7 +81,7 @@ export async function reviewQueue(
   },
 ): Promise<{ rows: QueueRow[]; total: number }> {
   const where = and(
-    eq(sense.status, opts.status),
+    inQueue(opts.status),
     opts.check
       ? sql`${sense.checkNotes} @> ${JSON.stringify({ failures: [{ check: opts.check }] })}::jsonb`
       : undefined,
@@ -86,14 +109,14 @@ export async function reviewQueue(
   return { rows, total };
 }
 
-export type QueueStatus = "ai_checked" | "draft" | "approved";
+export type QueueStatus = "ai_checked" | "draft" | "approved" | "changed";
 
 /** How many senses in a queue have a failure from each check, for the queue's filter. */
 export async function checkCounts(db: Db, status: QueueStatus) {
   const rows = await db.execute<{ check: string; n: number }>(sql`
     select f->>'check' as check, count(distinct ${sense.id})::int as n
     from ${sense}, jsonb_array_elements(coalesce(${sense.checkNotes} -> 'failures', '[]'::jsonb)) f
-    where ${sense.status} = ${status}
+    where ${inQueue(status)}
     group by 1 order by 2 desc, 1`);
   return [...rows].map((r) => ({ check: String(r.check), n: Number(r.n) }));
 }
@@ -103,13 +126,18 @@ export async function nextInQueue(
   db: Pick<Db, "select">,
   current: { status: ContentStatus; frequencyRank: number; key: string },
 ): Promise<number | null> {
-  if (!(OPEN as readonly ContentStatus[]).includes(current.status)) return null;
+  const queue: QueueStatus | null = (OPEN as readonly ContentStatus[]).includes(current.status)
+    ? (current.status as QueueStatus)
+    : current.status === "live"
+      ? "changed"
+      : null;
+  if (!queue) return null;
   const [row] = await db
     .select({ id: sense.id })
     .from(sense)
     .where(
       and(
-        eq(sense.status, current.status),
+        inQueue(queue),
         sql`(${sense.frequencyRank}, ${sense.key}) > (${current.frequencyRank}, ${current.key})`,
       ),
     )
@@ -118,13 +146,17 @@ export async function nextInQueue(
   return row?.id ?? null;
 }
 
-export async function queueCounts(db: Db): Promise<Record<(typeof OPEN)[number], number>> {
+export async function queueCounts(db: Db): Promise<Record<QueueStatus, number>> {
   const rows = await db
     .select({ status: sense.status, n: sql<number>`count(*)::int` })
     .from(sense)
     .where(inArray(sense.status, OPEN))
     .groupBy(sense.status);
-  const counts = { draft: 0, ai_checked: 0, approved: 0 };
+  const [changed] = (await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(sense)
+    .where(liveWithWaiting)) as [{ n: number }];
+  const counts = { draft: 0, ai_checked: 0, approved: 0, changed: changed.n };
   for (const r of rows) counts[r.status as (typeof OPEN)[number]] = r.n;
   return counts;
 }
@@ -185,12 +217,55 @@ export async function senseForReview(db: Pick<Db, "select">, senseId: number, vi
     images: notRetired(
       await db.select().from(image).where(eq(image.senseId, senseId)).orderBy(asc(image.position)),
     ),
+    recordings: await recordingsFor(db, l!.id, examples),
     // Reviewers see who acted only as "you" or "another reviewer".
     log: log.map(({ reviewerId, ...r }) => ({ ...r, byYou: reviewerId === viewerId })),
   };
 }
 
 export type SenseForReview = Awaited<ReturnType<typeof senseForReview>>;
+
+type Recording = { fileKey: string; status: ContentStatus; spokenText: string };
+
+/** The headword's and each sentence's current recording, for the reviewer to listen to. */
+async function recordingsFor(
+  db: Pick<Db, "select">,
+  lemmaId: number,
+  examples: { id: number }[],
+): Promise<{ headword: Recording | null; examples: (Recording | null)[] }> {
+  const cols = {
+    lemmaId: audio.lemmaId,
+    exampleId: audio.exampleId,
+    fileKey: audio.fileKey,
+    status: audio.status,
+    spokenText: audio.spokenText,
+  };
+  const ids = examples.map((e) => e.id);
+  const rows = await db
+    .select(cols)
+    .from(audio)
+    .where(
+      and(
+        ne(audio.status, "retired"),
+        ids.length
+          ? sql`(${audio.lemmaId} = ${lemmaId} or ${inArray(audio.exampleId, ids)})`
+          : eq(audio.lemmaId, lemmaId),
+      ),
+    );
+  const pick = ({ fileKey, status, spokenText }: (typeof rows)[number]) => ({
+    fileKey,
+    status,
+    spokenText,
+  });
+  const headword = rows.find((r) => r.lemmaId === lemmaId);
+  return {
+    headword: headword ? pick(headword) : null,
+    examples: examples.map((e) => {
+      const r = rows.find((x) => x.exampleId === e.id);
+      return r ? pick(r) : null;
+    }),
+  };
+}
 
 /** Builds the import's input for an edited sense, keeping what the editor does not touch. */
 export function editToSenseInput(
@@ -392,6 +467,40 @@ export async function rejectSense(db: Db, reviewer: Reviewer, senseId: number, r
       .insert(reviewLog)
       .values({ reviewerId: reviewer.id, senseId, action: "reject", reason });
     return { status: "draft" as const };
+  });
+}
+
+/**
+ * A reviewer heard a wrong pronunciation: the recording is retired (students fall back to
+ * the browser's voice) and the next `content:audio` run makes a new one, which comes back
+ * here as a draft to approve.
+ */
+export async function flagAudio(
+  db: Db,
+  reviewer: Reviewer,
+  senseId: number,
+  target: { owner: "lemma" } | { owner: "example"; exampleId: number },
+  reason: string,
+) {
+  return db.transaction(async (tx) => {
+    const s = await lockSense(tx, senseId);
+    const owner =
+      target.owner === "lemma"
+        ? eq(audio.lemmaId, s.lemmaId)
+        : and(
+            eq(audio.exampleId, target.exampleId),
+            sql`exists (select 1 from ${example} x where x.id = ${audio.exampleId} and x.sense_id = ${senseId})`,
+          );
+    const [row] = await tx
+      .select({ id: audio.id })
+      .from(audio)
+      .where(and(owner, ne(audio.status, "retired")));
+    if (!row) throw new HttpError(404, "no recording to flag");
+    await applyStatusChanges(tx, [{ table: "audio", id: row.id, to: "retired" }]);
+    await tx
+      .insert(reviewLog)
+      .values({ reviewerId: reviewer.id, senseId, action: "flag_audio", reason });
+    return { retired: row.id };
   });
 }
 

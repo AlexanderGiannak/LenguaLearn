@@ -66,3 +66,15 @@ export const pseudowordDecisionSchema = z.strictObject({
   ids: z.array(z.int().positive()).min(1).max(500),
   action: z.enum(["approve", "reject"]),
 });
+
+/** A wrong pronunciation in the headword's or a sentence's recording. */
+export const flagAudioSchema = z.strictObject({
+  target: z.discriminatedUnion("owner", [
+    z.strictObject({ owner: z.literal("lemma") }),
+    z.strictObject({
+      owner: z.literal("example"),
+      exampleId: z.int().min(1).max(2_147_483_647),
+    }),
+  ]),
+  reason: str(300).pipe(z.string().min(3)),
+});

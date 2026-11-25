@@ -342,8 +342,9 @@ describe("the queue", () => {
       key: first!.key,
     });
     expect(next).not.toBeNull();
+    // A retired sense is in no queue. (A live one is in "Changes to live words".)
     const after = await nextInQueue(getDb(), {
-      status: "live",
+      status: "retired",
       frequencyRank: 300,
       key: second!.key,
     });

@@ -52,6 +52,14 @@ export type EditorData = {
   notes: CheckNotes | null;
   edit: Edit;
   images: { fileKey: string; alt: string }[];
+  /** The headword's and each sentence's recording; url is null until one is made. */
+  recordings: {
+    label: string;
+    text: string;
+    url: string | null;
+    status: ContentStatus | null;
+    target: { owner: "lemma" } | { owner: "example"; exampleId: number };
+  }[];
   log: { at: string; action: string; reason: string | null; byYou: boolean }[];
   isAdmin: boolean;
   /** The next sense in the same queue, opened after approving or rejecting this one. */
@@ -66,6 +74,14 @@ const STATUS_LABEL: Record<ContentStatus, string> = {
   approved: "Approved",
   live: "Live",
   retired: "Retired",
+};
+
+const ACTION_LABEL: Record<string, string> = {
+  edit: "edited",
+  approve: "approved",
+  reject: "rejected",
+  publish: "published",
+  flag_audio: "recording flagged",
 };
 
 const input = `field w-full ${focusRing}`;
@@ -105,7 +121,7 @@ export function SenseEditor({
   const [busy, setBusy] = useState(false);
   const [reason, setReason] = useState("");
   const dirty = JSON.stringify(edit) !== JSON.stringify(data.edit);
-  const backTo = `/review?status=${data.status === "live" ? "ai_checked" : data.status}`;
+  const backTo = `/review?status=${data.status === "live" ? "changed" : data.status}`;
   const onward = data.nextId ? `/review/${data.nextId}` : backTo;
 
   const set = <K extends keyof Edit>(k: K, v: Edit[K]) => setEdit((e) => ({ ...e, [k]: v }));
@@ -145,6 +161,16 @@ export function SenseEditor({
     );
   const approve = () =>
     run(`/api/review/senses/${data.id}/decision`, { action: "approve" }, () => router.push(onward));
+  const [audioNote, setAudioNote] = useState("");
+  const flagRecording = (target: EditorData["recordings"][number]["target"]) =>
+    run(
+      `/api/review/senses/${data.id}/audio-flag`,
+      { target, reason: audioNote.trim() || "Wrong pronunciation" },
+      () => {
+        setAudioNote("");
+        router.refresh();
+      },
+    );
   const reject = () =>
     run(`/api/review/senses/${data.id}/decision`, { action: "reject", reason }, () =>
       router.push(onward),
@@ -488,6 +514,47 @@ export function SenseEditor({
         </Button>
       </Section>
 
+      <Section title="Recordings">
+        <p className={`text-sm ${muted}`}>
+          Listen to each one. A wrong pronunciation is removed and made again the next time the
+          audio script runs; the new recording comes back here to approve.
+        </p>
+        <ul className="flex flex-col gap-3">
+          {data.recordings.map((r, i) => (
+            <li key={i} className="flex flex-col gap-1">
+              <span className="text-sm font-semibold">
+                {r.label}
+                {r.status && <span className={muted}> · {STATUS_LABEL[r.status]}</span>}
+              </span>
+              <span lang="es">{r.text}</span>
+              {r.url ? (
+                <span className="flex flex-wrap items-center gap-2">
+                  <audio controls preload="none" src={r.url} className="h-11 max-w-full">
+                    <track kind="captions" />
+                  </audio>
+                  <Button
+                    variant="secondary"
+                    disabled={busy}
+                    onClick={() => flagRecording(r.target)}
+                  >
+                    Wrong pronunciation
+                  </Button>
+                </span>
+              ) : (
+                <span className={`text-sm ${muted}`}>No recording yet.</span>
+              )}
+            </li>
+          ))}
+        </ul>
+        {data.recordings.some((r) => r.url) && (
+          <Text
+            label="What was wrong (optional, saved with the flag)"
+            value={audioNote}
+            onChange={setAudioNote}
+          />
+        )}
+      </Section>
+
       {data.images.length > 0 && (
         <Section title="Pictures">
           <ul className="list-disc pl-5">
@@ -566,7 +633,7 @@ export function SenseEditor({
           <ul className="flex flex-col gap-1 text-sm">
             {data.log.map((e, i) => (
               <li key={i}>
-                {new Date(e.at).toLocaleString()}: {e.action} by{" "}
+                {new Date(e.at).toLocaleString()}: {ACTION_LABEL[e.action] ?? e.action} by{" "}
                 {e.byYou ? "you" : "another reviewer"}
                 {e.reason && <>: {e.reason}</>}
               </li>

@@ -7,6 +7,7 @@ import * as accountsRoute from "@/app/api/admin/accounts/route";
 import { hashAdminToken } from "@/lib/admin/auth";
 import { getDb, getSql } from "@/lib/db/client";
 import { adminActionLog, user } from "@/lib/db/schema";
+import * as audioFlagRoute from "./senses/[id]/audio-flag/route";
 import * as decisionRoute from "./senses/[id]/decision/route";
 import * as editRoute from "./senses/[id]/route";
 import * as publishRoute from "./publish/route";
@@ -76,6 +77,7 @@ afterAll(async () => {
 const routes = [
   ["edit", editRoute.POST, {}],
   ["decision", decisionRoute.POST, { action: "approve" }],
+  ["audio-flag", audioFlagRoute.POST, { target: { owner: "lemma" }, reason: "wrong" }],
   ["pseudowords", pseudowordsRoute.POST, { ids: [1], action: "approve" }],
   ["publish", publishRoute.POST, {}],
 ] as const;
