@@ -1,12 +1,12 @@
-// Content pipeline: uploads the files in content/import/ (written by content:check) through
-// the admin import endpoint. It never publishes: senses arrive as ai_checked or draft, and
+// Content pipeline: uploads the files in content/import/ (written by content:check) and the
+// placement pseudowords (content/pseudowords.json) through the admin import endpoint. It never publishes: senses arrive as ai_checked or draft, and
 // reach students only after review (spec: status flow).
 //
 //   npm run content:upload                          # the local app, http://localhost:3000
 //   npm run content:upload -- https://lengualearn.com --yes
 //
 // Needs ADMIN_API_TOKEN (from .env.local, or the environment) for the target site.
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 
 const args = process.argv.slice(2);
 const baseUrl = (args.find((a) => !a.startsWith("--")) ?? "http://localhost:3000").replace(
@@ -25,20 +25,40 @@ if (!local && !args.includes("--yes")) {
 }
 
 const dir = new URL("../../content/import/", import.meta.url);
-const files = readdirSync(dir)
-  .filter((n) => /^import-\d+\.json$/.test(n))
-  .sort();
-if (files.length === 0) {
-  console.log("Nothing in content/import/. Run npm run content:check first.");
+const pseudowordsFile = new URL("../../content/pseudowords.json", import.meta.url);
+const files = existsSync(dir)
+  ? readdirSync(dir)
+      .filter((n) => /^import-\d+\.json$/.test(n))
+      .sort()
+  : [];
+
+// The placement pseudowords (content:pseudowords) go up as drafts, 200 per request.
+const uploads: { name: string; body: string }[] = files.map((name) => ({
+  name,
+  body: readFileSync(new URL(name, dir), "utf8"),
+}));
+if (existsSync(pseudowordsFile)) {
+  const { words } = JSON.parse(readFileSync(pseudowordsFile, "utf8")) as { words: string[] };
+  for (let i = 0; i < words.length; i += 200)
+    uploads.push({
+      name: `pseudowords ${i + 1}–${Math.min(i + 200, words.length)}`,
+      body: JSON.stringify({
+        lemmas: [],
+        pseudowords: words.slice(i, i + 200).map((text) => ({ text, status: "draft" })),
+      }),
+    });
+}
+if (uploads.length === 0) {
+  console.log("Nothing to upload. Run npm run content:check or content:pseudowords first.");
   process.exit(0);
 }
 
 const totals: Record<string, number> = {};
-for (const name of files) {
+for (const { name, body } of uploads) {
   const res = await fetch(`${baseUrl}/api/admin/import`, {
     method: "POST",
     headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-    body: readFileSync(new URL(name, dir), "utf8"),
+    body,
   });
   const text = await res.text();
   if (!res.ok) {
