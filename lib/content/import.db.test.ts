@@ -1,9 +1,18 @@
 import { and, eq } from "drizzle-orm";
 import { afterAll, describe, expect, it } from "vitest";
 import { getDb, getSql } from "@/lib/db/client";
-import { contentRevision, example, lemma, misuse, sense, wordListItem } from "@/lib/db/schema";
+import {
+  contentRevision,
+  example,
+  lemma,
+  misuse,
+  pseudoword,
+  sense,
+  wordListItem,
+} from "@/lib/db/schema";
 import { ImportError, importContent } from "./import";
 import { importPayloadSchema, type ImportPayloadInput } from "./import-schema";
+import { applyStatusChanges } from "./status-changes";
 
 // TEST FIXTURE: Spanish text below is test data, not content.
 // Each test uses its own key prefix, so tests never see each other's rows.
@@ -253,5 +262,22 @@ describe("database constraints", () => {
           source: "ai",
         }),
     ).rejects.toThrow();
+  });
+});
+
+describe("pseudoword imports", () => {
+  it("keep a rejected (retired) pseudoword retired when it is uploaded again", async () => {
+    const text = `zq${prefix().replace(/[^a-z]/g, "")}`.slice(0, 14);
+    const upload = () =>
+      importContent(
+        getDb(),
+        importPayloadSchema.parse({ lemmas: [], pseudowords: [{ text, status: "draft" }] }),
+      );
+    const id = (await upload()).rows[0]!.id;
+    await applyStatusChanges(getDb(), [{ table: "pseudoword", id, to: "retired" }]);
+    const again = await upload();
+    expect(again.rows[0]).toMatchObject({ id, action: "unchanged", status: "retired" });
+    const [row] = await getDb().select().from(pseudoword).where(eq(pseudoword.id, id));
+    expect(row!.status).toBe("retired");
   });
 });

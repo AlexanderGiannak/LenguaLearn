@@ -86,6 +86,10 @@ describe("locate", () => {
     expect(locate("casa con casa.", "casa")).toEqual({ error: '"casa" appears 2 times' });
   });
 
+  it("refuses an empty form instead of matching everywhere", () => {
+    expect(locate("Mi casa es grande.", "")).toEqual({ error: "the target word is empty" });
+  });
+
   it("counts offsets in characters of NFC text", () => {
     expect(locate("¿Dónde está tu casa?", "casa")).toEqual({ start: 15, end: 19 });
   });
