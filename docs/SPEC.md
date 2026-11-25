@@ -266,6 +266,7 @@ Classroom students are known to the app only by an anonymous handle. The teacher
 - **Class student:** no email and no name. Created by redeeming a seat code. Never offered Google sign-in, because a school Google account would send the app the student's real name and school email.
 - **Independent learner:** username and password, or Google sign-in. Email is optional for username accounts and used only for password reset. Sign-up requires confirming the user is 13 or older.
 - **Admin:** me. Content review and moderation only. Admins cannot browse student data through the UI.
+- **Reviewer:** a verified teacher account the admin marks as a content reviewer (`can_review`). Reviewers edit, approve and reject content in the review tool; only the admin publishes it. They see content only, never student data.
 
 ### Class student flow
 

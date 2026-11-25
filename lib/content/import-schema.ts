@@ -145,7 +145,7 @@ export const checkNotesSchema = z.strictObject({
 });
 export type CheckNotes = z.infer<typeof checkNotesSchema>;
 
-const senseSchema = z
+export const senseSchema = z
   .strictObject({
     key: contentKey,
     gloss: text(60).refine(

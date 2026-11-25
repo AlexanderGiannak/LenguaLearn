@@ -37,3 +37,23 @@ describe("canTransition", () => {
     expect(canTransition("retired", "approved")).toBe(false);
   });
 });
+
+describe("human review", () => {
+  it("may approve a draft directly: a person checked it (owner, 2026-11-25)", () => {
+    expect(canTransition("draft", "approved", "human-review")).toBe(true);
+    expect(canTransition("draft", "approved")).toBe(false);
+  });
+
+  it("allows nothing else the pipeline may not do", () => {
+    for (const from of CONTENT_STATUSES)
+      for (const to of CONTENT_STATUSES) {
+        if (from === "draft" && to === "approved") continue;
+        expect(canTransition(from, to, "human-review")).toBe(canTransition(from, to));
+      }
+  });
+
+  it("still never reaches live without approval", () => {
+    for (const from of CONTENT_STATUSES)
+      if (from !== "approved") expect(canTransition(from, "live", "human-review")).toBe(false);
+  });
+});

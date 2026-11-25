@@ -29,7 +29,7 @@ import type { ImportPayload, LemmaInput, SenseInput } from "./import-schema";
 //   its version goes up by one, and it goes back to the import's status, even if it was
 //   live: changed content has to be reviewed again.
 // - An unchanged row keeps its version. It stays approved or live if it was; otherwise it
-//   takes the import's status.
+//   takes the import's status. An unchanged retired pseudoword stays retired.
 // - Children missing from the import (an example that was dropped) are retired, never
 //   deleted. Senses missing from a lemma are left alone; retire those explicitly.
 
@@ -103,6 +103,8 @@ class Importer {
       extraSnapshot?: Values;
       /** Written on every import but not compared: a change here is not a content change. */
       meta?: Values;
+      /** An unchanged retired row stays retired (a rejected pseudoword is not revived). */
+      keepRetired?: boolean;
     } = {},
   ): Promise<number> {
     // Drizzle's types cannot follow a table chosen at runtime, so the generic paths below
@@ -147,7 +149,10 @@ class Importer {
       return existing.id;
     }
 
-    const keepsStatus = existing.status === "approved" || existing.status === "live";
+    const keepsStatus =
+      existing.status === "approved" ||
+      existing.status === "live" ||
+      (opts.keepRetired === true && existing.status === "retired");
     const finalStatus = keepsStatus ? existing.status : status;
     if (finalStatus !== existing.status || opts.meta) {
       await this.tx
@@ -402,8 +407,11 @@ export async function importContent(db: Db, payload: ImportPayload): Promise<Imp
     for (const l of payload.lemmas) await importer.importLemma(l);
 
     for (const p of payload.pseudowords) {
+      // A pseudoword is only its text, so a re-upload is always "unchanged": one a reviewer
+      // rejected (retired) stays rejected. Revive one with the admin status endpoint.
       await importer.upsert("pseudoword", eq(pseudoword.text, p.text), { text: p.text }, p.status, {
         key: p.text,
+        keepRetired: true,
       });
     }
 
@@ -417,3 +425,16 @@ export async function importContent(db: Db, payload: ImportPayload): Promise<Imp
     return { counts, rows: importer.rows };
   });
 }
+
+/**
+ * Saves a reviewer's edit of one sense (the review tool) under the import's rules: changed
+ * rows get a revision and a new version, dropped children are retired, and every row of the
+ * sense takes the given status (draft) unless it is unchanged and already approved or live.
+ */
+export async function saveSense(tx: Tx, lemmaId: number, s: SenseInput): Promise<ImportRow[]> {
+  const importer = new Importer(tx);
+  await importer.importSense(lemmaId, s);
+  return importer.rows;
+}
+
+export type { Tx as ContentTx };

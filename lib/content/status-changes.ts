@@ -2,7 +2,7 @@ import { eq, inArray } from "drizzle-orm";
 import type { getDb } from "@/lib/db/client";
 import type { ContentStatus } from "./constants";
 import { CONTENT_TABLES, type ContentTableName } from "./import";
-import { canTransition } from "./status";
+import { canTransition, type TransitionActor } from "./status";
 
 export type StatusChange = { table: ContentTableName; id: number; to: ContentStatus };
 export type AppliedChange = {
@@ -23,8 +23,9 @@ export class StatusChangeError extends Error {
  * step (see status.ts); if any is not, nothing is applied.
  */
 export async function applyStatusChanges(
-  db: ReturnType<typeof getDb>,
+  db: Pick<ReturnType<typeof getDb>, "transaction">,
   changes: StatusChange[],
+  actor: TransitionActor = "pipeline",
 ): Promise<AppliedChange[]> {
   return db.transaction(async (tx) => {
     const problems: string[] = [];
@@ -48,7 +49,7 @@ export async function applyStatusChanges(
         const from = statusById.get(c.id);
         if (from === undefined) {
           problems.push(`${name} ${c.id}: not found`);
-        } else if (!canTransition(from, c.to)) {
+        } else if (!canTransition(from, c.to, actor)) {
           problems.push(`${name} ${c.id}: ${from} -> ${c.to} is not allowed`);
         } else {
           applied.push({ table: name, id: c.id, from, to: c.to });

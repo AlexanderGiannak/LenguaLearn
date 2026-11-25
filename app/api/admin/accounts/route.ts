@@ -1,13 +1,14 @@
 import { z } from "zod";
-import { adminDeleteClass, adminDeleteStudent } from "@/lib/account/data";
+import { adminDeleteClass, adminDeleteStudent, logAdminAction } from "@/lib/account/data";
 import { denyAdminRequest, json, readJsonBody, zodIssues } from "@/lib/admin/route";
 import { fixturesAllowed } from "@/lib/admin/auth";
 import { purgeAllDemoAccounts } from "@/lib/demo/service";
+import { setReviewer } from "@/lib/review/access";
 import { seedDemoClass, seedDemoLearner } from "@/lib/teacher/demo";
 import { purgeScheduledDeletions } from "@/lib/teacher/scope";
 
-// District deletion requests and the scheduled purge (spec: Deletion and export). Admin
-// token only; every action is written to admin_action_log.
+// District deletion requests and the scheduled purge (spec: Deletion and export), and
+// content reviewer grants. Admin token only; every action is written to admin_action_log.
 
 const schema = z.discriminatedUnion("action", [
   z.strictObject({ action: z.literal("delete_student"), id: z.string().min(1).max(64) }),
@@ -17,6 +18,12 @@ const schema = z.discriminatedUnion("action", [
     withStudents: z.boolean().default(true),
   }),
   z.strictObject({ action: z.literal("purge_scheduled") }),
+  // Content reviewers (Phase 9 step 4): a verified teacher account, by its email.
+  z.strictObject({
+    action: z.literal("set_reviewer"),
+    email: z.email().max(254),
+    canReview: z.boolean(),
+  }),
   // Every demo account (demo_account), with its classes and students: for switching a
   // site's demo mode off.
   z.strictObject({ action: z.literal("purge_demo_accounts") }),
@@ -45,6 +52,12 @@ export async function POST(request: Request) {
   if (a.action === "delete_student") await adminDeleteStudent(a.id);
   if (a.action === "delete_class") await adminDeleteClass(a.id, a.withStudents);
   if (a.action === "purge_scheduled") return json({ purged: await purgeScheduledDeletions() });
+  if (a.action === "set_reviewer") {
+    const result = await setReviewer(a.email, a.canReview);
+    if ("error" in result) return json({ error: result.error }, 409);
+    await logAdminAction(a.canReview ? "grant_reviewer" : "revoke_reviewer", result.id);
+    return json({ ok: true });
+  }
   if (a.action === "purge_demo_accounts") return json({ purged: await purgeAllDemoAccounts() });
   if (a.action === "seed_demo_class") {
     if (!fixturesAllowed(process.env)) {

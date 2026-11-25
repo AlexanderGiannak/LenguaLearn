@@ -27,6 +27,11 @@ export const user = pgTable(
     ageConfirmedAt: timestamp("age_confirmed_at", { withTimezone: true }),
     /** Class students left with no class are deleted 30 days later (spec: Deletion). */
     scheduledDeletionAt: timestamp("scheduled_deletion_at", { withTimezone: true }),
+    /**
+     * Volunteer content reviewer (spec: Content pipeline, step 4). Granted by the admin to a
+     * teacher account; reviewers may edit, approve and reject content, never publish it.
+     */
+    canReview: boolean("can_review").notNull().default(false),
   },
   (t) => [
     check("user_role", sql`${t.role} IN ('teacher', 'student', 'learner', 'admin')`),
@@ -35,6 +40,8 @@ export const user = pgTable(
       "user_student_no_pii",
       sql`${t.role} <> 'student' OR (${t.email} LIKE '%@students.invalid' AND ${t.image} IS NULL)`,
     ),
+    // Only adults with an email account review: never students or independent learners.
+    check("user_reviewer_role", sql`NOT ${t.canReview} OR ${t.role} IN ('teacher', 'admin')`),
   ],
 );
 
