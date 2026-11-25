@@ -11,7 +11,7 @@ import {
   REGISTERS,
   RELATION_TYPES,
   WORD_PART_KINDS,
-} from "./constants";
+} from "./constants.ts";
 
 // The JSON the content scripts upload to POST /api/admin/import. Each lemma is a full
 // description of that word: its senses, and each sense's examples, hooks, relations and
@@ -128,6 +128,23 @@ const imageSchema = z.strictObject({
   attribution: text(200),
 });
 
+/** What the pipeline's checks found for a sense (spec: Content pipeline, step 3). */
+export const checkNotesSchema = z.strictObject({
+  checkedAt: z.iso.datetime({ offset: true }),
+  /** The second model's own gloss, shown next to the generated one. */
+  reviewerGloss: z.string().max(100).optional(),
+  failures: z
+    .array(
+      z.strictObject({
+        field: z.string().max(120),
+        check: z.string().regex(/^[a-z-]{1,40}$/),
+        message: z.string().max(500),
+      }),
+    )
+    .max(100),
+});
+export type CheckNotes = z.infer<typeof checkNotesSchema>;
+
 const senseSchema = z
   .strictObject({
     key: contentKey,
@@ -147,6 +164,8 @@ const senseSchema = z
     cognate: z.enum(COGNATE_STATUSES),
     cognateEnglish: text(60).optional(),
     concreteness: z.enum(CONCRETENESS),
+    imageDescription: text(300).optional(),
+    checkNotes: checkNotesSchema.optional(),
     status: z.enum(IMPORT_STATUSES),
     examples: z.array(exampleSchema).max(8).default([]),
     hooks: z.array(hookSchema).max(3).default([]),

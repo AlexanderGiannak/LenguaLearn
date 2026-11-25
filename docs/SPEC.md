@@ -128,6 +128,7 @@ The unit of learning is a sense, not a spelling. Realizar meaning "to carry out"
 - **relation:** typed links between senses. Synonym, antonym, same family (aprovechar, provecho, aprovechable), commonly confused with (realizar versus darse cuenta), collocation (tomar una decisión).
 - **hook:** memory hook text for a sense, with source and status. Hooks can be mnemonics. They must not state false etymology as fact. Label a made-up association as a mnemonic. Hooks are optional per sense.
 - **image:** belongs to a sense. File key, alt text in English, source, license, attribution text, and status. Only for concrete senses at first.
+- **check notes (on sense):** what the pipeline's checks found (the failures and the second model's gloss), shown in the review queue. Not content: a re-check does not send a sense back to review. The sense also keeps the one-line image description from generation.
 - **misuse:** a sentence that uses a sense wrongly, with an English explanation, source and status. The wrong options in "which sentence uses the word correctly"; reviewed like examples.
 - **passage:** reading practice: a short sentence or a passage of 3–5 sentences, with its English translation, level, one comprehension question for passages, source, and status. Each word in it is linked to the sense it uses, so the app can work out what share of the words a learner already knows.
 - **audio:** file key for the lemma and for each example, with voice ID and generation date.

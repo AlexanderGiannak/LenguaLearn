@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { costUsd, estimateRunUsd, isOutOfCredit, measureUsage } from "./run.ts";
+import { costUsd, estimateRunUsd, isOutOfCredit, measureUsage, openAiUsage } from "./run.ts";
 
 describe("costUsd", () => {
   it("prices input, output and cache tokens, and halves batch requests", () => {
@@ -11,6 +11,23 @@ describe("costUsd", () => {
     };
     expect(costUsd("claude-opus-5-5", usage, false)).toBeCloseTo(4 + 20 + 0.2 + 5);
     expect(costUsd("claude-opus-5-5", usage, true)).toBeCloseTo((4 + 20 + 0.2 + 5) / 2);
+  });
+});
+
+describe("openAiUsage", () => {
+  it("separates cached tokens, which OpenAI counts inside input_tokens", () => {
+    const usage = openAiUsage({
+      input_tokens: 1_000_000,
+      output_tokens: 1_000_000,
+      input_tokens_details: { cached_tokens: 400_000 },
+    });
+    expect(usage).toEqual({
+      input_tokens: 600_000,
+      cache_read_input_tokens: 400_000,
+      output_tokens: 1_000_000,
+    });
+    // gpt-6.2-sol batch: 0.6 × $1 + 0.4 × $0.05 + 1 × $5.
+    expect(costUsd("gpt-6.2-sol", usage, true)).toBeCloseTo(0.6 + 0.02 + 5);
   });
 });
 

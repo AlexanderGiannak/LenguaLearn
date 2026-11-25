@@ -142,6 +142,17 @@ describe("importPayloadSchema", () => {
       expectInvalid(p, "text");
     });
 
+    it("accepts check notes and rejects a malformed check name", () => {
+      const p = validPayload();
+      sense(p).checkNotes = {
+        checkedAt: "2026-11-25T00:00:00Z",
+        failures: [{ field: "lemmas.0.senses.0.gloss", check: "reviewer", message: "Vague." }],
+      };
+      expect(issues(p)).toEqual([]);
+      sense(p).checkNotes!.failures[0]!.check = "Reviewer Notes";
+      expectInvalid(p, "checkNotes");
+    });
+
     it("rejects misuse sentences over 20 words and more than 6 per sense", () => {
       const long = validPayload();
       const words = Array.from({ length: 21 }, () => "uno").join(" ");

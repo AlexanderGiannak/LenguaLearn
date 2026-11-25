@@ -98,5 +98,10 @@ conjugation, so:
 - Each misuse contains the word itself (in any of its forms), spelled and conjugated
   correctly. Never replace it with another word, and never misspell or misconjugate it.
 - Everything else in the sentence is correct, natural Spanish.
-- The sentence is clearly wrong to a fluent speaker, not just unusual.
+- The sentence is clearly wrong to a fluent speaker, not just unusual, and wrong because of
+  how the word itself is used: replacing the word with the one the learner meant (for
+  example the word it is confused with) must give a correct, sensible sentence. A sentence
+  that uses the word correctly but adds an odd reason or situation is not a misuse.
+- Check that no ordinary reading makes the sentence correct (a noun that could also mean a
+  physical object, a verb that could take a different object).
 - why: a short English explanation of what is wrong and what to say instead.

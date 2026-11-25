@@ -57,6 +57,13 @@
       "when": 1795574695179,
       "tag": "0007_misuse",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1795575824026,
+      "tag": "0008_sense_check_notes",
+      "breakpoints": true
     }
   ]
 }

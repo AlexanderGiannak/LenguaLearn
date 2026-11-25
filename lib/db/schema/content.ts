@@ -26,6 +26,7 @@ import {
   RELATION_TYPES,
   WORD_PART_KINDS,
 } from "@/lib/content/constants";
+import type { CheckNotes } from "@/lib/content/import-schema";
 
 // Content tables (spec: Content model). Rows are never deleted: student history points
 // at sense and example IDs, so content is retired instead. Check constraints repeat the
@@ -102,6 +103,13 @@ export const sense = pgTable(
     cognate: cognateStatus("cognate").notNull(),
     cognateEnglish: text("cognate_english"),
     concreteness: concreteness("concreteness").notNull(),
+    /** For concrete senses: what a picture showing this meaning would show (step 7). */
+    imageDescription: text("image_description"),
+    /**
+     * What the pipeline's checks found (step 3), for the review queue. Not content: a
+     * re-check alone does not change the sense's version or send it back to review.
+     */
+    checkNotes: jsonb("check_notes").$type<CheckNotes>(),
     ...contentColumns(),
   },
   (t) => [

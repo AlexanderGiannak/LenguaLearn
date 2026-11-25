@@ -97,7 +97,13 @@ class Importer {
     match: SQL,
     values: Values,
     status: ImportStatus,
-    opts: { key?: string; extraChanged?: boolean; extraSnapshot?: Values } = {},
+    opts: {
+      key?: string;
+      extraChanged?: boolean;
+      extraSnapshot?: Values;
+      /** Written on every import but not compared: a change here is not a content change. */
+      meta?: Values;
+    } = {},
   ): Promise<number> {
     // Drizzle's types cannot follow a table chosen at runtime, so the generic paths below
     // work on plain rows. The values come from the Zod-validated payload.
@@ -111,7 +117,7 @@ class Importer {
     if (!existing) {
       const [created] = await this.tx
         .insert(table)
-        .values({ ...values, status } as typeof lemma.$inferInsert)
+        .values({ ...values, ...opts.meta, status } as typeof lemma.$inferInsert)
         .returning({ id: table.id });
       this.record(name, created!.id, "created", status, opts.key);
       return created!.id;
@@ -131,6 +137,7 @@ class Importer {
         .update(table)
         .set({
           ...values,
+          ...opts.meta,
           status,
           version: existing.version + 1,
           updatedAt: new Date(),
@@ -142,10 +149,10 @@ class Importer {
 
     const keepsStatus = existing.status === "approved" || existing.status === "live";
     const finalStatus = keepsStatus ? existing.status : status;
-    if (finalStatus !== existing.status) {
+    if (finalStatus !== existing.status || opts.meta) {
       await this.tx
         .update(table)
-        .set({ status: finalStatus, updatedAt: new Date() })
+        .set({ ...opts.meta, status: finalStatus, updatedAt: new Date() })
         .where(eq(table.id, existing.id));
     }
     this.record(name, existing.id, "unchanged", finalStatus, opts.key);
@@ -244,9 +251,10 @@ class Importer {
         cognate: s.cognate,
         cognateEnglish: s.cognateEnglish ?? null,
         concreteness: s.concreteness,
+        imageDescription: s.imageDescription ?? null,
       },
       s.status,
-      { key: s.key },
+      { key: s.key, meta: { checkNotes: s.checkNotes ?? null } },
     );
 
     const exampleIds = await this.replaceChildren(
