@@ -19,8 +19,11 @@ blob-report/
 .env.*
 !.env.example
 
-# content pipeline: raw AI responses kept locally for audit
+# content pipeline: raw AI responses kept locally for audit, generated words before
+# import, and run state (batch IDs). iCloud backs these up with the rest of the folder.
 content/raw/
+content/generated/
+content/state/
 
 # misc
 .DS_Store

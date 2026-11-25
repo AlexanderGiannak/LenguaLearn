@@ -2,7 +2,7 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { articleFor, mediaUrl } from "@/lib/content/display";
 import { getDb } from "@/lib/db/client";
-import { audio, example, lemma, relation, sense, wordPart } from "@/lib/db/schema";
+import { audio, example, lemma, misuse, relation, sense, wordPart } from "@/lib/db/schema";
 import { normalizeAnswer } from "@/lib/engine/answer-check";
 import type { EngineSense } from "@/lib/engine/types";
 
@@ -69,7 +69,7 @@ async function loadTrainingContent(): Promise<TrainingContent> {
   const lemmaIds = [...new Set(rows.map((r) => r.lemma.id))];
   const target = alias(sense, "target");
 
-  const [examples, relations, parts, audios] = await Promise.all([
+  const [examples, relations, parts, audios, misuses] = await Promise.all([
     db
       .select()
       .from(example)
@@ -88,11 +88,19 @@ async function loadTrainingContent(): Promise<TrainingContent> {
       .select({ lemmaId: audio.lemmaId, exampleId: audio.exampleId, fileKey: audio.fileKey })
       .from(audio)
       .where(eq(audio.status, LIVE)),
+    db
+      .select({ senseId: misuse.senseId, text: misuse.text })
+      .from(misuse)
+      .where(and(inArray(misuse.senseId, senseIds), eq(misuse.status, LIVE)))
+      .orderBy(asc(misuse.senseId), asc(misuse.position)),
   ]);
 
   const examplesBySense = new Map<number, (typeof examples)[number][]>();
   for (const e of examples)
     examplesBySense.set(e.senseId, [...(examplesBySense.get(e.senseId) ?? []), e]);
+  const misusesBySense = new Map<number, string[]>();
+  for (const m of misuses)
+    misusesBySense.set(m.senseId, [...(misusesBySense.get(m.senseId) ?? []), m.text]);
   const lemmasWithParts = new Set(parts.map((p) => p.lemmaId));
   const lemmaAudio = new Map(audios.filter((a) => a.lemmaId).map((a) => [a.lemmaId!, a.fileKey]));
   const exampleAudio = new Map(
@@ -134,8 +142,7 @@ async function loadTrainingContent(): Promise<TrainingContent> {
         end: e.endOffset,
         distractors: e.distractors,
       })),
-      // Reviewed misuse sentences arrive with the Phase 9 pipeline (DECISIONS.md).
-      misuses: [],
+      misuses: misusesBySense.get(s.id) ?? [],
     });
     const first = exs[0];
     core.set(s.id, {

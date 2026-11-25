@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { afterAll, describe, expect, it } from "vitest";
 import { getDb, getSql } from "@/lib/db/client";
-import { contentRevision, example, lemma, sense, wordListItem } from "@/lib/db/schema";
+import { contentRevision, example, lemma, misuse, sense, wordListItem } from "@/lib/db/schema";
 import { ImportError, importContent } from "./import";
 import { importPayloadSchema, type ImportPayloadInput } from "./import-schema";
 
@@ -150,6 +150,30 @@ describe("importContent", () => {
     expect(examples).toEqual([
       { position: 0, status: "ai_checked" },
       { position: 1, status: "retired" },
+    ]);
+  });
+
+  it("stores misuse sentences in order and retires dropped ones", async () => {
+    const p = prefix();
+    const withMisuses = payload(p);
+    withMisuses.lemmas[0]!.senses[0]!.misuses = [
+      { text: "Mi perro casa en el jardín.", explanation: "Used as a verb.", source: "ai" },
+      { text: "Hoy casa mucho calor.", explanation: "Confused with hacer.", source: "ai" },
+    ];
+    await importContent(getDb(), withMisuses);
+    withMisuses.lemmas[0]!.senses[0]!.misuses.pop();
+    const report = await importContent(getDb(), withMisuses);
+
+    expect(report.counts.retired).toBe(1);
+    const s = await senseRow(`${p}casa#noun#1`);
+    const rows = await getDb()
+      .select({ position: misuse.position, text: misuse.text, status: misuse.status })
+      .from(misuse)
+      .where(eq(misuse.senseId, s.id))
+      .orderBy(misuse.position);
+    expect(rows).toEqual([
+      { position: 0, text: "Mi perro casa en el jardín.", status: "ai_checked" },
+      { position: 1, text: "Hoy casa mucho calor.", status: "retired" },
     ]);
   });
 
