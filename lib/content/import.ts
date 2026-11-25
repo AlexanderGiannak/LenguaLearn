@@ -8,6 +8,7 @@ import {
   hook,
   image,
   lemma,
+  misuse,
   pseudoword,
   relation,
   sense,
@@ -39,6 +40,7 @@ export const CONTENT_TABLES = {
   word_part: wordPart,
   relation,
   hook,
+  misuse,
   image,
   audio,
   word_list: wordList,
@@ -288,6 +290,14 @@ class Importer {
       "senseId",
       senseId,
       s.relations.map((r) => ({ type: r.type, text: r.text, targetKey: r.targetKey ?? null })),
+      s.status,
+    );
+    await this.replaceChildren(
+      "misuse",
+      misuse.senseId,
+      "senseId",
+      senseId,
+      s.misuses.map((m) => ({ text: m.text, explanation: m.explanation, source: m.source })),
       s.status,
     );
     await this.replaceChildren(

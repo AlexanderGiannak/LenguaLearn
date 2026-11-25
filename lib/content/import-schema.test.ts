@@ -142,6 +142,21 @@ describe("importPayloadSchema", () => {
       expectInvalid(p, "text");
     });
 
+    it("rejects misuse sentences over 20 words and more than 6 per sense", () => {
+      const long = validPayload();
+      const words = Array.from({ length: 21 }, () => "uno").join(" ");
+      sense(long).misuses = [{ text: words, explanation: "Too long.", source: "ai" }];
+      expectInvalid(long, "misuses.0.text");
+
+      const many = validPayload();
+      sense(many).misuses = Array.from({ length: 7 }, (_, i) => ({
+        text: `Frase ${i}.`,
+        explanation: "Wrong.",
+        source: "ai" as const,
+      }));
+      expectInvalid(many, "misuses");
+    });
+
     it("rejects text that is not NFC-normalized, since offsets would shift", () => {
       const p = validPayload();
       // "pequen" + combining tilde (U+0303): NFD form of "pequeña".

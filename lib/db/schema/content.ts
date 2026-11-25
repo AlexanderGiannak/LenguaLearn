@@ -196,6 +196,28 @@ export const hook = pgTable(
   (t) => [unique("hook_sense_position").on(t.senseId, t.position)],
 );
 
+/**
+ * Sentences that use a sense wrongly, the wrong options in "which sentence uses the word
+ * correctly". Reviewed like examples: a generated misuse can turn out to be correct Spanish,
+ * and then the question would mark a right answer wrong.
+ */
+export const misuse = pgTable(
+  "misuse",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    senseId: integer("sense_id")
+      .notNull()
+      .references(() => sense.id),
+    position: integer("position").notNull(),
+    text: text("text").notNull(),
+    /** Why it is wrong, in English, for reviewers and the feedback after an answer. */
+    explanation: text("explanation").notNull(),
+    source: contentSource("source").notNull(),
+    ...contentColumns(),
+  },
+  (t) => [unique("misuse_sense_position").on(t.senseId, t.position)],
+);
+
 export const image = pgTable(
   "image",
   {

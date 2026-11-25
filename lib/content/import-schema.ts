@@ -111,6 +111,15 @@ const relationSchema = z.strictObject({
   targetKey: contentKey.optional(),
 });
 
+const misuseSchema = z.strictObject({
+  text: text(300).refine(
+    (s) => countWords(s) <= MAX_SENTENCE_WORDS,
+    `must be ${MAX_SENTENCE_WORDS} words or fewer`,
+  ),
+  explanation: text(300),
+  source: z.enum(CONTENT_SOURCES),
+});
+
 const imageSchema = z.strictObject({
   fileKey,
   alt: text(200),
@@ -142,6 +151,7 @@ const senseSchema = z
     examples: z.array(exampleSchema).max(8).default([]),
     hooks: z.array(hookSchema).max(3).default([]),
     relations: z.array(relationSchema).max(30).default([]),
+    misuses: z.array(misuseSchema).max(6).default([]),
     images: z.array(imageSchema).max(3).default([]),
   })
   .superRefine((s, ctx) => {
