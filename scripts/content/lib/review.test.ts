@@ -135,6 +135,16 @@ describe("reviewFailures", () => {
     expect(failures.map((f) => f.check)).toEqual(["misuse-correct"]);
   });
 
+  it("flags every sense the reviewer left out, so none can pass unreviewed", () => {
+    const twoSenses: GeneratedWord = structuredClone(word);
+    twoSenses.lemmas[0]!.senses.push(structuredClone(twoSenses.lemmas[0]!.senses[0]!));
+    const failures = reviewFailures(twoSenses, review());
+    expect(failures.map((f) => f.field)).toEqual(["lemmas.0.senses", "lemmas.0.senses.1"]);
+
+    const noLemma = reviewFailures(word, { lemmas: [] });
+    expect(noLemma.map((f) => f.field)).toEqual(["lemmas", "lemmas.0.senses.0"]);
+  });
+
   it("sends a review whose shape does not match the word to a person", () => {
     const failures = reviewFailures(word, review({ examples: [] }));
     expect(failures.map((f) => f.check)).toEqual(["review-shape"]);
