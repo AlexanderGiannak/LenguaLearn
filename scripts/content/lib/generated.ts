@@ -86,6 +86,30 @@ export const generatedWordSchema = z.object({
 });
 
 export type GeneratedWord = z.infer<typeof generatedWordSchema>;
+
+/**
+ * Counts structured outputs cannot enforce. An answer with any of these problems is not
+ * saved, so the next run asks again.
+ */
+export function shapeProblems(word: GeneratedWord): string[] {
+  const problems: string[] = [];
+  if (!word.skipReason && word.lemmas.length === 0) problems.push("no lemmas and no skip reason");
+  word.lemmas.forEach((l, li) => {
+    if (l.senses.length === 0) problems.push(`lemma ${li + 1} has no senses`);
+    l.senses.forEach((s, si) => {
+      const at = `lemma ${li + 1} sense ${si + 1}`;
+      if (s.examples.length !== EXAMPLES_PER_SENSE)
+        problems.push(`${at} has ${s.examples.length} examples, not ${EXAMPLES_PER_SENSE}`);
+      if (s.misuses.length !== MISUSES_PER_SENSE)
+        problems.push(`${at} has ${s.misuses.length} misuses, not ${MISUSES_PER_SENSE}`);
+      s.examples.forEach((e, ei) => {
+        if (e.distractors.length !== 3)
+          problems.push(`${at} example ${ei + 1} has ${e.distractors.length} distractors`);
+      });
+    });
+  });
+  return problems;
+}
 export type GeneratedLemma = GeneratedWord["lemmas"][number];
 export type GeneratedSense = GeneratedLemma["senses"][number];
 
