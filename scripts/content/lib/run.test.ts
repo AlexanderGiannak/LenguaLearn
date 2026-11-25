@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { costUsd, estimateRunUsd, isOutOfCredit } from "./run.ts";
+import { costUsd, estimateRunUsd, isOutOfCredit, measureUsage } from "./run.ts";
 
 describe("costUsd", () => {
   it("prices input, output and cache tokens, and halves batch requests", () => {
@@ -25,6 +25,29 @@ describe("estimateRunUsd", () => {
       batch: true,
     });
     expect(usd).toBeCloseTo(400 * ((6000 * 4 + 4000 * 20) / 1e6) * 0.5);
+  });
+});
+
+describe("cache-aware estimates", () => {
+  it("measures output per request and the share of input read from cache", () => {
+    const m = measureUsage([
+      { input_tokens: 100, output_tokens: 4000, cache_creation_input_tokens: 5900 },
+      { input_tokens: 100, output_tokens: 5000, cache_read_input_tokens: 5900 },
+    ]);
+    expect(m).toEqual({ outputTokens: 4500, cachedShare: 5900 / 12000 });
+    expect(measureUsage([])).toBeNull();
+  });
+
+  it("charges the cached share at the cache-read price", () => {
+    const opts = {
+      model: "claude-opus-5-5" as const,
+      requests: 1,
+      inputTokensPerRequest: 1_000_000,
+      outputTokensPerRequest: 0,
+      batch: false,
+    };
+    expect(estimateRunUsd(opts)).toBeCloseTo(4);
+    expect(estimateRunUsd({ ...opts, cachedShare: 0.5 })).toBeCloseTo(2 + 0.1);
   });
 });
 

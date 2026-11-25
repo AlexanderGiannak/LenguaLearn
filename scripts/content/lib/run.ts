@@ -30,22 +30,50 @@ export function costUsd(model: PricedModel, usage: Usage, batch: boolean): numbe
 /**
  * The cost of a run before it starts. Input tokens are measured (token counting); output,
  * which includes the model's thinking, is an estimate until a sample run measures it.
+ * cachedShare is the share of input tokens that past answers read from the prompt cache
+ * (0 until measured, which overestimates).
  */
 export function estimateRunUsd(opts: {
   model: PricedModel;
   requests: number;
   inputTokensPerRequest: number;
   outputTokensPerRequest: number;
+  cachedShare?: number;
   batch: boolean;
 }): number {
+  const cached = Math.round(opts.inputTokensPerRequest * (opts.cachedShare ?? 0));
   return (
     opts.requests *
     costUsd(
       opts.model,
-      { input_tokens: opts.inputTokensPerRequest, output_tokens: opts.outputTokensPerRequest },
+      {
+        input_tokens: opts.inputTokensPerRequest - cached,
+        cache_read_input_tokens: cached,
+        output_tokens: opts.outputTokensPerRequest,
+      },
       opts.batch,
     )
   );
+}
+
+/** Averages over past answers' usage: output tokens and the share of input read from cache. */
+export function measureUsage(
+  usages: Usage[],
+): { outputTokens: number; cachedShare: number } | null {
+  if (usages.length === 0) return null;
+  let output = 0;
+  let cached = 0;
+  let input = 0;
+  for (const u of usages) {
+    output += u.output_tokens;
+    const fromCache = (u.cache_read_input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0);
+    cached += u.cache_read_input_tokens ?? 0;
+    input += u.input_tokens + fromCache;
+  }
+  return {
+    outputTokens: Math.round(output / usages.length),
+    cachedShare: input > 0 ? cached / input : 0,
+  };
 }
 
 /**

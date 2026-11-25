@@ -64,14 +64,21 @@ entirely, and follow any note about them in the candidate.
 
 - One natural Spanish sentence each, 6 to 14 words where possible and never more than 20,
   using the word in this sense. Vary the forms: different persons and tenses for verbs,
-  singular and plural for nouns, masculine and feminine for adjectives.
+  singular and plural for nouns, masculine and feminine for adjectives. Keep the grammar
+  as simple as the level: at levels 1 to 3 use the present, the preterite, the imperfect,
+  the near future (ir a + infinitive) and commands, and no subjunctive.
 - surfaceForm: the target word exactly as it appears in the sentence (for example a
   conjugated form), spelled identically, appearing once.
 - translation: natural English.
 - distractors: three Spanish words in the same grammatical form as the surfaceForm (same
-  person, tense, number and gender) that fit the sentence's grammar but make it wrong or
-  meaningless. Never a synonym, a form of the target word, or any word that could also be
-  correct in that sentence.
+  person, tense, number and gender) that fit the sentence's grammar but make it clearly
+  wrong or meaningless. A student who picks one is marked wrong, so a distractor that also
+  makes a sensible sentence is a serious error. Test each one: put it in the gap and read
+  the whole sentence. If the result is still something a person could sensibly say, choose
+  another word. Opposites and words from the same small family as the target (other
+  quantity words, other negatives or affirmatives, other possessives or demonstratives)
+  usually still make sense, so avoid them. Use different distractors across the four
+  examples where you can.
 - {{vocabulary_rule}}
 
 **hook.** A memory hook only when a genuinely good one exists; otherwise null. "etymology"
@@ -83,6 +90,13 @@ state a false etymology as fact.
 this one), "collocation" (common phrases with the word). Often three to eight in total.
 
 **misuses.** Exactly two Spanish sentences per sense that use the word wrongly in a way a
-learner plausibly might (a false-friend meaning, a confused word's meaning, the wrong
-context), while the rest of the sentence is correct. why: a short English explanation.
-These are the wrong options in "which sentence uses the word correctly".
+learner plausibly might: with a false-friend meaning, with the meaning of a word it is
+confused with, or in a context where it does not fit. These are the wrong options in
+"which sentence uses the word correctly", which tests meaning and use, not spelling or
+conjugation, so:
+
+- Each misuse contains the word itself (in any of its forms), spelled and conjugated
+  correctly. Never replace it with another word, and never misspell or misconjugate it.
+- Everything else in the sentence is correct, natural Spanish.
+- The sentence is clearly wrong to a fluent speaker, not just unusual.
+- why: a short English explanation of what is wrong and what to say instead.

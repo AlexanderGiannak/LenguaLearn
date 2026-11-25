@@ -94,6 +94,8 @@ export type GeneratedFile = {
   candidate: CandidateRow;
   model: string;
   effort: string;
+  /** Hash of the prompt files; absent on the first 20-word sample. */
+  promptVersion?: string;
   batch: boolean;
   generatedAt: string;
   usage: Usage;

@@ -13,6 +13,7 @@
 // it has, and says how to resume. Only content goes to the API, never student data.
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { parseCandidates, type CandidateRow } from "./lib/candidates.ts";
 import {
@@ -20,7 +21,14 @@ import {
   VOCABULARY_LIMITED_LEVELS,
   type GeneratedFile,
 } from "./lib/generated.ts";
-import { costUsd, estimateRunUsd, formatUsd, isOutOfCredit, type Usage } from "./lib/run.ts";
+import {
+  costUsd,
+  estimateRunUsd,
+  formatUsd,
+  isOutOfCredit,
+  measureUsage,
+  type Usage,
+} from "./lib/run.ts";
 
 const MODEL = "claude-opus-5-5";
 const MAX_TOKENS = 16_000;
@@ -57,6 +65,11 @@ const candidates = parseCandidates(readFileSync(new URL("candidates.csv", root),
 const byLemma = new Map(candidates.map((c) => [c.lemma, c]));
 const prompt = readFileSync(new URL("prompts/generate-word.md", root), "utf8");
 const vocabularyRule = readFileSync(new URL("prompts/vocabulary-rule.md", root), "utf8");
+/** Which prompt wrote a word, so words written by an older prompt can be found and redone. */
+const promptVersion = createHash("sha256")
+  .update(prompt + vocabularyRule)
+  .digest("hex")
+  .slice(0, 12);
 
 function selected(): CandidateRow[] {
   if (!rangeArg) return [];
@@ -143,6 +156,7 @@ function save(
     candidate,
     model: MODEL,
     effort,
+    promptVersion,
     batch,
     generatedAt: new Date().toISOString(),
     usage: message.usage,
@@ -236,22 +250,26 @@ async function main(): Promise<void> {
     system: first.system,
     messages: first.messages,
   });
-  const measured = [...finished.values()].map((f) => f.usage.output_tokens);
-  const outputPerWord = measured.length
-    ? Math.round(measured.reduce((a, b) => a + b, 0) / measured.length)
-    : DEFAULT_OUTPUT_TOKENS;
+  // Every answer ever received is kept in content/raw/, so the measurement survives redos.
+  const usages = readdirSync(dirs.raw)
+    .filter((n) => n.endsWith(".json") && !/ \d+\.json$/.test(n))
+    .map((n) => (JSON.parse(readFileSync(new URL(n, dirs.raw), "utf8")) as { usage?: Usage }).usage)
+    .filter((u): u is Usage => !!u);
+  const measured = measureUsage(usages);
+  const outputPerWord = measured?.outputTokens ?? DEFAULT_OUTPUT_TOKENS;
   const estimate = estimateRunUsd({
     model: MODEL,
     requests: todo.length,
     inputTokensPerRequest: counted.input_tokens,
     outputTokensPerRequest: outputPerWord,
+    cachedShare: measured?.cachedShare,
     batch: !now,
   });
   console.log(
     `${todo.length} words to generate with ${MODEL} (effort ${effort}, ${now ? "now" : "batch, half price"}).` +
       `\nAbout ${counted.input_tokens} input tokens and ${outputPerWord} output tokens per word` +
-      `${measured.length ? ` (measured over ${measured.length} words)` : " (a guess until a sample is measured)"}.` +
-      `\nEstimated cost: ${formatUsd(estimate)} (prompt caching makes it lower).`,
+      `${measured ? ` (output and caching measured over ${usages.length} answers)` : " (a guess until a sample is measured)"}.` +
+      `\nEstimated cost: ${formatUsd(estimate)}.`,
   );
   if (budget !== undefined && estimate > budget) {
     console.log(`That is over the --budget of ${formatUsd(budget)}. Nothing was sent.`);
