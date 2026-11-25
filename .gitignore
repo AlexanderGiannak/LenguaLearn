@@ -24,6 +24,9 @@ blob-report/
 content/raw/
 content/generated/
 content/state/
+content/reviewed/
+content/checked/
+content/import/
 
 # misc
 .DS_Store

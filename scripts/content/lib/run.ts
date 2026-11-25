@@ -4,6 +4,9 @@
 /** US dollars per million tokens. Batch requests cost half (both providers). */
 export const PRICES = {
   "claude-opus-5-5": { input: 4, output: 20, cacheRead: 0.2, cacheWrite: 5 },
+  // OpenAI has no cache-write charge; its usage counts cached tokens inside input_tokens,
+  // which openAiUsage() separates.
+  "gpt-6.2-sol": { input: 2, output: 10, cacheRead: 0.1, cacheWrite: 2 },
 } as const satisfies Record<
   string,
   { input: number; output: number; cacheRead: number; cacheWrite: number }
@@ -99,4 +102,18 @@ export function isOutOfCredit(err: unknown): boolean {
 
 export function formatUsd(n: number): string {
   return `$${n.toFixed(n < 1 ? 3 : 2)}`;
+}
+
+/** OpenAI Responses usage in the shape costUsd takes. */
+export function openAiUsage(u: {
+  input_tokens: number;
+  output_tokens: number;
+  input_tokens_details?: { cached_tokens?: number | null } | null;
+}): Usage {
+  const cached = u.input_tokens_details?.cached_tokens ?? 0;
+  return {
+    input_tokens: u.input_tokens - cached,
+    cache_read_input_tokens: cached,
+    output_tokens: u.output_tokens,
+  };
 }
