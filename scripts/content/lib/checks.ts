@@ -5,6 +5,9 @@
 // failure that says so.
 
 import { countWords, MAX_SENTENCE_WORDS } from "../../../lib/content/import-schema.ts";
+import { locate } from "../../../lib/content/locate.ts";
+
+export { locate };
 import { EXAMPLES_PER_SENSE, MISUSES_PER_SENSE, type GeneratedSense } from "./generated.ts";
 
 /** What the checks need from Wiktionary (the word-list LemmaIndex provides it). */
@@ -14,26 +17,6 @@ export type Lexicon = {
 };
 
 export type Failure = { field: string; check: string; message: string };
-
-const isWordChar = (c: string | undefined) => c !== undefined && /[\p{L}\p{N}]/u.test(c);
-
-/**
- * Where the surface form stands in the sentence as a whole word, or why it cannot be
- * placed. Offsets are UTF-16 indexes, as JavaScript and the import schema count them; the
- * text is NFC so an accented letter is one unit.
- */
-export function locate(
-  text: string,
-  surface: string,
-): { start: number; end: number } | { error: string } {
-  const found: number[] = [];
-  for (let i = text.indexOf(surface); i >= 0; i = text.indexOf(surface, i + 1)) {
-    if (!isWordChar(text[i - 1]) && !isWordChar(text[i + surface.length])) found.push(i);
-  }
-  if (found.length === 0) return { error: `"${surface}" is not a word in the sentence` };
-  if (found.length > 1) return { error: `"${surface}" appears ${found.length} times` };
-  return { start: found[0]!, end: found[0]! + surface.length };
-}
 
 export function words(text: string): string[] {
   return text.toLocaleLowerCase("es").match(/[\p{L}]+/gu) ?? [];

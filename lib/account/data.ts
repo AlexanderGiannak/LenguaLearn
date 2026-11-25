@@ -103,6 +103,6 @@ export async function adminDeleteClass(classId: string, withStudents: boolean): 
   await logAdminAction(withStudents ? "delete_class_and_students" : "delete_class", classId);
 }
 
-async function logAdminAction(action: string, target: string, detail?: string) {
+export async function logAdminAction(action: string, target: string, detail?: string) {
   await getDb().insert(adminActionLog).values({ action, target, detail });
 }

@@ -417,3 +417,16 @@ export async function importContent(db: Db, payload: ImportPayload): Promise<Imp
     return { counts, rows: importer.rows };
   });
 }
+
+/**
+ * Saves a reviewer's edit of one sense (the review tool) under the import's rules: changed
+ * rows get a revision and a new version, dropped children are retired, and every row of the
+ * sense takes the given status (draft) unless it is unchanged and already approved or live.
+ */
+export async function saveSense(tx: Tx, lemmaId: number, s: SenseInput): Promise<ImportRow[]> {
+  const importer = new Importer(tx);
+  await importer.importSense(lemmaId, s);
+  return importer.rows;
+}
+
+export type { Tx as ContentTx };
