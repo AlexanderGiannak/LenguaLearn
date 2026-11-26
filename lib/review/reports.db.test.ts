@@ -140,6 +140,7 @@ async function admin() {
   });
 }
 
+// Queue checks read the whole queue: the local test database keeps rows between runs.
 describe("Report a problem", () => {
   it("files the report under the sense of the learner's own question", async () => {
     const senseId = await liveSense();
@@ -259,7 +260,7 @@ describe("reviewing reports", () => {
   it("lists reported senses and shows reports without who sent them", async () => {
     const senseId = await liveSense();
     await reportFrom(senseId, "fixture text");
-    const queue = await reviewQueue(getDb(), { status: "reported", limit: 500 });
+    const queue = await reviewQueue(getDb(), { status: "reported", limit: 1_000_000 });
     expect(queue.rows.some((r) => r.senseId === senseId)).toBe(true);
     expect((await queueCounts(getDb())).reported).toBeGreaterThan(0);
     const reports = await openReports(getDb(), senseId);
@@ -274,7 +275,7 @@ describe("reviewing reports", () => {
     await reportFrom(second);
     const [s] = await getDb().select().from(sense).where(eq(sense.id, first));
     const next = await nextInQueue(getDb(), s!, "reported");
-    const queue = await reviewQueue(getDb(), { status: "reported", limit: 500 });
+    const queue = await reviewQueue(getDb(), { status: "reported", limit: 1_000_000 });
     expect(queue.rows.map((r) => r.senseId)).toContain(next);
   });
 
@@ -287,7 +288,7 @@ describe("reviewing reports", () => {
     expect((await pausedSenseIds(getDb())).has(senseId)).toBe(false);
     // Taught again at once: the cache was dropped after the change committed.
     expect((await getTrainingContent()).paused.has(senseId)).toBe(false);
-    const queue = await reviewQueue(getDb(), { status: "reported", limit: 500 });
+    const queue = await reviewQueue(getDb(), { status: "reported", limit: 1_000_000 });
     expect(queue.rows.some((r) => r.senseId === senseId)).toBe(false);
     await expect(markReportsReviewed(getDb(), reviewer, senseId)).rejects.toMatchObject({
       status: 409,
