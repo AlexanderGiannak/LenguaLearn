@@ -184,7 +184,7 @@ async function nextScreen(ctx: Ctx, activeMs: number, plannedMs: number): Promis
   const newWords: number[] = [];
   for (const id of ctx.data.focus ?? []) {
     // A focus word retired since the session started is skipped.
-    if (!ctx.content.byId.has(id)) continue;
+    if (!ctx.content.byId.has(id) || ctx.content.paused.has(id)) continue;
     if (!memories.has(id) && !newWords.includes(id)) newWords.push(id);
     if (newWords.length === 10) break;
   }
@@ -196,7 +196,9 @@ async function nextScreen(ctx: Ctx, activeMs: number, plannedMs: number): Promis
   for (const id of ctx.content.order) {
     if (atLevel.length >= 10 && (below.length >= 10 || !placed)) break;
     const s = ctx.content.byId.get(id)!;
-    if (memories.has(id) || newWords.includes(id)) continue;
+    // A sense reported by several learners waits for review before anyone new meets it;
+    // learners who already have it keep reviewing it.
+    if (memories.has(id) || newWords.includes(id) || ctx.content.paused.has(id)) continue;
     if (s.frequencyRank >= firstRank) {
       if (atLevel.length < 10) atLevel.push(id);
     } else if (placed && below.length < 10) below.push(id);

@@ -5,6 +5,7 @@ import { getDb } from "@/lib/db/client";
 import { audio, example, lemma, misuse, relation, sense, wordPart } from "@/lib/db/schema";
 import { normalizeAnswer } from "@/lib/engine/answer-check";
 import type { EngineSense } from "@/lib/engine/types";
+import { pausedSenseIds } from "@/lib/review/reports";
 
 // Live content in the engine's shapes, cached per server process. Content changes rarely
 // (through review), so a one-minute cache keeps each question well under the spec's 150 ms.
@@ -37,6 +38,8 @@ export type TrainingContent = {
   forms: Set<string>;
   /** Live senses in teaching order (frequency rank). */
   order: number[];
+  /** Senses learners reported enough to stop introducing them until reviewed. */
+  paused: Set<number>;
 };
 
 const cache = globalThis as unknown as { trainingContent?: { at: number; value: TrainingContent } };
@@ -63,13 +66,20 @@ async function loadTrainingContent(): Promise<TrainingContent> {
     .where(and(eq(sense.status, LIVE), eq(lemma.status, LIVE)))
     .orderBy(asc(sense.frequencyRank), asc(sense.id));
   if (rows.length === 0)
-    return { senses: [], byId: new Map(), core: new Map(), forms: new Set(), order: [] };
+    return {
+      senses: [],
+      byId: new Map(),
+      core: new Map(),
+      forms: new Set(),
+      order: [],
+      paused: new Set(),
+    };
 
   const senseIds = rows.map((r) => r.sense.id);
   const lemmaIds = [...new Set(rows.map((r) => r.lemma.id))];
   const target = alias(sense, "target");
 
-  const [examples, relations, parts, audios, misuses] = await Promise.all([
+  const [examples, relations, parts, audios, misuses, paused] = await Promise.all([
     db
       .select()
       .from(example)
@@ -93,6 +103,7 @@ async function loadTrainingContent(): Promise<TrainingContent> {
       .from(misuse)
       .where(and(inArray(misuse.senseId, senseIds), eq(misuse.status, LIVE)))
       .orderBy(asc(misuse.senseId), asc(misuse.position)),
+    pausedSenseIds(db),
   ]);
 
   const examplesBySense = new Map<number, (typeof examples)[number][]>();
@@ -172,5 +183,6 @@ async function loadTrainingContent(): Promise<TrainingContent> {
     core,
     forms,
     order: senses.map((s) => s.id),
+    paused,
   };
 }
