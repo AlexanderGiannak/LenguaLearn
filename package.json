@@ -22,6 +22,7 @@
     "test:db": "vitest run --config vitest.db.config.mts",
     "seed:fixtures": "node --env-file-if-exists=.env.local scripts/seed-fixtures.mts",
     "admin:token": "node scripts/admin-token.mts",
+    "review:stats": "node --env-file-if-exists=.env.local --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/stats-job.mts",
     "simulate": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/simulate.mts",
     "seed:demo-class": "node --env-file-if-exists=.env.local scripts/seed-demo-class.mts",
     "content:word-list": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/content/word-list.mts",

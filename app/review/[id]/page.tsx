@@ -87,6 +87,7 @@ async function Sense({ params }: Pick<PageProps<"/review/[id]">, "params">) {
       text: r.text,
       questionType: r.questionType,
     })),
+    flags: v.flags.map((f) => ({ at: f.at.toISOString(), ...describeFlag(f.kind, f.detail) })),
     recordings: [
       {
         label: "Headword",
@@ -108,7 +109,11 @@ async function Sense({ params }: Pick<PageProps<"/review/[id]">, "params">) {
     ],
     log: v.log.map((l) => ({ ...l, at: l.at.toISOString() })),
     isAdmin: reviewer.isAdmin,
-    nextId: await nextInQueue(getDb(), v.sense, v.reports.length > 0 ? "reported" : undefined),
+    nextId: await nextInQueue(
+      getDb(),
+      v.sense,
+      v.reports.length > 0 ? "reported" : v.flags.length > 0 ? "flagged" : undefined,
+    ),
     waiting: (await waitingRows(getDb(), v.sense)).length,
   };
   const [word, content] = await Promise.all([getReviewWordPage(v.sense.id), getTrainingContent()]);
@@ -126,4 +131,36 @@ async function Sense({ params }: Pick<PageProps<"/review/[id]">, "params">) {
   ) : null;
   // A new key after every save remounts the editor with the saved content.
   return <SenseEditor key={data.loadedAt} data={data} studentView={studentView} />;
+}
+
+// Question types whose options are English (a meaning); every other type shows Spanish options.
+const ENGLISH_OPTIONS = new Set(["meaning_choice", "listen_meaning_choice"]);
+const pct = (n: unknown) => `${Math.round(Number(n) * 100)}%`;
+const typeName = (t: unknown) => String(t).replaceAll("_", " ");
+
+/** A stats flag as a sentence for the reviewer. */
+function describeFlag(
+  kind: "low_accuracy" | "distractor_magnet" | "slow",
+  d: Record<string, number | string>,
+): { title: string; summary: string; option: { text: string; lang: "en" | "es" } | null } {
+  if (kind === "low_accuracy")
+    return {
+      title: "Low accuracy",
+      summary: `Right ${pct(d.accuracy)} of the time over ${d.answers} answers; words at its level with the same question types: ${pct(d.expected)}.`,
+      option: null,
+    };
+  if (kind === "slow")
+    return {
+      title: "Slow answers",
+      summary: `Answers take ${d.timesUsual} times as long as usual for their question types (${d.answers} answers).`,
+      option: null,
+    };
+  return {
+    title: "One wrong option draws most mistakes",
+    summary: `${pct(d.share)} of ${d.wrongPicks} wrong answers on ${typeName(d.questionType)} questions picked:`,
+    option: {
+      text: String(d.option),
+      lang: ENGLISH_OPTIONS.has(String(d.questionType)) ? "en" : "es",
+    },
+  };
 }

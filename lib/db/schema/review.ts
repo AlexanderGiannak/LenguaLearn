@@ -3,6 +3,7 @@ import {
   check,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   text,
@@ -21,6 +22,7 @@ export const REVIEW_ACTIONS = [
   "publish",
   "flag_audio",
   "resolve_reports",
+  "resolve_flags",
 ] as const;
 export const reviewAction = pgEnum("review_action", REVIEW_ACTIONS);
 
@@ -79,5 +81,34 @@ export const contentReport = pgTable(
       .where(sql`${t.resolvedAt} is null`),
     index("content_report_reporter_idx").on(t.reporterId, t.at),
     check("content_report_text_len", sql`char_length(${t.text}) <= 300`),
+  ],
+);
+
+export const STAT_FLAG_KINDS = ["low_accuracy", "distractor_magnet", "slow"] as const;
+export const statFlagKind = pgEnum("stat_flag_kind", STAT_FLAG_KINDS);
+
+/**
+ * A flag from the nightly stats job (spec: Content pipeline, step 5): a sense whose answers
+ * look unusual. Totals only (accuracy, shares, times), never anything about one learner.
+ */
+export const contentFlag = pgTable(
+  "content_flag",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+    senseId: integer("sense_id")
+      .notNull()
+      .references(() => sense.id),
+    kind: statFlagKind("kind").notNull(),
+    /** The numbers behind the flag, as the job saw them on its last run. */
+    detail: jsonb("detail").notNull(),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    resolvedBy: text("resolved_by").references(() => user.id, { onDelete: "set null" }),
+  },
+  (t) => [
+    uniqueIndex("content_flag_open_once")
+      .on(t.senseId, t.kind)
+      .where(sql`${t.resolvedAt} is null`),
+    index("content_flag_sense_idx").on(t.senseId, t.resolvedAt),
   ],
 );
