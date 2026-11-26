@@ -88,17 +88,18 @@ export function findFlags(
   for (const [senseId, rows] of bySense) {
     const answers = rows.reduce((n, r) => n + r.answers, 0);
     if (answers < config.minAnswers) continue;
-    const correct = rows.reduce((n, r) => n + r.correct, 0);
+    // Compared only over question types that have a baseline: a type no other sense was
+    // asked in can't say what accuracy to expect.
     const predicted = rows.map((r) => ({ r, e: expected(r) })).filter((x) => x.e !== null);
     const predictedAnswers = predicted.reduce((n, x) => n + x.r.answers, 0);
-    if (predictedAnswers > 0) {
+    if (predictedAnswers >= config.minAnswers) {
       const want = predicted.reduce((n, x) => n + x.e! * x.r.answers, 0) / predictedAnswers;
-      const got = correct / answers;
+      const got = predicted.reduce((n, x) => n + x.r.correct, 0) / predictedAnswers;
       if (got < want - config.accuracyGap) {
         flags.push({
           senseId,
           kind: "low_accuracy",
-          detail: { accuracy: round(got), expected: round(want), answers },
+          detail: { accuracy: round(got), expected: round(want), answers: predictedAnswers },
         });
       }
     }
