@@ -235,8 +235,10 @@ describe("Report a problem", () => {
     // At once, not when the cached content next expires.
     const content = await getTrainingContent();
     expect(content.paused.has(senseId)).toBe(true);
-    // Still live, so learners who have it keep reviewing it.
+    // Still live, so learners who have it keep reviewing it...
     expect(content.byId.has(senseId)).toBe(true);
+    // ...but no other question shows it as an option, related word or contrast.
+    expect(content.questionPool.some((s) => s.id === senseId)).toBe(false);
   });
 
   it("is deleted with the learner's account and included in their export", async () => {

@@ -41,6 +41,11 @@ export type TrainingContent = {
   order: number[];
   /** Senses learners reported enough to stop introducing them until reviewed. */
   paused: Set<number>;
+  /**
+   * What questions may show besides their own word (wrong options, related words, contrast
+   * partners): every live sense except paused ones, so suspect content reaches no one new.
+   */
+  questionPool: EngineSense[];
 };
 
 const cache = contentCache<TrainingContent>();
@@ -71,6 +76,7 @@ async function loadTrainingContent(): Promise<TrainingContent> {
       forms: new Set(),
       order: [],
       paused: new Set(),
+      questionPool: [],
     };
 
   const senseIds = rows.map((r) => r.sense.id);
@@ -182,5 +188,6 @@ async function loadTrainingContent(): Promise<TrainingContent> {
     forms,
     order: senses.map((s) => s.id),
     paused,
+    questionPool: senses.filter((s) => !paused.has(s.id)),
   };
 }
