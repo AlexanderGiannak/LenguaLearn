@@ -40,8 +40,22 @@ export default defineRailway((ctx) => {
       // Set by hand with `railway variables`, never written in source (see .env.example).
       ADMIN_API_TOKEN_HASH: preserve(),
       BETTER_AUTH_SECRET: preserve(),
+      // The CloudFront address for pictures and recordings (set by hand; docs/DECISIONS.md).
+      MEDIA_BASE_URL: preserve(),
     },
   });
 
-  return project("lengualearn", { resources: [db, web] });
+  // The nightly stats job (spec: Hosting, "Railway cron service"): flags senses with unusual
+  // answer statistics for the review queue. Runs at 08:00 UTC (3 or 4 a.m. in US Eastern),
+  // then exits. No Next build: the job is plain Node (scripts/stats-job.mts).
+  const stats = service("stats", {
+    source: github("AlexanderGiannak/LenguaLearn", { branch: "main", checkSuites: false }),
+    build: "node --version",
+    start: "npm run review:stats",
+    deploy: { cronSchedule: "0 8 * * *", restartPolicyType: "NEVER" },
+    replicas: { [REGION]: 1 },
+    env: { DATABASE_URL: db.env.DATABASE_URL },
+  });
+
+  return project("lengualearn", { resources: [db, web, stats] });
 });

@@ -21,6 +21,11 @@ const TABS = [
     hint: "Read the reports, fix what's wrong, then approve or mark the reports reviewed.",
   },
   {
+    status: "flagged",
+    label: "Unusual answer statistics",
+    hint: "The nightly check found answers that look odd. Look for the cause, fix it and approve, or mark the flags reviewed.",
+  },
+  {
     status: "changed",
     label: "Changes to live words",
     hint: "Students see the live word; approve the edited part or the new recording.",

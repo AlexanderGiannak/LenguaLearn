@@ -8,6 +8,7 @@ import { applyStatusChanges, type StatusChange } from "@/lib/content/status-chan
 import type { getDb } from "@/lib/db/client";
 import {
   audio,
+  contentFlag,
   contentReport,
   example,
   hook,
@@ -22,6 +23,7 @@ import {
 } from "@/lib/db/schema";
 import { requireAdmin, type Reviewer } from "./access";
 import { clearTrainingContentCache } from "@/lib/train/content-cache";
+import { openFlags, resolveFlags } from "./flags";
 import { openReports, resolveReports } from "./reports";
 import type { SenseEdit } from "./schema";
 
@@ -61,10 +63,15 @@ const liveWithWaiting = sql`${sense.status} = 'live' and (
 const reported = sql`exists (select 1 from ${contentReport} r
   where r.sense_id = ${sense.id} and r.resolved_at is null)`;
 
+/** Senses the nightly stats job flagged, with flags no reviewer has closed yet. */
+const flagged = sql`exists (select 1 from ${contentFlag} f
+  where f.sense_id = ${sense.id} and f.resolved_at is null)`;
+
 /** The senses in one queue tab. */
 function inQueue(status: QueueStatus) {
   if (status === "changed") return liveWithWaiting;
   if (status === "reported") return and(ne(sense.status, "retired"), reported)!;
+  if (status === "flagged") return and(ne(sense.status, "retired"), flagged)!;
   return eq(sense.status, status);
 }
 
@@ -118,7 +125,7 @@ export async function reviewQueue(
   return { rows, total };
 }
 
-export type QueueStatus = "ai_checked" | "draft" | "approved" | "changed" | "reported";
+export type QueueStatus = "ai_checked" | "draft" | "approved" | "changed" | "reported" | "flagged";
 
 /** How many senses in a queue have a failure from each check, for the queue's filter. */
 export async function checkCounts(db: Db, status: QueueStatus) {
@@ -132,7 +139,7 @@ export async function checkCounts(db: Db, status: QueueStatus) {
 
 /**
  * The sense after this one in the same queue, so a reviewer can go straight on. A sense with
- * open reports was reached from the Reported tab, so it goes on through that tab.
+ * open reports or stats flags was reached from that tab, so it goes on through it.
  */
 export async function nextInQueue(
   db: Pick<Db, "select">,
@@ -175,12 +182,17 @@ export async function queueCounts(db: Db): Promise<Record<QueueStatus, number>> 
     .select({ n: sql<number>`count(*)::int` })
     .from(sense)
     .where(inQueue("reported"))) as [{ n: number }];
+  const [flaggedCount] = (await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(sense)
+    .where(inQueue("flagged"))) as [{ n: number }];
   const counts = {
     draft: 0,
     ai_checked: 0,
     approved: 0,
     changed: changed.n,
     reported: reportedCount.n,
+    flagged: flaggedCount.n,
   };
   for (const r of rows) counts[r.status as (typeof OPEN)[number]] = r.n;
   return counts;
@@ -244,6 +256,7 @@ export async function senseForReview(db: Pick<Db, "select">, senseId: number, vi
     ),
     recordings: await recordingsFor(db, l!.id, examples),
     reports: await openReports(db, senseId),
+    flags: await openFlags(db, senseId),
     // Reviewers see who acted only as "you" or "another reviewer".
     log: log.map(({ reviewerId, ...r }) => ({ ...r, byYou: reviewerId === viewerId })),
   };
@@ -475,8 +488,10 @@ export async function approveSense(db: Db, reviewer: Reviewer, senseId: number) 
     if (changes.length === 0) throw new HttpError(409, `nothing here waits for approval`);
     await applyStatusChanges(tx, changes, "human-review");
     await tx.insert(reviewLog).values({ reviewerId: reviewer.id, senseId, action: "approve" });
-    // The sense has been reviewed, so its open reports are answered and it is taught again.
+    // The sense has been reviewed, so its open reports are answered and it is taught again,
+    // and its stats start again from here.
     await resolveReports(tx, reviewer, senseId, false);
+    await resolveFlags(tx, reviewer, senseId, false);
     return { approved: changes.length };
   });
   // After commit: a paused sense is introduced again straight away.

@@ -54,6 +54,13 @@ export type EditorData = {
   images: { fileKey: string; alt: string }[];
   /** Learners' open reports: reason, their words, where it was reported. Never who. */
   reports: { at: string; reason: string; text: string | null; questionType: string | null }[];
+  /** Open flags from the nightly stats job, already put into words. */
+  flags: {
+    at: string;
+    title: string;
+    summary: string;
+    option: { text: string; lang: "en" | "es" } | null;
+  }[];
   /** The headword's and each sentence's recording; url is null until one is made. */
   recordings: {
     label: string;
@@ -85,6 +92,7 @@ const ACTION_LABEL: Record<string, string> = {
   publish: "published",
   flag_audio: "recording flagged",
   resolve_reports: "reports marked reviewed",
+  resolve_flags: "stats flags marked reviewed",
 };
 
 const input = `field w-full ${focusRing}`;
@@ -125,7 +133,13 @@ export function SenseEditor({
   const [reason, setReason] = useState("");
   const dirty = JSON.stringify(edit) !== JSON.stringify(data.edit);
   const backTo = `/review?status=${
-    data.reports.length > 0 ? "reported" : data.status === "live" ? "changed" : data.status
+    data.reports.length > 0
+      ? "reported"
+      : data.flags.length > 0
+        ? "flagged"
+        : data.status === "live"
+          ? "changed"
+          : data.status
   }`;
   const onward = data.nextId ? `/review/${data.nextId}` : backTo;
 
@@ -288,6 +302,53 @@ export function SenseEditor({
               }
             >
               Mark reports reviewed
+            </Button>
+          </div>
+        </section>
+      )}
+
+      {data.flags.length > 0 && (
+        <section className="card flex flex-col gap-3 p-4" aria-labelledby="flags">
+          <h2 id="flags" className="text-lg font-bold">
+            Unusual answer statistics ({data.flags.length})
+          </h2>
+          <p className={`text-sm ${muted}`}>
+            From the nightly check of the last 60 days of answers. Look for the cause (a misleading
+            example, a second right answer, a hard-to-read sentence), fix it and approve, or mark
+            the flags reviewed if the content is right. Either way the numbers start again.
+          </p>
+          <ul className="flex flex-col gap-2">
+            {data.flags.map((f, i) => (
+              <li key={i} className="flex flex-col">
+                <span className="font-semibold">{f.title}</span>
+                <span>
+                  {f.summary}
+                  {f.option && (
+                    <>
+                      {" "}
+                      <span lang={f.option.lang} className="font-semibold">
+                        {f.option.text}
+                      </span>
+                    </>
+                  )}
+                </span>
+                <span className={`text-sm ${muted}`}>
+                  First raised {new Date(f.at).toLocaleDateString()}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <div>
+            <Button
+              variant="secondary"
+              disabled={busy}
+              onClick={() =>
+                run(`/api/review/senses/${data.id}/flags`, { action: "resolve" }, () =>
+                  router.refresh(),
+                )
+              }
+            >
+              Mark flags reviewed
             </Button>
           </div>
         </section>
