@@ -15,6 +15,11 @@ const TABS = [
   { status: "ai_checked", label: "Passed the AI check", hint: "Read, then approve or fix." },
   { status: "draft", label: "Flagged", hint: "The checks found problems: fix, then approve." },
   { status: "approved", label: "Approved", hint: "Waiting for the admin to publish." },
+  {
+    status: "changed",
+    label: "Changes to live words",
+    hint: "Students see the live word; approve the edited part or the new recording.",
+  },
 ] as const;
 type Status = (typeof TABS)[number]["status"];
 const PAGE = 50;

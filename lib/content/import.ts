@@ -17,6 +17,7 @@ import {
   wordPart,
 } from "@/lib/db/schema";
 import type { ContentStatus, ImportStatus } from "./constants";
+import { spokenHeadword } from "./display";
 import type { ImportPayload, LemmaInput, SenseInput } from "./import-schema";
 
 // Loads a validated import payload in one transaction.
@@ -32,6 +33,7 @@ import type { ImportPayload, LemmaInput, SenseInput } from "./import-schema";
 //   takes the import's status. An unchanged retired pseudoword stays retired.
 // - Children missing from the import (an example that was dropped) are retired, never
 //   deleted. Senses missing from a lemma are left alone; retire those explicitly.
+// - Audio missing from the import is kept while it still says the current text.
 
 export const CONTENT_TABLES = {
   lemma,
@@ -227,7 +229,14 @@ class Importer {
       { key: l.key },
     );
 
-    await this.importAudio(audio.lemmaId, "lemmaId", lemmaId, l.audio, l.status);
+    await this.importAudio(
+      audio.lemmaId,
+      "lemmaId",
+      lemmaId,
+      l.audio,
+      l.status,
+      spokenHeadword({ ...l, gender: l.gender ?? null }),
+    );
     await this.replaceChildren(
       "word_part",
       wordPart.lemmaId,
@@ -286,6 +295,7 @@ class Importer {
         exampleId,
         s.examples[i]!.audio,
         s.status,
+        s.examples[i]!.text,
       );
     }
 
@@ -335,9 +345,16 @@ class Importer {
     ownerId: number,
     a: LemmaInput["audio"],
     status: ImportStatus,
+    spokenText: string,
   ): Promise<void> {
+    // Audio is made later from the app's own text (content:audio and /api/admin/audio), so
+    // an import without audio keeps a recording that still says the current text and
+    // retires one that no longer does.
     if (!a) {
-      await this.retireWhere("audio", eq(ownerColumn, ownerId));
+      await this.retireWhere(
+        "audio",
+        and(eq(ownerColumn, ownerId), ne(audio.spokenText, spokenText))!,
+      );
       return;
     }
     await this.upsert(
@@ -347,10 +364,23 @@ class Importer {
         [ownerField]: ownerId,
         fileKey: a.fileKey,
         voiceId: a.voiceId,
+        spokenText,
         generatedAt: new Date(a.generatedAt),
       },
       status,
     );
+  }
+
+  /** A new recording from the audio script: it waits for review like any other change. */
+  async attachAudio(
+    owner: { lemmaId: number } | { exampleId: number },
+    a: { fileKey: string; voiceId: string; generatedAt: Date; spokenText: string },
+  ): Promise<number> {
+    const match =
+      "lemmaId" in owner ? eq(audio.lemmaId, owner.lemmaId) : eq(audio.exampleId, owner.exampleId);
+    const { generatedAt, ...values } = a;
+    // When it was made is not part of the content: attaching the same file twice is no change.
+    return this.upsert("audio", match, { ...owner, ...values }, "draft", { meta: { generatedAt } });
   }
 
   async importList(list: ImportPayload["lists"][number]): Promise<string[]> {
@@ -438,3 +468,14 @@ export async function saveSense(tx: Tx, lemmaId: number, s: SenseInput): Promise
 }
 
 export type { Tx as ContentTx };
+
+/** Attaches one new recording (lib/content/audio.ts) under the import's rules. */
+export async function saveAudio(
+  tx: Tx,
+  owner: { lemmaId: number } | { exampleId: number },
+  a: { fileKey: string; voiceId: string; generatedAt: Date; spokenText: string },
+): Promise<ImportRow[]> {
+  const importer = new Importer(tx);
+  await importer.attachAudio(owner, a);
+  return importer.rows;
+}

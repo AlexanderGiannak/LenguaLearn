@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { hashAdminToken } from "@/lib/admin/auth";
+import { GET as audioGet, POST as audioPost } from "./audio/route";
 import { POST as importPost } from "./import/route";
 import { POST as statusPost } from "./status/route";
 
@@ -19,6 +20,7 @@ function post(url: string, body: string, headers: Record<string, string> = {}) {
 const routes = [
   ["import", importPost, "http://localhost/api/admin/import"],
   ["status", statusPost, "http://localhost/api/admin/status"],
+  ["audio", audioPost, "http://localhost/api/admin/audio"],
 ] as const;
 
 beforeEach(() => {
@@ -94,6 +96,46 @@ describe("status changes", () => {
       post(
         "http://localhost/api/admin/status",
         JSON.stringify({ changes: [{ table: "answer_event", id: 1, to: "live" }] }),
+        { authorization: `Bearer ${TOKEN}` },
+      ),
+    );
+    expect(res.status).toBe(400);
+  });
+});
+
+describe("GET /api/admin/audio", () => {
+  const get = (headers: Record<string, string>, query = "") =>
+    audioGet(new Request(`http://localhost/api/admin/audio${query}`, { headers }));
+
+  it("rejects a request without the token, and browser requests", async () => {
+    expect((await get({})).status).toBe(401);
+    expect(
+      (await get({ authorization: `Bearer ${TOKEN}`, origin: "https://evil.example" })).status,
+    ).toBe(403);
+  });
+
+  it("rejects an unknown query parameter", async () => {
+    expect((await get({ authorization: `Bearer ${TOKEN}` }, "?status=live")).status).toBe(400);
+  });
+});
+
+describe("attaching audio", () => {
+  it("accepts only paths under audio/", async () => {
+    const res = await audioPost(
+      post(
+        "http://localhost/api/admin/audio",
+        JSON.stringify({
+          items: [
+            {
+              owner: "lemma",
+              id: 1,
+              text: "x",
+              fileKey: "images/x.mp3",
+              voiceId: "v",
+              generatedAt: new Date().toISOString(),
+            },
+          ],
+        }),
         { authorization: `Bearer ${TOKEN}` },
       ),
     );

@@ -41,7 +41,7 @@ Use these defaults unless I have edited them. If you think one is wrong, say why
 | Sessions | Stored in Postgres (Better Auth default) | No extra service |
 | Rate limiting | Better Auth's built-in limiter, in memory, keyed per handle, per seat code and per device cookie (see Accounts and privacy) | Works on a single server and behind shared school IPs |
 | Spaced repetition | ts-fsrs (FSRS-6), two cards per sense: recognition and production | Most accurate open scheduler with a TypeScript library. Move to FSRS-7 when ts-fsrs supports it |
-| Audio | Amazon Polly Neural voices, pre-generated, in a private S3 bucket, served through CloudFront on an audio subdomain with long cache headers. Browser speech synthesis as fallback | Same AWS account. Generated once, never per request |
+| Audio | AI voice (OpenAI `gpt-4o-mini-tts`, voice marin; owner, 2026-11-25), pre-generated, in a private S3 bucket, served through CloudFront on an audio subdomain with long cache headers. Browser speech synthesis as fallback | Same AWS account. Generated once, never per request |
 | Images | Pictures for concrete words, stored in S3 next to audio, with source and license recorded per image | Pictures plus the English gloss beat either alone |
 | Email | AWS SES, with SPF and DKIM on the domain | Same AWS account as audio and backups |
 | Scheduled jobs | Railway cron service: nightly stats job and nightly pg_dump to S3 | Built in. Independent backups |
@@ -81,7 +81,7 @@ flowchart LR
     Media[("S3 media bucket, private: audio and images")]
     Backup[("S3 backup bucket: encrypted pg_dumps")]
     SES["SES: teacher and learner email"]
-    Polly["Polly: content audio only"]
+    Polly["OpenAI TTS: content audio only"]
   end
   Browser -->|HTTPS| App
   Browser -->|audio and images| CF --> Media
@@ -315,7 +315,7 @@ No third-party analytics, ads, trackers, or externally loaded fonts. Use next/fo
 Write these in plain language in /docs:
 
 - A privacy policy, including the retention schedule above and a written data retention policy as the amended COPPA rule requires.
-- A one-page "For school IT" data sheet. It lists exactly what is stored and how deletion works, and names every outside service: Railway (app and database, US East), AWS S3 and CloudFront (audio, images and encrypted backups, no student data in the media bucket), AWS SES (teacher and learner email only), Amazon Polly (content audio only, never student data), and Google sign-in (teachers and independent learners only). It also lists the exact domains the district must allowlist: the app domain and the audio subdomain.
+- A one-page "For school IT" data sheet. It lists exactly what is stored and how deletion works, and names every outside service: Railway (app and database, US East), AWS S3 and CloudFront (audio, images and encrypted backups, no student data in the media bucket), AWS SES (teacher and learner email only), OpenAI text-to-speech (content audio only, never student data), and Google sign-in (teachers and independent learners only). It also lists the exact domains the district must allowlist: the app domain and the audio subdomain.
 - An accessibility conformance report (a VPAT) against WCAG 2.1 AA, which districts request under the ADA Title II web rule.
 - A COPPA notice for schools, used only if a class includes students under 13. Also a one-page incident plan: who to notify, within what time, and how, if student data is ever exposed.
 
@@ -487,7 +487,7 @@ An admin review tool inside the app, built for speed. I should be able to approv
 
 ### 6. Audio
 
-A script generates audio with Amazon Polly Neural voices for each lemma and example, normalizes loudness, and uploads it to the private S3 media bucket. Use one voice for headwords and a different voice for sentences, both Latin American. Before generating the first 500 words, produce the same 10 sentences in two or three candidate voices so I can pick. Support regenerating a single word's audio when a reviewer flags a pronunciation.
+A script generates audio for each lemma and example, normalizes loudness, and uploads it to the private S3 media bucket. The voice is OpenAI's marin for headwords and sentences, speaking neutral Latin American Spanish (owner, 2026-11-25, after the voice test; Polly Neural voices are not offered in the project's Region), and pages say the recordings use an AI-generated voice. Before generating the first 500 words, produce the same 10 sentences in two or three candidate voices so I can pick. Support regenerating a single word's audio when a reviewer flags a pronunciation.
 
 ### 7. Images
 
@@ -558,7 +558,7 @@ Build in this order. Stop at the end of each phase and wait for me. Start the co
 | 6. Integrity | Active time, idle pause, flagged-time detection, signed question tokens, server timing checks | Scripted fast-clicker and idle tests produce the expected flags |
 | 7. Placement and learner home | Beginner choice and adaptive calibration test, starting level, learner home, goals, vocabulary size on home and progress | A total beginner and an intermediate learner each go from sign-up to first question in under 5 minutes, at sensible levels |
 | 8. Assessments (after pilot) | Creation, personalized and fixed sources, taking, grading, item drop, results | A seeded class takes an assessment end to end |
-| 9. Content pipeline | Candidate list, generation, second-model check, automatic checks, admin review tool, reviewer role, reports, nightly stats flags, Polly audio upload to S3, images for concrete senses, reading practice (sentences and passages) and its reader | The first 500 senses reach live status through the full pipeline, concrete senses have a reviewed image where one could be found or made, and every live level has reviewed reading practice |
+| 9. Content pipeline | Candidate list, generation, second-model check, automatic checks, admin review tool, reviewer role, reports, nightly stats flags, audio upload to S3, images for concrete senses, reading practice (sentences and passages) and its reader | The first 500 senses reach live status through the full pipeline, concrete senses have a reviewed image where one could be found or made, and every live level has reviewed reading practice |
 | 10. Launch prep | Pilot items: privacy policy with retention schedule, school IT data sheet with allowlist domains, CloudFront audio subdomain, nightly pg_dump to S3 with a tested restore, uptime monitor, school-network test on a real Chromebook. Before public launch: landing page, accessibility audit and conformance report, load test at 300 simultaneous students | A pilot with one real class and independent learners for 2 weeks with no data loss, then public launch |
 
 > Editor's note (2026-10-20): `reference/prototype.html` does not exist. The Phase 1 seed set will be proposed in the Phase 1 plan instead. See [DECISIONS.md](DECISIONS.md).

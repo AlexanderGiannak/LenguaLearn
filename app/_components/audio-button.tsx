@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 
-// Plays the stored recording when there is one. Until Polly audio exists (Phase 9), or if
-// the file fails to load, it falls back to the browser's own Spanish voice. Only content
+// Plays the stored recording when there is one (content:audio makes them). Without one, or
+// if the file fails to load, it falls back to the browser's own Spanish voice. Only content
 // text is spoken; it never includes anything about the student.
 
 /** Plays a recording, falling back to the browser's Spanish voice. False if neither works. */
