@@ -63,6 +63,9 @@ export async function submitReport(
     if (!issued) throw new HttpError(404, "question not found");
     const payload = issued.payload as IssuedPayload;
 
+    // One report at a time per learner, so reports sent all at once can't each pass the
+    // daily count before the others are saved. Released when the transaction ends.
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`content_report:${userId}`}))`);
     const [{ n }] = (await tx
       .select({ n: count() })
       .from(contentReport)

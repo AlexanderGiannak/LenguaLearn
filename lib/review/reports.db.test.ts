@@ -231,6 +231,22 @@ describe("Report a problem", () => {
     ).rejects.toMatchObject({ status: 429 });
   });
 
+  it("holds the daily cap when reports arrive all at once", async () => {
+    const id = await learner();
+    const questions = [];
+    for (let i = 0; i < REPORT_CONFIG.perDay + 5; i++)
+      questions.push(await issued(id, await liveSense()));
+    const results = await Promise.allSettled(
+      questions.map((questionId) =>
+        submitReport(getDb(), { id, role: "learner" }, { questionId, reason: "other" }),
+      ),
+    );
+    expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(REPORT_CONFIG.perDay);
+    expect(
+      await getDb().select().from(contentReport).where(eq(contentReport.reporterId, id)),
+    ).toHaveLength(REPORT_CONFIG.perDay);
+  });
+
   it("pauses a sense for new learners at 3 reports from different learners", async () => {
     const senseId = await liveSense();
     await reportFrom(senseId);
