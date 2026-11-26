@@ -45,6 +45,9 @@ function useKeys(handler: (e: KeyboardEvent) => void) {
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
+      // Keys pressed inside a dialog (Report a problem) belong to it, not to the trainer.
+      if (e.target instanceof Element && e.target.closest("dialog")) return;
+      if (e.target instanceof HTMLTextAreaElement) return;
       const typing = e.target instanceof HTMLInputElement;
       if (typing && e.key !== "Enter") return;
       ref.current(e);

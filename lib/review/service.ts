@@ -8,6 +8,7 @@ import { applyStatusChanges, type StatusChange } from "@/lib/content/status-chan
 import type { getDb } from "@/lib/db/client";
 import {
   audio,
+  contentReport,
   example,
   hook,
   image,
@@ -20,6 +21,8 @@ import {
   wordPart,
 } from "@/lib/db/schema";
 import { requireAdmin, type Reviewer } from "./access";
+import { clearTrainingContentCache } from "@/lib/train/content-cache";
+import { openReports, resolveReports } from "./reports";
 import type { SenseEdit } from "./schema";
 
 // The review tool (spec: Content pipeline, step 4; owner, 2026-11-25):
@@ -54,9 +57,15 @@ const liveWithWaiting = sql`${sense.status} = 'live' and (
   or exists (select 1 from ${audio} x where x.lemma_id = ${sense.lemmaId} and x.status in ('draft', 'ai_checked'))
 )`;
 
+/** Senses learners have reported, with reports no reviewer has answered yet. */
+const reported = sql`exists (select 1 from ${contentReport} r
+  where r.sense_id = ${sense.id} and r.resolved_at is null)`;
+
 /** The senses in one queue tab. */
 function inQueue(status: QueueStatus) {
-  return status === "changed" ? liveWithWaiting : eq(sense.status, status);
+  if (status === "changed") return liveWithWaiting;
+  if (status === "reported") return and(ne(sense.status, "retired"), reported)!;
+  return eq(sense.status, status);
 }
 
 export type QueueRow = {
@@ -109,7 +118,7 @@ export async function reviewQueue(
   return { rows, total };
 }
 
-export type QueueStatus = "ai_checked" | "draft" | "approved" | "changed";
+export type QueueStatus = "ai_checked" | "draft" | "approved" | "changed" | "reported";
 
 /** How many senses in a queue have a failure from each check, for the queue's filter. */
 export async function checkCounts(db: Db, status: QueueStatus) {
@@ -121,16 +130,22 @@ export async function checkCounts(db: Db, status: QueueStatus) {
   return [...rows].map((r) => ({ check: String(r.check), n: Number(r.n) }));
 }
 
-/** The sense after this one in the same queue, so a reviewer can go straight on. */
+/**
+ * The sense after this one in the same queue, so a reviewer can go straight on. A sense with
+ * open reports was reached from the Reported tab, so it goes on through that tab.
+ */
 export async function nextInQueue(
   db: Pick<Db, "select">,
   current: { status: ContentStatus; frequencyRank: number; key: string },
+  from?: QueueStatus,
 ): Promise<number | null> {
-  const queue: QueueStatus | null = (OPEN as readonly ContentStatus[]).includes(current.status)
-    ? (current.status as QueueStatus)
-    : current.status === "live"
-      ? "changed"
-      : null;
+  const queue: QueueStatus | null = from
+    ? from
+    : (OPEN as readonly ContentStatus[]).includes(current.status)
+      ? (current.status as QueueStatus)
+      : current.status === "live"
+        ? "changed"
+        : null;
   if (!queue) return null;
   const [row] = await db
     .select({ id: sense.id })
@@ -156,7 +171,17 @@ export async function queueCounts(db: Db): Promise<Record<QueueStatus, number>> 
     .select({ n: sql<number>`count(*)::int` })
     .from(sense)
     .where(liveWithWaiting)) as [{ n: number }];
-  const counts = { draft: 0, ai_checked: 0, approved: 0, changed: changed.n };
+  const [reportedCount] = (await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(sense)
+    .where(inQueue("reported"))) as [{ n: number }];
+  const counts = {
+    draft: 0,
+    ai_checked: 0,
+    approved: 0,
+    changed: changed.n,
+    reported: reportedCount.n,
+  };
   for (const r of rows) counts[r.status as (typeof OPEN)[number]] = r.n;
   return counts;
 }
@@ -218,6 +243,7 @@ export async function senseForReview(db: Pick<Db, "select">, senseId: number, vi
       await db.select().from(image).where(eq(image.senseId, senseId)).orderBy(asc(image.position)),
     ),
     recordings: await recordingsFor(db, l!.id, examples),
+    reports: await openReports(db, senseId),
     // Reviewers see who acted only as "you" or "another reviewer".
     log: log.map(({ reviewerId, ...r }) => ({ ...r, byYou: reviewerId === viewerId })),
   };
@@ -443,14 +469,19 @@ export async function waitingRows(
 
 /** Approves everything in a sense that waits for approval (see waitingRows). */
 export async function approveSense(db: Db, reviewer: Reviewer, senseId: number) {
-  return db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const s = await lockSense(tx, senseId);
     const changes = await waitingRows(tx, s);
     if (changes.length === 0) throw new HttpError(409, `nothing here waits for approval`);
     await applyStatusChanges(tx, changes, "human-review");
     await tx.insert(reviewLog).values({ reviewerId: reviewer.id, senseId, action: "approve" });
+    // The sense has been reviewed, so its open reports are answered and it is taught again.
+    await resolveReports(tx, reviewer, senseId, false);
     return { approved: changes.length };
   });
+  // After commit: a paused sense is introduced again straight away.
+  clearTrainingContentCache();
+  return result;
 }
 
 /** Sends a sense back to draft with the reviewer's reason. */

@@ -169,7 +169,7 @@ async function nextScreen(ctx: Ctx, activeMs: number, plannedMs: number): Promis
   if (forced?.stage === "intro") return introScreen(ctx, forced.senseId, forced.abilityDone);
   if (forced?.stage === "intro_check") {
     const sense = ctx.content.byId.get(forced.senseId)!;
-    const q = buildQuestion({ type: "meaning_choice", sense, pool: ctx.content.senses, rng });
+    const q = buildQuestion({ type: "meaning_choice", sense, pool: ctx.content.questionPool, rng });
     return questionScreen(ctx, "intro_check", { kind: "new", senseId: sense.id }, q, {
       abilityDone: forced.abilityDone,
     });
@@ -184,7 +184,7 @@ async function nextScreen(ctx: Ctx, activeMs: number, plannedMs: number): Promis
   const newWords: number[] = [];
   for (const id of ctx.data.focus ?? []) {
     // A focus word retired since the session started is skipped.
-    if (!ctx.content.byId.has(id)) continue;
+    if (!ctx.content.byId.has(id) || ctx.content.paused.has(id)) continue;
     if (!memories.has(id) && !newWords.includes(id)) newWords.push(id);
     if (newWords.length === 10) break;
   }
@@ -196,7 +196,9 @@ async function nextScreen(ctx: Ctx, activeMs: number, plannedMs: number): Promis
   for (const id of ctx.content.order) {
     if (atLevel.length >= 10 && (below.length >= 10 || !placed)) break;
     const s = ctx.content.byId.get(id)!;
-    if (memories.has(id) || newWords.includes(id)) continue;
+    // A sense reported by several learners waits for review before anyone new meets it;
+    // learners who already have it keep reviewing it.
+    if (memories.has(id) || newWords.includes(id) || ctx.content.paused.has(id)) continue;
     if (s.frequencyRank >= firstRank) {
       if (atLevel.length < 10) atLevel.push(id);
     } else if (placed && below.length < 10) below.push(id);
@@ -231,12 +233,17 @@ async function nextScreen(ctx: Ctx, activeMs: number, plannedMs: number): Promis
       // A probably-known word: straight to the "I already know this" production question.
       // Right: scheduled as known. Wrong: the word page and its check follow, as a new word.
       const type = introQuestionType("already_know", sense);
-      const q = buildQuestion({ type, sense, pool: ctx.content.senses, rng });
+      const q = buildQuestion({ type, sense, pool: ctx.content.questionPool, rng });
       return questionScreen(ctx, "intro_known", item, q);
     }
     if (guessFirst(sense)) {
       ctx.data.forced.unshift({ stage: "intro", senseId: sense.id });
-      const q = buildQuestion({ type: "meaning_choice", sense, pool: ctx.content.senses, rng });
+      const q = buildQuestion({
+        type: "meaning_choice",
+        sense,
+        pool: ctx.content.questionPool,
+        rng,
+      });
       return questionScreen(ctx, "pretest", item, q);
     }
     return introScreen(ctx, sense.id);
@@ -244,7 +251,10 @@ async function nextScreen(ctx: Ctx, activeMs: number, plannedMs: number): Promis
 
   const p = progress.get(sense.id)!;
   const c = p.memory[item.card]!;
-  const partners = sense.confusedIds.filter((id) => progress.get(id)?.memory.production);
+  // Known partners only, and never a paused one (it is not in the question pool).
+  const partners = sense.confusedIds.filter(
+    (id) => progress.get(id)?.memory.production && !ctx.content.paused.has(id),
+  );
   const type = chooseQuestionType({
     sense,
     card: item.card,
@@ -252,13 +262,13 @@ async function nextScreen(ctx: Ctx, activeMs: number, plannedMs: number): Promis
     lastType: p.lastType,
     audio: ctx.audio,
     contrastPartners: partners,
-    pool: ctx.content.senses,
+    pool: ctx.content.questionPool,
     rng,
   });
   const question = buildQuestion({
     type,
     sense,
-    pool: ctx.content.senses,
+    pool: ctx.content.questionPool,
     rng,
     contrastPartnerId: partners[Math.floor(rng() * partners.length)],
   });
@@ -381,7 +391,7 @@ export async function chooseIntro(
       now: clock(),
     };
     const type = introQuestionType(body.choice, sense);
-    const question = buildQuestion({ type, sense, pool: content.senses, rng });
+    const question = buildQuestion({ type, sense, pool: content.questionPool, rng });
     const stage = body.choice === "got_it" ? "intro_check" : "intro_known";
     const next = await questionScreen(ctx, stage, payload.item, question, {
       abilityDone: payload.abilityDone,

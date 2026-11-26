@@ -7,7 +7,9 @@ import * as accountsRoute from "@/app/api/admin/accounts/route";
 import { hashAdminToken } from "@/lib/admin/auth";
 import { getDb, getSql } from "@/lib/db/client";
 import { adminActionLog, user } from "@/lib/db/schema";
+import * as trainReportRoute from "@/app/api/train/report/route";
 import * as audioFlagRoute from "./senses/[id]/audio-flag/route";
+import * as reportsRoute from "./senses/[id]/reports/route";
 import * as decisionRoute from "./senses/[id]/decision/route";
 import * as editRoute from "./senses/[id]/route";
 import * as publishRoute from "./publish/route";
@@ -78,6 +80,7 @@ const routes = [
   ["edit", editRoute.POST, {}],
   ["decision", decisionRoute.POST, { action: "approve" }],
   ["audio-flag", audioFlagRoute.POST, { target: { owner: "lemma" }, reason: "wrong" }],
+  ["reports", reportsRoute.POST, { action: "resolve" }],
   ["pseudowords", pseudowordsRoute.POST, { ids: [1], action: "approve" }],
   ["publish", publishRoute.POST, {}],
 ] as const;
@@ -125,6 +128,31 @@ describe("review routes", () => {
     expect(crossOrigin.status).toBe(403);
     expect(
       (await call(decisionRoute.POST, { body: { action: "reject", reason: "" }, cookie })).status,
+    ).toBe(400);
+  });
+
+  it("let learners report a problem only when signed in, from this site, about their own question", async () => {
+    const body = { questionId: randomUUID(), reason: "other" };
+    expect((await call(trainReportRoute.POST, { body })).status).toBe(401);
+    const learner = await call(signUpRoute.POST, {
+      body: {
+        role: "learner",
+        username: `l${randomUUID().slice(0, 8)}`,
+        password: "learner-password",
+        ageConfirmed: true,
+      },
+    });
+    const crossOrigin = await call(trainReportRoute.POST, {
+      body,
+      cookie: learner.cookie,
+      origin: "https://evil.example",
+    });
+    expect(crossOrigin.status).toBe(403);
+    // A question this learner was never shown.
+    expect((await call(trainReportRoute.POST, { body, cookie: learner.cookie })).status).toBe(404);
+    const tooLong = { ...body, text: "x".repeat(301) };
+    expect(
+      (await call(trainReportRoute.POST, { body: tooLong, cookie: learner.cookie })).status,
     ).toBe(400);
   });
 

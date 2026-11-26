@@ -185,6 +185,28 @@ describe("pickDistractors", () => {
     }
   });
 
+  it("still finds three when the nearest words repeat one headword and meaning", () => {
+    // Ten copies of one word sit closest to the target; real alternatives are further away.
+    const repeat = nounPool[0]!;
+    const copies = Array.from({ length: 10 }, (_, i) => ({
+      ...repeat,
+      id: 5000 + i,
+      lemmaId: 5000 + i,
+      level: casa.level,
+      gloss: casa.gloss.slice(0, 1) + "x".repeat(Math.max(0, casa.gloss.length - 1)),
+      headword: "fixturecopy",
+      synonymIds: [],
+      antonymIds: [],
+      familyIds: [],
+      confusedIds: [],
+    }));
+    for (let i = 0; i < 20; i++) {
+      const picked = pickDistractors(casa, [...copies, ...nounPool], seededRng(i));
+      expect(picked).toHaveLength(3);
+      expect(new Set(picked.map((s) => `${s.headword}|${s.gloss}`)).size).toBe(3);
+    }
+  });
+
   it("does not use a word whose own relations point back at the target", () => {
     const ids = pickDistractors(caza, [casa, ...nounPool], seededRng(2)).map((s) => s.id);
     expect(ids).not.toContain(casa.id); // casa lists caza as commonly confused

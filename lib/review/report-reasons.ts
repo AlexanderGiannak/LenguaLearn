@@ -1,0 +1,54 @@
+// The "Report a problem" menu, shared by the trainer (browser) and the server. No database
+// imports here, so the browser bundle stays small.
+
+export const REPORT_REASONS = [
+  "answer_marked_wrong",
+  "wrong_meaning",
+  "two_answers",
+  "spelling",
+  "audio",
+  "confusing",
+  "other",
+] as const;
+export type ReportReason = (typeof REPORT_REASONS)[number];
+
+export const REPORT_REASON_LABELS: Record<ReportReason, string> = {
+  answer_marked_wrong: "My answer should count",
+  wrong_meaning: "The meaning or translation is wrong",
+  two_answers: "More than one answer is right",
+  spelling: "There's a spelling or grammar mistake",
+  audio: "The audio is wrong",
+  confusing: "The question is confusing",
+  other: "Something else",
+};
+
+export const REPORT_TEXT_MAX = 300;
+
+/**
+ * Only independent learners may add text. Class seats never type anything to the app beyond
+ * answers (spec: Student privacy), and a teacher's text could name a class student; both
+ * pick a reason only.
+ */
+export const reportTextAllowed = (role: string) => role === "learner";
+
+const REMOVED = "[removed]";
+
+/**
+ * Takes out what looks like contact details before a report is stored: email addresses,
+ * links, IP addresses (never stored, by rule), phone numbers and @handles. Names can't be spotted reliably; the dialog asks for
+ * none, and reviewers never see who sent a report.
+ */
+export function scrubPersonalDetails(text: string): string {
+  return (
+    text
+      .replace(/[^\s@]+@[^\s@]+\.[^\s@]+/g, REMOVED)
+      .replace(/\b(?:https?:\/\/|www\.)\S+/gi, REMOVED)
+      .replace(/[\w.-]+\.(?:com|net|org|edu|io|me|us|co|app|gg)\b\S*/gi, REMOVED)
+      .replace(/(^|[^\w])@\w{2,}/g, `$1${REMOVED}`)
+      // IPv4, and IPv6: hex groups with at least two colons ("::1", "2001:db8::1"). A time like
+      // 10:30 has one colon and stays.
+      .replace(/\b\d{1,3}(?:\.\d{1,3}){3}\b/g, REMOVED)
+      .replace(/(?<![\w:])(?=[0-9a-f:]*:[0-9a-f]*:)[0-9a-f:]{2,}(?:%\w+)?(?![\w:])/gi, REMOVED)
+      .replace(/\+?\(?\d[\d\s().-]{5,}\d/g, (m) => (m.replace(/\D/g, "").length >= 7 ? REMOVED : m))
+  );
+}

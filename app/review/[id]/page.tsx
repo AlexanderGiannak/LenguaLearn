@@ -7,6 +7,7 @@ import { reviewerPage } from "@/lib/review/page-gate";
 import { mediaUrl, spokenHeadword } from "@/lib/content/display";
 import { getReviewWordPage } from "@/lib/content/word-page";
 import { previewQuestions, toEngineSense } from "@/lib/review/preview";
+import { REPORT_REASON_LABELS } from "@/lib/review/report-reasons";
 import { nextInQueue, senseForReview, waitingRows } from "@/lib/review/service";
 import { getTrainingContent } from "@/lib/train/content";
 import { StudentView } from "./student-view";
@@ -80,6 +81,12 @@ async function Sense({ params }: Pick<PageProps<"/review/[id]">, "params">) {
       misuses: v.misuses.map((m) => ({ text: m.text, explanation: m.explanation })),
     },
     images: v.images.map((i) => ({ fileKey: i.fileKey, alt: i.alt })),
+    reports: v.reports.map((r) => ({
+      at: r.at.toISOString(),
+      reason: REPORT_REASON_LABELS[r.reason],
+      text: r.text,
+      questionType: r.questionType,
+    })),
     recordings: [
       {
         label: "Headword",
@@ -101,7 +108,7 @@ async function Sense({ params }: Pick<PageProps<"/review/[id]">, "params">) {
     ],
     log: v.log.map((l) => ({ ...l, at: l.at.toISOString() })),
     isAdmin: reviewer.isAdmin,
-    nextId: await nextInQueue(getDb(), v.sense),
+    nextId: await nextInQueue(getDb(), v.sense, v.reports.length > 0 ? "reported" : undefined),
     waiting: (await waitingRows(getDb(), v.sense)).length,
   };
   const [word, content] = await Promise.all([getReviewWordPage(v.sense.id), getTrainingContent()]);

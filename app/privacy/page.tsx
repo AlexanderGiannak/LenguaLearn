@@ -24,6 +24,11 @@ const stored = [
     "90 days, then only whether each was right is kept",
     "Checking that answers are graded fairly",
   ],
+  [
+    '"Report a problem" messages: the reason, and for independent learners only, up to 300 characters of their own words (email addresses, links, IP addresses and phone numbers removed)',
+    "Until the account is deleted",
+    "Fixing mistakes in words. Reviewers read the message but never see who sent it",
+  ],
   ["A random device ID in a cookie", "90 days", "Counting failed sign-ins per device"],
   ["Your IP address", "Never stored", "Used in memory only, to slow down abuse"],
 ];

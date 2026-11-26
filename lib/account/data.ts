@@ -3,6 +3,7 @@ import { getDb } from "@/lib/db/client";
 import {
   adminActionLog,
   answerEvent,
+  contentReport,
   card,
   classroom,
   learnerProfile,
@@ -14,7 +15,8 @@ import {
 import { teacherScope } from "@/lib/teacher/scope";
 
 // Export and deletion (spec: Deletion and export). Deleting a user row cascades to every
-// table that holds their data: sessions, cards, progress, answers and study sessions.
+// table that holds their data: sessions, cards, progress, answers, study sessions and
+// their "Report a problem" reports.
 
 /** Everything the app holds about one user, as JSON they can download. */
 export async function exportUserData(userId: string) {
@@ -29,7 +31,7 @@ export async function exportUserData(userId: string) {
     })
     .from(user)
     .where(eq(user.id, userId));
-  const [classes, profile, cards, progress, sessions, answers] = await Promise.all([
+  const [classes, profile, cards, progress, sessions, answers, reports] = await Promise.all([
     db
       .select({ className: classroom.name, seatNumber: seat.seatNumber, joinedAt: seat.joinedAt })
       .from(seat)
@@ -47,6 +49,16 @@ export async function exportUserData(userId: string) {
       .from(studySession)
       .where(eq(studySession.userId, userId)),
     db.select().from(answerEvent).where(eq(answerEvent.userId, userId)),
+    db
+      .select({
+        at: contentReport.at,
+        senseId: contentReport.senseId,
+        reason: contentReport.reason,
+        text: contentReport.text,
+        resolvedAt: contentReport.resolvedAt,
+      })
+      .from(contentReport)
+      .where(eq(contentReport.reporterId, userId)),
   ]);
   const placeholder = u?.email.endsWith(".invalid");
   return {
@@ -58,6 +70,7 @@ export async function exportUserData(userId: string) {
     wordProgress: progress,
     sessions,
     answers: answers.map(({ userId: _userId, ...rest }) => rest),
+    problemReports: reports,
   };
 }
 

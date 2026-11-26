@@ -5,6 +5,7 @@ import { canSpeak } from "@/app/_components/audio-button";
 import { INTEGRITY_CONFIG } from "@/lib/integrity/config";
 import type { AnswerResponse, Feedback, Screen, SessionSummary } from "@/lib/train/types";
 import { pendingRequest, sendQueued, type SendResult } from "./queue";
+import { ReportProblem } from "./report-problem";
 import {
   FeedbackView,
   focusRing,
@@ -20,7 +21,7 @@ import {
 type View =
   | { kind: "start" }
   | { kind: "screen"; screen: Exclude<Screen, { kind: "done" }> }
-  | { kind: "feedback"; feedback: Feedback; next: Screen }
+  | { kind: "feedback"; feedback: Feedback; next: Screen; questionId: string }
   | { kind: "summary"; summary: SessionSummary }
   | { kind: "error"; message: string };
 
@@ -127,7 +128,8 @@ function useActiveClock() {
   );
 }
 
-export function Trainer() {
+/** `reportText`: whether "Report a problem" offers a text box (independent learners only). */
+export function Trainer({ reportText }: { reportText: boolean }) {
   const [view, setView] = useState<View>({ kind: "start" });
   const [session, setSession] = useState<Saved | null>(null);
   const [activeMs, setActiveMs] = useState(0);
@@ -176,11 +178,11 @@ export function Trainer() {
     [send, clock],
   );
 
-  const handleAnswerResult = useCallback((r: SendResult) => {
+  const handleAnswerResult = useCallback((r: SendResult, questionId: string) => {
     if (!r.ok) return setView({ kind: "error", message: friendly(r.error) });
     const data = r.data as AnswerResponse;
     setActiveMs(data.activeMs);
-    setView({ kind: "feedback", feedback: data.feedback, next: data.next });
+    setView({ kind: "feedback", feedback: data.feedback, next: data.next, questionId });
   }, []);
 
   // After a reload, resend an answer that never reached the server. Once, on mount: a
@@ -195,7 +197,8 @@ export function Trainer() {
     void (async () => {
       const r = await send(pending.url, pending.body);
       setSession(saved);
-      if (pending.url.endsWith("/answer")) handleAnswerResult(r);
+      if (pending.url.endsWith("/answer"))
+        handleAnswerResult(r, (pending.body as { questionId: string }).questionId);
       else if (pending.url.endsWith("/intro") && r.ok) {
         void show((r.data as { next: Screen }).next, saved);
       } else if (pending.url.endsWith("/end") && r.ok) {
@@ -248,6 +251,7 @@ export function Trainer() {
     if (view.kind !== "screen" || busy || paused) return;
     if (view.screen.kind !== "question") return;
     const responseMs = Math.max(0, clock.peek() - questionShownAt.current);
+    const questionId = view.screen.id;
     handleAnswerResult(
       await send("/api/train/answer", {
         questionId: view.screen.id,
@@ -259,6 +263,7 @@ export function Trainer() {
         feedbackMs: takeFeedbackMs(),
         hiddenReturnMs: clock.hiddenReturnMs(),
       }),
+      questionId,
     );
   }
 
@@ -436,12 +441,19 @@ export function Trainer() {
           />
         )}
         {view.kind === "screen" && view.screen.kind === "question" && (
-          <QuestionView
-            key={view.screen.id}
-            question={view.screen.question}
-            onAnswer={answer}
-            busy={busy || paused !== null}
-          />
+          <>
+            <QuestionView
+              key={view.screen.id}
+              question={view.screen.question}
+              onAnswer={answer}
+              busy={busy || paused !== null}
+            />
+            <ReportProblem
+              key={`report-${view.screen.id}`}
+              questionId={view.screen.id}
+              allowText={reportText}
+            />
+          </>
         )}
         {view.kind === "feedback" && (
           <FeedbackView
@@ -452,6 +464,13 @@ export function Trainer() {
               feedbackMs.current = clock.lap();
               void show(view.next, session);
             }}
+          />
+        )}
+        {view.kind === "feedback" && (
+          <ReportProblem
+            key={`report-${view.questionId}`}
+            questionId={view.questionId}
+            allowText={reportText}
           />
         )}
       </div>
