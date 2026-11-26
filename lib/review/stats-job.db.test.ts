@@ -160,6 +160,7 @@ async function admin() {
   });
 }
 
+// Queue checks read the whole queue: the local test database keeps rows between runs.
 describe("nightly stats job", () => {
   it("flags low accuracy, a magnet distractor and slow answers, and nothing ordinary", async () => {
     const r = await runStatsJob(getSql(), NIGHT);
@@ -189,7 +190,7 @@ describe("nightly stats job", () => {
 
   it("puts flagged senses in the review queue with their numbers", async () => {
     const reviewer = await admin();
-    const queue = await reviewQueue(getDb(), { status: "flagged", limit: 500 });
+    const queue = await reviewQueue(getDb(), { status: "flagged", limit: 1_000_000 });
     expect(queue.rows.map((r) => r.senseId)).toEqual(
       expect.arrayContaining([ids.bad, ids.magnet, ids.slow]),
     );
