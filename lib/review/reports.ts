@@ -104,17 +104,13 @@ export async function submitReport(
           at: now,
         },
       });
-    const [{ reporters }] = (await tx
-      .select({ reporters: sql<number>`count(distinct ${contentReport.reporterId})::int` })
-      .from(contentReport)
-      .where(
-        and(eq(contentReport.senseId, payload.senseId), isNull(contentReport.resolvedAt)),
-      )) as [{ reporters: number }];
-    return { paused: reporters >= REPORT_CONFIG.pauseAt };
+    return { ok: true as const };
   });
-  // Pause at once rather than when the cached content next expires.
-  if (result.paused) clearTrainingContentCache();
-  return { ok: true as const };
+  // Pause at once rather than when the cached content next expires. Dropped after every
+  // report, not only when this one reached the pause: reports sent at the same moment can't
+  // see each other's rows, so none of them may know it was the third. Reports are rare.
+  clearTrainingContentCache();
+  return result;
 }
 
 /** Senses with enough open reports to stop introducing them (see REPORT_CONFIG.pauseAt). */

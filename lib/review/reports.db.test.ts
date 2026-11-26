@@ -247,6 +247,24 @@ describe("Report a problem", () => {
     ).toHaveLength(REPORT_CONFIG.perDay);
   });
 
+  it("pauses at once when the third report arrives with the others", async () => {
+    const senseId = await liveSense();
+    const reporters = await Promise.all([learner(), learner(), learner()]);
+    const questions = await Promise.all(reporters.map((id) => issued(id, senseId)));
+    clearTrainingContentCache();
+    expect((await getTrainingContent()).paused.has(senseId)).toBe(false);
+    await Promise.all(
+      reporters.map((id, i) =>
+        submitReport(
+          getDb(),
+          { id, role: "learner" },
+          { questionId: questions[i]!, reason: "other" },
+        ),
+      ),
+    );
+    expect((await getTrainingContent()).paused.has(senseId)).toBe(true);
+  });
+
   it("pauses a sense for new learners at 3 reports from different learners", async () => {
     const senseId = await liveSense();
     await reportFrom(senseId);
