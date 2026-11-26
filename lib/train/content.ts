@@ -5,7 +5,7 @@ import { getDb } from "@/lib/db/client";
 import { audio, example, lemma, misuse, relation, sense, wordPart } from "@/lib/db/schema";
 import { normalizeAnswer } from "@/lib/engine/answer-check";
 import type { EngineSense } from "@/lib/engine/types";
-import { clearTrainingContentCache, contentCache } from "./content-cache";
+import { cachedTrainingContent, clearTrainingContentCache } from "./content-cache";
 import { pausedSenseIds } from "@/lib/review/reports";
 
 // Live content in the engine's shapes, cached per server process. Content changes rarely
@@ -48,14 +48,8 @@ export type TrainingContent = {
   questionPool: EngineSense[];
 };
 
-const cache = contentCache<TrainingContent>();
-
-export async function getTrainingContent(): Promise<TrainingContent> {
-  const hit = cache.trainingContent;
-  if (hit && Date.now() - hit.at < CACHE_MS) return hit.value;
-  const value = await loadTrainingContent();
-  cache.trainingContent = { at: Date.now(), value };
-  return value;
+export function getTrainingContent(): Promise<TrainingContent> {
+  return cachedTrainingContent(loadTrainingContent, CACHE_MS);
 }
 
 export { clearTrainingContentCache };
