@@ -6,6 +6,7 @@
 // is kept or leaves the database.
 
 import type { Sql } from "postgres";
+import { INTEGRITY_CONFIG } from "../integrity/config.ts";
 import { findFlags, STATS_CONFIG, type SenseTypeStats, type WrongPick } from "./stats.ts";
 
 export type StatsJobResult = { senses: number; raised: number; updated: number; quiet: number };
@@ -21,13 +22,22 @@ export async function runStatsJob(
   const from = at(new Date(now.getTime() - config.windowDays * 86_400_000));
   const until = at(now);
 
-  // Answers that count: in the window, not integrity-flagged, not pretests (guesses before a
-  // word is taught), to senses still in use, and newer than the last time a reviewer closed
-  // that sense's flags (a fix starts its numbers again).
+  // Answers that count: in the window, not integrity-flagged (when answered or later, by
+  // the streak rules in answer_flag), not pretests (guesses before a word is taught), to
+  // senses still in use, and newer than the last time a reviewer closed that sense's flags
+  // (a fix starts its numbers again).
+  //
+  // Response times are bounded by the server's clock as training bounds them (checkTiming):
+  // a client time longer than issue-to-receive plus the tolerance counts as that span.
   const counted = sql`
     select e.sense_id, coalesce(s.level, 0) as level, e.question_type, e.correct, e.dont_know,
-           e.client_response_ms, e.options, e.chosen_index
+           case when e.client_response_ms > el.ms + ${INTEGRITY_CONFIG.clockToleranceMs}
+                then el.ms else e.client_response_ms end as client_response_ms,
+           e.options, e.chosen_index
     from answer_event e
+    cross join lateral (
+      select extract(epoch from (e.server_received_at - e.server_issued_at)) * 1000 as ms
+    ) el
     join sense s on s.id = e.sense_id and s.status <> 'retired'
     left join (
       select sense_id, max(resolved_at) as closed from content_flag group by sense_id
@@ -35,6 +45,7 @@ export async function runStatsJob(
     where e.server_received_at >= ${from}::timestamptz
       and e.server_received_at <= ${until}::timestamptz
       and not e.flagged and not e.is_pretest
+      and not exists (select 1 from answer_flag af where af.answer_event_id = e.id)
       and (c.closed is null or e.server_received_at > c.closed)`;
 
   const stats = await sql<

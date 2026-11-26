@@ -59,6 +59,29 @@ describe("findFlags", () => {
     expect(findFlags([...bank(), ...typedHeavy], [])).toEqual([]);
   });
 
+  it("judges accuracy only over question types with a baseline", () => {
+    // Its meaning questions go as usual; a type no other sense was asked in goes badly.
+    const rows = [
+      {
+        senseId: 8,
+        level: 1,
+        questionType: "meaning_choice",
+        answers: 40,
+        correct: 32,
+        medianTimeRatio: 1,
+      },
+      {
+        senseId: 8,
+        level: 1,
+        questionType: "fixture_only_here",
+        answers: 40,
+        correct: 4,
+        medianTimeRatio: 1,
+      },
+    ];
+    expect(findFlags([...bank(), ...rows], [])).toEqual([]);
+  });
+
   it("waits for enough answers", () => {
     const few = [
       {

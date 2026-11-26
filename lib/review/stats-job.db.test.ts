@@ -39,7 +39,10 @@ afterAll(async () => {
 
 beforeAll(async () => {
   const p = `sj${randomUUID().slice(0, 6)}`;
-  const names = [...Array.from({ length: 12 }, (_, i) => `ok${i}`), "bad", "magnet", "slow", "gen"];
+  const names = [
+    ...Array.from({ length: 12 }, (_, i) => `ok${i}`),
+    ...["bad", "magnet", "slow", "gen", "inflated", "streak"],
+  ];
   const report = await importContent(
     getDb(),
     importPayloadSchema.parse({
@@ -105,6 +108,12 @@ beforeAll(async () => {
   await answers(ids.slow!, { right: 32, ms: 12_000 });
   // A two-option question: its one wrong option takes every wrong pick, which says nothing.
   await answers(ids.gen!, { right: 24, type: "gender_choice", options: GENDER });
+  // The client claims 12 seconds, but the server saw about 4: training would count 4.
+  await answers(ids.inflated!, { right: 32, ms: 12_000, serverMs: 4_000 });
+  // Answered badly, but the streak rules flagged every answer afterwards (answer_flag).
+  await answers(ids.streak!, { right: 8 });
+  await getSql()`insert into answer_flag (answer_event_id, reason)
+    select id, 'same_position' from answer_event where sense_id = ${ids.streak!}`;
 });
 
 /** 40 answers to a sense: `right` of them right, the wrong ones spread over the options. */
@@ -117,6 +126,8 @@ async function answers(
     type?: string;
     options?: string;
     at?: Date;
+    /** Issue-to-receive time on the server; by default what the client reports. */
+    serverMs?: number;
   },
 ) {
   const sql = getSql();
@@ -132,7 +143,9 @@ async function answers(
            when g - ${o.right} <= ${o.magnet ?? 0} then 1
            else 1 + (g % 3) end,
       case when g <= ${o.right} then 'right' else 'wrong' end,
-      g <= ${o.right}, 'fixture', ${o.ms ?? 4000} + (g % 7) * 100, ${at}::timestamptz, ${at}::timestamptz, 'test'
+      g <= ${o.right}, 'fixture', ${o.ms ?? 4000} + (g % 7) * 100,
+      ${at}::timestamptz - make_interval(secs => (${o.serverMs ?? o.ms ?? 4000} + (g % 7) * 100) / 1000.0),
+      ${at}::timestamptz, 'test'
     from generate_series(1, 40) g`;
 }
 
