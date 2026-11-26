@@ -52,6 +52,8 @@ export type EditorData = {
   notes: CheckNotes | null;
   edit: Edit;
   images: { fileKey: string; alt: string }[];
+  /** Learners' open reports: reason, their words, where it was reported. Never who. */
+  reports: { at: string; reason: string; text: string | null; questionType: string | null }[];
   /** The headword's and each sentence's recording; url is null until one is made. */
   recordings: {
     label: string;
@@ -82,6 +84,7 @@ const ACTION_LABEL: Record<string, string> = {
   reject: "rejected",
   publish: "published",
   flag_audio: "recording flagged",
+  resolve_reports: "reports marked reviewed",
 };
 
 const input = `field w-full ${focusRing}`;
@@ -121,7 +124,9 @@ export function SenseEditor({
   const [busy, setBusy] = useState(false);
   const [reason, setReason] = useState("");
   const dirty = JSON.stringify(edit) !== JSON.stringify(data.edit);
-  const backTo = `/review?status=${data.status === "live" ? "changed" : data.status}`;
+  const backTo = `/review?status=${
+    data.reports.length > 0 ? "reported" : data.status === "live" ? "changed" : data.status
+  }`;
   const onward = data.nextId ? `/review/${data.nextId}` : backTo;
 
   const set = <K extends keyof Edit>(k: K, v: Edit[K]) => setEdit((e) => ({ ...e, [k]: v }));
@@ -249,6 +254,44 @@ export function SenseEditor({
           </p>
         )}
       </header>
+
+      {data.reports.length > 0 && (
+        <section className="card flex flex-col gap-3 p-4" aria-labelledby="reports">
+          <h2 id="reports" className="text-lg font-bold">
+            Learner reports ({data.reports.length})
+          </h2>
+          <p className={`text-sm ${muted}`}>
+            Fix what&apos;s wrong and approve, or mark the reports reviewed if the content is right.
+            Approving also closes them. With 3 or more, new learners don&apos;t meet this word until
+            then.
+          </p>
+          <ul className="flex flex-col gap-2">
+            {data.reports.map((r, i) => (
+              <li key={i} className="flex flex-col">
+                <span className="font-semibold">{r.reason}</span>
+                {r.text && <span className="break-words whitespace-pre-wrap">“{r.text}”</span>}
+                <span className={`text-sm ${muted}`}>
+                  {new Date(r.at).toLocaleString()}
+                  {r.questionType && <> · {r.questionType.replaceAll("_", " ")}</>}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <div>
+            <Button
+              variant="secondary"
+              disabled={busy}
+              onClick={() =>
+                run(`/api/review/senses/${data.id}/reports`, { action: "resolve" }, () =>
+                  router.refresh(),
+                )
+              }
+            >
+              Mark reports reviewed
+            </Button>
+          </div>
+        </section>
+      )}
 
       {studentView}
 

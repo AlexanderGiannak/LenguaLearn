@@ -16,6 +16,11 @@ const TABS = [
   { status: "draft", label: "Flagged", hint: "The checks found problems: fix, then approve." },
   { status: "approved", label: "Approved", hint: "Waiting for the admin to publish." },
   {
+    status: "reported",
+    label: "Reported by learners",
+    hint: "Read the reports, fix what's wrong, then approve or mark the reports reviewed.",
+  },
+  {
     status: "changed",
     label: "Changes to live words",
     hint: "Students see the live word; approve the edited part or the new recording.",
