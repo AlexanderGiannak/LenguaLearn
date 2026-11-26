@@ -13,7 +13,14 @@ import { focusRing, primaryButton, secondaryButton } from "./views";
 // the reason and the optional text: the server works out which word it was. The trainer's
 // keyboard shortcuts ignore keys pressed inside this dialog.
 
-export function ReportProblem({ questionId }: { questionId: string }) {
+export function ReportProblem({
+  questionId,
+  allowText,
+}: {
+  questionId: string;
+  /** Class seats pick a reason only (they never type personal details to the app). */
+  allowText: boolean;
+}) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [reason, setReason] = useState<ReportReason | null>(null);
   const [text, setText] = useState("");
@@ -35,7 +42,11 @@ export function ReportProblem({ questionId }: { questionId: string }) {
       const res = await fetch("/api/train/report", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ questionId, reason, ...(text.trim() ? { text } : {}) }),
+        body: JSON.stringify({
+          questionId,
+          reason,
+          ...(allowText && text.trim() ? { text } : {}),
+        }),
       });
       if (res.ok) return setState("sent");
       const body = (await res.json().catch(() => ({}))) as { error?: string };
@@ -95,23 +106,25 @@ export function ReportProblem({ questionId }: { questionId: string }) {
                 </label>
               ))}
             </fieldset>
-            <label className="flex flex-col gap-1">
-              <span className="font-semibold">Anything else? (optional)</span>
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                maxLength={REPORT_TEXT_MAX}
-                rows={3}
-                aria-describedby={`report-note-${questionId}`}
-                className={`field w-full ${focusRing}`}
-              />
-              <span
-                id={`report-note-${questionId}`}
-                className="text-sm text-ink-600 dark:text-ink-300"
-              >
-                Don&apos;t include your name or other personal details.
-              </span>
-            </label>
+            {allowText && (
+              <label className="flex flex-col gap-1">
+                <span className="font-semibold">Anything else? (optional)</span>
+                <textarea
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  maxLength={REPORT_TEXT_MAX}
+                  rows={3}
+                  aria-describedby={`report-note-${questionId}`}
+                  className={`field w-full ${focusRing}`}
+                />
+                <span
+                  id={`report-note-${questionId}`}
+                  className="text-sm text-ink-600 dark:text-ink-300"
+                >
+                  Don&apos;t include your name or other personal details.
+                </span>
+              </label>
+            )}
             {typeof state === "object" && (
               <p role="alert" className="text-red-700 dark:text-red-300">
                 {state.error}

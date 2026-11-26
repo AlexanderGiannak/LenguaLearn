@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { reportTextAllowed } from "@/lib/review/report-reasons";
 import { learnerPage } from "@/lib/train/page-gate";
 import { Trainer } from "./trainer";
 
@@ -15,6 +16,6 @@ export default function TrainPage() {
 
 async function Gate() {
   // Learners and class students place first (spec: Placement); teachers may try training.
-  await learnerPage("/train");
-  return <Trainer />;
+  const u = await learnerPage("/train");
+  return <Trainer reportText={reportTextAllowed(u.role)} />;
 }

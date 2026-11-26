@@ -128,7 +128,8 @@ function useActiveClock() {
   );
 }
 
-export function Trainer() {
+/** `reportText`: whether "Report a problem" offers a text box (not to class seats). */
+export function Trainer({ reportText }: { reportText: boolean }) {
   const [view, setView] = useState<View>({ kind: "start" });
   const [session, setSession] = useState<Saved | null>(null);
   const [activeMs, setActiveMs] = useState(0);
@@ -447,7 +448,11 @@ export function Trainer() {
               onAnswer={answer}
               busy={busy || paused !== null}
             />
-            <ReportProblem key={`report-${view.screen.id}`} questionId={view.screen.id} />
+            <ReportProblem
+              key={`report-${view.screen.id}`}
+              questionId={view.screen.id}
+              allowText={reportText}
+            />
           </>
         )}
         {view.kind === "feedback" && (
@@ -462,7 +467,11 @@ export function Trainer() {
           />
         )}
         {view.kind === "feedback" && (
-          <ReportProblem key={`report-${view.questionId}`} questionId={view.questionId} />
+          <ReportProblem
+            key={`report-${view.questionId}`}
+            questionId={view.questionId}
+            allowText={reportText}
+          />
         )}
       </div>
       {view.kind === "summary" && (

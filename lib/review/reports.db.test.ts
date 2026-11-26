@@ -16,7 +16,14 @@ import {
   REPORT_CONFIG,
   submitReport,
 } from "./reports";
-import { approveSense, editSense, queueCounts, reviewQueue, senseForReview } from "./service";
+import {
+  approveSense,
+  editSense,
+  nextInQueue,
+  queueCounts,
+  reviewQueue,
+  senseForReview,
+} from "./service";
 import { senseEditSchema } from "./schema";
 
 // TEST FIXTURE: the Spanish text below is test data, not content.
@@ -106,11 +113,15 @@ async function issued(userId: string, senseId: number) {
 
 async function reportFrom(senseId: number, text?: string) {
   const id = await learner();
-  await submitReport(getDb(), id, {
-    questionId: await issued(id, senseId),
-    reason: "wrong_meaning",
-    text,
-  });
+  await submitReport(
+    getDb(),
+    { id: id, role: "learner" },
+    {
+      questionId: await issued(id, senseId),
+      reason: "wrong_meaning",
+      text,
+    },
+  );
   return id;
 }
 
@@ -146,12 +157,37 @@ describe("Report a problem", () => {
     });
   });
 
+  it("takes a reason but no text from a class seat, and removes contact details", async () => {
+    const senseId = await liveSense();
+    const seat = await learner();
+    const questionId = await issued(seat, senseId);
+    await expect(
+      submitReport(
+        getDb(),
+        { id: seat, role: "student" },
+        { questionId, reason: "other", text: "hi" },
+      ),
+    ).rejects.toMatchObject({ status: 400 });
+    await submitReport(getDb(), { id: seat, role: "student" }, { questionId, reason: "other" });
+
+    const id = await reportFrom(senseId, "wrong gloss, mail fixture@example.com");
+    const [row] = await getDb()
+      .select()
+      .from(contentReport)
+      .where(eq(contentReport.reporterId, id));
+    expect(row!.text).toBe("wrong gloss, mail [removed]");
+  });
+
   it("refuses a question issued to someone else", async () => {
     const senseId = await liveSense();
     const other = await learner();
     const questionId = await issued(other, senseId);
     await expect(
-      submitReport(getDb(), await learner(), { questionId, reason: "other" }),
+      submitReport(
+        getDb(),
+        { id: await learner(), role: "learner" },
+        { questionId, reason: "other" },
+      ),
     ).rejects.toMatchObject({ status: 404 });
   });
 
@@ -159,7 +195,11 @@ describe("Report a problem", () => {
     const senseId = await liveSense();
     const id = await learner();
     for (const reason of ["wrong_meaning", "spelling"] as const) {
-      await submitReport(getDb(), id, { questionId: await issued(id, senseId), reason });
+      await submitReport(
+        getDb(),
+        { id: id, role: "learner" },
+        { questionId: await issued(id, senseId), reason },
+      );
     }
     const rows = await getDb().select().from(contentReport).where(eq(contentReport.reporterId, id));
     expect(rows.map((r) => r.reason)).toEqual(["spelling"]);
@@ -175,7 +215,11 @@ describe("Report a problem", () => {
     }
     const senseId = await liveSense();
     await expect(
-      submitReport(getDb(), id, { questionId: await issued(id, senseId), reason: "other" }),
+      submitReport(
+        getDb(),
+        { id: id, role: "learner" },
+        { questionId: await issued(id, senseId), reason: "other" },
+      ),
     ).rejects.toMatchObject({ status: 429 });
   });
 
@@ -184,9 +228,11 @@ describe("Report a problem", () => {
     await reportFrom(senseId);
     await reportFrom(senseId);
     expect((await pausedSenseIds(getDb())).has(senseId)).toBe(false);
+    clearTrainingContentCache();
+    expect((await getTrainingContent()).paused.has(senseId)).toBe(false);
     await reportFrom(senseId);
     expect((await pausedSenseIds(getDb())).has(senseId)).toBe(true);
-    clearTrainingContentCache();
+    // At once, not when the cached content next expires.
     const content = await getTrainingContent();
     expect(content.paused.has(senseId)).toBe(true);
     // Still live, so learners who have it keep reviewing it.
@@ -217,6 +263,17 @@ describe("reviewing reports", () => {
     const reports = await openReports(getDb(), senseId);
     expect(reports).toHaveLength(1);
     expect(Object.keys(reports[0]!).sort()).toEqual(["at", "questionType", "reason", "text"]);
+  });
+
+  it("goes on to the next reported sense, not the next live one", async () => {
+    const first = await liveSense();
+    const second = await liveSense();
+    await reportFrom(first);
+    await reportFrom(second);
+    const [s] = await getDb().select().from(sense).where(eq(sense.id, first));
+    const next = await nextInQueue(getDb(), s!, "reported");
+    const queue = await reviewQueue(getDb(), { status: "reported", limit: 500 });
+    expect(queue.rows.map((r) => r.senseId)).toContain(next);
   });
 
   it("marking them reviewed closes them and un-pauses the sense", async () => {

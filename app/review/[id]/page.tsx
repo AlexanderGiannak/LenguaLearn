@@ -108,7 +108,7 @@ async function Sense({ params }: Pick<PageProps<"/review/[id]">, "params">) {
     ],
     log: v.log.map((l) => ({ ...l, at: l.at.toISOString() })),
     isAdmin: reviewer.isAdmin,
-    nextId: await nextInQueue(getDb(), v.sense),
+    nextId: await nextInQueue(getDb(), v.sense, v.reports.length > 0 ? "reported" : undefined),
     waiting: (await waitingRows(getDb(), v.sense)).length,
   };
   const [word, content] = await Promise.all([getReviewWordPage(v.sense.id), getTrainingContent()]);

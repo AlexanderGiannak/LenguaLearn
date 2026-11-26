@@ -5,6 +5,7 @@ import { getDb } from "@/lib/db/client";
 import { audio, example, lemma, misuse, relation, sense, wordPart } from "@/lib/db/schema";
 import { normalizeAnswer } from "@/lib/engine/answer-check";
 import type { EngineSense } from "@/lib/engine/types";
+import { clearTrainingContentCache, contentCache } from "./content-cache";
 import { pausedSenseIds } from "@/lib/review/reports";
 
 // Live content in the engine's shapes, cached per server process. Content changes rarely
@@ -42,7 +43,7 @@ export type TrainingContent = {
   paused: Set<number>;
 };
 
-const cache = globalThis as unknown as { trainingContent?: { at: number; value: TrainingContent } };
+const cache = contentCache<TrainingContent>();
 
 export async function getTrainingContent(): Promise<TrainingContent> {
   const hit = cache.trainingContent;
@@ -52,10 +53,7 @@ export async function getTrainingContent(): Promise<TrainingContent> {
   return value;
 }
 
-/** Drops the cache, for tests that change content. */
-export function clearTrainingContentCache() {
-  delete cache.trainingContent;
-}
+export { clearTrainingContentCache };
 
 async function loadTrainingContent(): Promise<TrainingContent> {
   const db = getDb();

@@ -5,7 +5,13 @@ import { contentReport, issuedQuestion, reviewLog, sense } from "@/lib/db/schema
 import { HttpError } from "@/lib/http/handler";
 import type { IssuedPayload } from "@/lib/train/types";
 import type { Reviewer } from "./access";
-import { REPORT_REASONS, REPORT_TEXT_MAX } from "./report-reasons";
+import { clearTrainingContentCache } from "@/lib/train/content-cache";
+import {
+  REPORT_REASONS,
+  REPORT_TEXT_MAX,
+  reportTextAllowed,
+  scrubPersonalDetails,
+} from "./report-reasons";
 
 // "Report a problem" (spec: Content pipeline, step 5). A learner reports the question they
 // were shown; the server finds its sense from the question it issued them, so the browser
@@ -39,8 +45,17 @@ export type ReportInput = z.infer<typeof reportSchema>;
  * Saves a learner's report. Reporting the same sense again while the first is still open
  * updates it, so one learner never counts twice toward a pause.
  */
-export async function submitReport(db: Db, userId: string, input: ReportInput, now = new Date()) {
-  return db.transaction(async (tx) => {
+export async function submitReport(
+  db: Db,
+  reporter: { id: string; role: string },
+  input: ReportInput,
+  now = new Date(),
+) {
+  const userId = reporter.id;
+  if (input.text?.trim() && !reportTextAllowed(reporter.role)) {
+    throw new HttpError(400, "Class accounts can choose a reason but can't add text.");
+  }
+  const result = await db.transaction(async (tx) => {
     const [issued] = await tx
       .select({ payload: issuedQuestion.payload })
       .from(issuedQuestion)
@@ -65,7 +80,11 @@ export async function submitReport(db: Db, userId: string, input: ReportInput, n
       senseId: payload.senseId,
       reporterId: userId,
       reason: input.reason,
-      text: input.text?.normalize("NFC").trim().slice(0, REPORT_CONFIG.textMax) || null,
+      text:
+        scrubPersonalDetails(input.text?.normalize("NFC").trim() ?? "").slice(
+          0,
+          REPORT_CONFIG.textMax,
+        ) || null,
       questionType: payload.question?.type ?? payload.stage,
       at: now,
     };
@@ -82,8 +101,17 @@ export async function submitReport(db: Db, userId: string, input: ReportInput, n
           at: now,
         },
       });
-    return { ok: true as const };
+    const [{ reporters }] = (await tx
+      .select({ reporters: sql<number>`count(distinct ${contentReport.reporterId})::int` })
+      .from(contentReport)
+      .where(
+        and(eq(contentReport.senseId, payload.senseId), isNull(contentReport.resolvedAt)),
+      )) as [{ reporters: number }];
+    return { paused: reporters >= REPORT_CONFIG.pauseAt };
   });
+  // Pause at once rather than when the cached content next expires.
+  if (result.paused) clearTrainingContentCache();
+  return { ok: true as const };
 }
 
 /** Senses with enough open reports to stop introducing them (see REPORT_CONFIG.pauseAt). */
@@ -123,6 +151,9 @@ export async function resolveReports(
     .set({ resolvedAt: new Date(), resolvedBy: reviewer.id })
     .where(and(eq(contentReport.senseId, senseId), isNull(contentReport.resolvedAt)))
     .returning({ id: contentReport.id });
+  // A paused sense is introduced again. (If the transaction then fails, the cache simply
+  // reloads the same content.)
+  if (closed.length > 0) clearTrainingContentCache();
   if (log && closed.length > 0) {
     await tx.insert(reviewLog).values({
       reviewerId: reviewer.id,

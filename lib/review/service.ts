@@ -129,16 +129,22 @@ export async function checkCounts(db: Db, status: QueueStatus) {
   return [...rows].map((r) => ({ check: String(r.check), n: Number(r.n) }));
 }
 
-/** The sense after this one in the same queue, so a reviewer can go straight on. */
+/**
+ * The sense after this one in the same queue, so a reviewer can go straight on. A sense with
+ * open reports was reached from the Reported tab, so it goes on through that tab.
+ */
 export async function nextInQueue(
   db: Pick<Db, "select">,
   current: { status: ContentStatus; frequencyRank: number; key: string },
+  from?: QueueStatus,
 ): Promise<number | null> {
-  const queue: QueueStatus | null = (OPEN as readonly ContentStatus[]).includes(current.status)
-    ? (current.status as QueueStatus)
-    : current.status === "live"
-      ? "changed"
-      : null;
+  const queue: QueueStatus | null = from
+    ? from
+    : (OPEN as readonly ContentStatus[]).includes(current.status)
+      ? (current.status as QueueStatus)
+      : current.status === "live"
+        ? "changed"
+        : null;
   if (!queue) return null;
   const [row] = await db
     .select({ id: sense.id })

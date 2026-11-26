@@ -25,7 +25,7 @@ const stored = [
     "Checking that answers are graded fairly",
   ],
   [
-    '"Report a problem" messages: the reason and, if given, up to 300 characters of your words',
+    '"Report a problem" messages: the reason, and for accounts that aren\'t class seats, up to 300 characters of their own words (email addresses, links and phone numbers removed)',
     "Until the account is deleted",
     "Fixing mistakes in words. Reviewers read the message but never see who sent it",
   ],
