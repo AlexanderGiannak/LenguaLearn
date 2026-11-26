@@ -44,10 +44,12 @@ export function pickDistractors(
     }))
     .sort((a, b) => a.score - b.score);
 
-  // Choose at random among the closest few, so the same three do not always appear.
+  // Choose at random among the closest few, so the same three do not always appear. If
+  // those include repeats of one word, carry on down the list rather than show fewer options.
   const picked: EngineSense[] = [];
   const seenText = new Set<string>();
-  for (const { s } of shuffle(scored.slice(0, count * 3), rng)) {
+  const nearest = scored.slice(0, count * 3);
+  for (const { s } of [...shuffle(nearest, rng), ...scored.slice(count * 3)]) {
     const key = `${s.headword}|${s.gloss.toLocaleLowerCase("en")}`;
     if (seenText.has(key)) continue;
     seenText.add(key);
