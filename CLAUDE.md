@@ -33,6 +33,8 @@ in `.git` and `drizzle/meta`). Before generating migrations or committing, delet
 
 The AWS CLI profile is `lengualearn` (`AWS_PROFILE=lengualearn`). The project is on the new AWS experience, Region us-east-2, free plan as of 2026-11-24. Sign in with `aws login --profile lengualearn` when credentials expire (12 hours, renewable for 90 days). The project's own rules above win where they conflict with this block.
 
+Resources: the media bucket `lengualearn-media-680673770014-us-east-2-an` (private, us-east-2) behind CloudFront `E2YG7BFCHK7CTW` (`d130vsvcw19kwv.cloudfront.net`). See DECISIONS (2026-11-26).
+
 ### AWS Guidance for the new AWS experience
 
 This user has signed up for the new AWS experience. This experience lets you sign into AWS using a social provider and requires the following additional context.
