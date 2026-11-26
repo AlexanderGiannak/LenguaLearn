@@ -139,7 +139,11 @@ export async function openReports(db: Pick<Db, "select">, senseId: number) {
     .orderBy(desc(contentReport.at));
 }
 
-/** Closes a sense's open reports: a reviewer has looked at it, so it is introduced again. */
+/**
+ * Closes a sense's open reports: a reviewer has looked at it, so it is introduced again. The
+ * caller drops the training cache once its transaction commits (before that, a request
+ * could reload the still-open reports into the cache).
+ */
 export async function resolveReports(
   tx: Tx | Db,
   reviewer: Reviewer,
@@ -151,9 +155,6 @@ export async function resolveReports(
     .set({ resolvedAt: new Date(), resolvedBy: reviewer.id })
     .where(and(eq(contentReport.senseId, senseId), isNull(contentReport.resolvedAt)))
     .returning({ id: contentReport.id });
-  // A paused sense is introduced again. (If the transaction then fails, the cache simply
-  // reloads the same content.)
-  if (closed.length > 0) clearTrainingContentCache();
   if (log && closed.length > 0) {
     await tx.insert(reviewLog).values({
       reviewerId: reviewer.id,
@@ -167,11 +168,13 @@ export async function resolveReports(
 
 /** Marks a sense's reports reviewed without changing it (the content was right). */
 export async function markReportsReviewed(db: Db, reviewer: Reviewer, senseId: number) {
-  return db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const [s] = await tx.select({ id: sense.id }).from(sense).where(eq(sense.id, senseId));
     if (!s) throw new HttpError(404, "not found");
     const resolved = await resolveReports(tx, reviewer, senseId, true);
     if (resolved === 0) throw new HttpError(409, "no open reports");
     return { resolved };
   });
+  clearTrainingContentCache();
+  return result;
 }

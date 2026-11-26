@@ -21,6 +21,7 @@ import {
   wordPart,
 } from "@/lib/db/schema";
 import { requireAdmin, type Reviewer } from "./access";
+import { clearTrainingContentCache } from "@/lib/train/content-cache";
 import { openReports, resolveReports } from "./reports";
 import type { SenseEdit } from "./schema";
 
@@ -468,7 +469,7 @@ export async function waitingRows(
 
 /** Approves everything in a sense that waits for approval (see waitingRows). */
 export async function approveSense(db: Db, reviewer: Reviewer, senseId: number) {
-  return db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const s = await lockSense(tx, senseId);
     const changes = await waitingRows(tx, s);
     if (changes.length === 0) throw new HttpError(409, `nothing here waits for approval`);
@@ -478,6 +479,9 @@ export async function approveSense(db: Db, reviewer: Reviewer, senseId: number) 
     await resolveReports(tx, reviewer, senseId, false);
     return { approved: changes.length };
   });
+  // After commit: a paused sense is introduced again straight away.
+  clearTrainingContentCache();
+  return result;
 }
 
 /** Sends a sense back to draft with the reviewer's reason. */

@@ -280,8 +280,11 @@ describe("reviewing reports", () => {
     const reviewer = await admin();
     const senseId = await liveSense();
     for (let i = 0; i < 3; i++) await reportFrom(senseId);
+    expect((await getTrainingContent()).paused.has(senseId)).toBe(true);
     expect(await markReportsReviewed(getDb(), reviewer, senseId)).toEqual({ resolved: 3 });
     expect((await pausedSenseIds(getDb())).has(senseId)).toBe(false);
+    // Taught again at once: the cache was dropped after the change committed.
+    expect((await getTrainingContent()).paused.has(senseId)).toBe(false);
     const queue = await reviewQueue(getDb(), { status: "reported", limit: 500 });
     expect(queue.rows.some((r) => r.senseId === senseId)).toBe(false);
     await expect(markReportsReviewed(getDb(), reviewer, senseId)).rejects.toMatchObject({
