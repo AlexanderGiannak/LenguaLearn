@@ -53,7 +53,7 @@ export async function submitReport(
 ) {
   const userId = reporter.id;
   if (input.text?.trim() && !reportTextAllowed(reporter.role)) {
-    throw new HttpError(400, "Class accounts can choose a reason but can't add text.");
+    throw new HttpError(400, "Only independent learners can add text. Choose a reason.");
   }
   const result = await db.transaction(async (tx) => {
     const [issued] = await tx

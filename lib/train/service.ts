@@ -251,7 +251,10 @@ async function nextScreen(ctx: Ctx, activeMs: number, plannedMs: number): Promis
 
   const p = progress.get(sense.id)!;
   const c = p.memory[item.card]!;
-  const partners = sense.confusedIds.filter((id) => progress.get(id)?.memory.production);
+  // Known partners only, and never a paused one (it is not in the question pool).
+  const partners = sense.confusedIds.filter(
+    (id) => progress.get(id)?.memory.production && !ctx.content.paused.has(id),
+  );
   const type = chooseQuestionType({
     sense,
     card: item.card,

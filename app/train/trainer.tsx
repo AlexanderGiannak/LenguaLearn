@@ -128,7 +128,7 @@ function useActiveClock() {
   );
 }
 
-/** `reportText`: whether "Report a problem" offers a text box (not to class seats). */
+/** `reportText`: whether "Report a problem" offers a text box (independent learners only). */
 export function Trainer({ reportText }: { reportText: boolean }) {
   const [view, setView] = useState<View>({ kind: "start" });
   const [session, setSession] = useState<Saved | null>(null);

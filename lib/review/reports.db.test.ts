@@ -158,7 +158,7 @@ describe("Report a problem", () => {
     });
   });
 
-  it("takes a reason but no text from a class seat, and removes contact details", async () => {
+  it("takes a reason but no text from a class seat or teacher, and removes contact details", async () => {
     const senseId = await liveSense();
     const seat = await learner();
     const questionId = await issued(seat, senseId);
@@ -167,6 +167,13 @@ describe("Report a problem", () => {
         getDb(),
         { id: seat, role: "student" },
         { questionId, reason: "other", text: "hi" },
+      ),
+    ).rejects.toMatchObject({ status: 400 });
+    await expect(
+      submitReport(
+        getDb(),
+        { id: seat, role: "teacher" },
+        { questionId, reason: "other", text: "fixture name" },
       ),
     ).rejects.toMatchObject({ status: 400 });
     await submitReport(getDb(), { id: seat, role: "student" }, { questionId, reason: "other" });

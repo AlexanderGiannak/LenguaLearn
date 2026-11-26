@@ -20,8 +20,9 @@ describe("scrubPersonalDetails", () => {
   });
 });
 
-it("lets only accounts that aren't class seats add text", () => {
+it("lets only independent learners add text", () => {
   expect(reportTextAllowed("student")).toBe(false);
+  expect(reportTextAllowed("teacher")).toBe(false);
+  expect(reportTextAllowed("admin")).toBe(false);
   expect(reportTextAllowed("learner")).toBe(true);
-  expect(reportTextAllowed("teacher")).toBe(true);
 });

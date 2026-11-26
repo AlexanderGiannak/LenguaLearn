@@ -24,9 +24,12 @@ export const REPORT_REASON_LABELS: Record<ReportReason, string> = {
 
 export const REPORT_TEXT_MAX = 300;
 
-/** Class seats (role "student") pick a reason only: they never type anything to the app
- * beyond answers (spec: Student privacy). */
-export const reportTextAllowed = (role: string) => role !== "student";
+/**
+ * Only independent learners may add text. Class seats never type anything to the app beyond
+ * answers (spec: Student privacy), and a teacher's text could name a class student; both
+ * pick a reason only.
+ */
+export const reportTextAllowed = (role: string) => role === "learner";
 
 const REMOVED = "[removed]";
 
