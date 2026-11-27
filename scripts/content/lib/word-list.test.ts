@@ -100,6 +100,27 @@ describe("rankLemmas", () => {
     expect(dropped.map((d) => d.lemma)).toEqual(["a", "yo"]);
   });
 
+  it("keeps listed function words, taught as pronouns, prepositions or conjunctions", () => {
+    const idx = index([
+      own("alguien", "pron"),
+      own("otro", "pron", [], ["another", "other", "else"]),
+      own("otro", "adj"),
+      own("el", "article"),
+      own("yo", "pron"),
+    ]);
+    const { candidates, dropped } = rankLemmas(
+      parseFrequencyList("alguien 30\notro 20\nel 10\nyo 5"),
+      idx,
+      { ...opts, keep: new Set(["alguien", "otro", "el"]) },
+    );
+    expect(candidates.map((c) => [c.lemma, c.pos, c.notes])).toEqual([
+      ["alguien", ["pronoun"], ""],
+      ["otro", ["adjective", "pronoun"], ""],
+    ]);
+    // Articles are never taught as cards, even when listed; unlisted pronouns still drop.
+    expect(dropped.map((d) => d.lemma)).toEqual(["el", "yo"]);
+  });
+
   it("ignores letter names, musical notes and spelling pointers", () => {
     const idx = index([
       own("de", "noun", [], ["The name of the Latin script letter D/d."]),

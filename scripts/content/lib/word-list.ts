@@ -34,7 +34,20 @@ const FUNCTION_POS = new Set(["article", "prep", "prep_phrase", "pron", "conj", 
 const IGNORED_GLOSS =
   /^(?:the )?name of the (?:latin[- ]script )?letter|\b(?:greek|hebrew|cyrillic) letter\b|note of the (?:musical )?scale|^(?:misspelling|alternative (?:form|spelling)|obsolete (?:form|spelling)|archaic spelling|abbreviation|initialism|acronym) of\b/i;
 
-export type KeptPos = (typeof KEPT_POS)[keyof typeof KEPT_POS];
+/**
+ * Function-word parts of speech a word can still be taught as, when the owner lists it in
+ * content/kept-function-words.txt (pronoun-type words such as "someone", with a clear
+ * English meaning). Articles and contractions are never taught as cards.
+ */
+const TAUGHT_FUNCTION_POS = {
+  pron: "pronoun",
+  prep: "preposition",
+  conj: "conjunction",
+} as const;
+
+export type KeptPos =
+  | (typeof KEPT_POS)[keyof typeof KEPT_POS]
+  | (typeof TAUGHT_FUNCTION_POS)[keyof typeof TAUGHT_FUNCTION_POS];
 
 /** The fields of a Wiktionary (kaikki.org) entry that this module reads. */
 export type WiktionaryEntry = {
@@ -226,7 +239,12 @@ export type Dropped = { lemma: string; count: number; reason: string };
 export function rankLemmas(
   forms: FormCount[],
   index: LemmaIndex,
-  opts: { limit: number; levelBandSize: number },
+  opts: {
+    limit: number;
+    levelBandSize: number;
+    /** Function words to keep anyway (content/kept-function-words.txt). */
+    keep?: ReadonlySet<string>;
+  },
 ): { candidates: Candidate[]; dropped: Dropped[]; unmatched: FormCount[] } {
   const unambiguous = new Map<string, number>();
   const ambiguous: { form: string; count: number; lemmas: string[] }[] = [];
@@ -269,24 +287,37 @@ export function rankLemmas(
     if (candidates.length >= opts.limit) break;
     const info = index.headwords.get(lemma)!;
     const rounded = Math.round(count);
+    const pos = new Set<KeptPos>(info.kept);
+    const also = new Set(info.dropped);
+    if (opts.keep?.has(lemma)) {
+      for (const p of info.dropped) {
+        const taught = TAUGHT_FUNCTION_POS[p as keyof typeof TAUGHT_FUNCTION_POS];
+        if (taught) {
+          pos.add(taught);
+          also.delete(p);
+        }
+      }
+    }
     // A word used mostly as a function word is dropped even if it has a minor content
     // use, such as a preposition with a rare interjection sense. Ties drop too. Words with
-    // more content senses than function senses (for "nothing", "what", "all") stay.
-    if (info.kept.size === 0 || info.functionSenses >= info.keptSenses) {
+    // more content senses than function senses (for "nothing", "what", "all") stay, and so
+    // do the listed exceptions.
+    const keptAnyway = pos.size > info.kept.size;
+    if (pos.size === 0 || (!keptAnyway && info.functionSenses >= info.keptSenses)) {
       const reason = info.dropped.size > 0 ? [...info.dropped].sort().join("|") : "unsuitable";
       dropped.push({ lemma, count: rounded, reason });
       continue;
     }
     const rank = candidates.length + 1;
     const notes: string[] = [];
-    if (info.dropped.size > 0) notes.push(`also ${[...info.dropped].sort().join("|")}`);
+    if (also.size > 0) notes.push(`also ${[...also].sort().join("|")}`);
     if (info.unsuitableSenses > 0) notes.push("has vulgar or offensive senses: leave them out");
     const sharedWith = shared.get(lemma);
     if (sharedWith?.size) notes.push(`count shared with ${[...sharedWith].sort().join("|")}`);
     candidates.push({
       rank,
       lemma,
-      pos: [...info.kept].sort(),
+      pos: [...pos].sort(),
       level: Math.ceil(rank / opts.levelBandSize),
       count: rounded,
       notes: notes.join("; "),

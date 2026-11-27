@@ -34,7 +34,8 @@ No commercial frequency dictionary is used.
 4. Left out as standalone cards: articles, prepositions, pronouns and conjunctions (the spec's
    cut), contractions, names and affixes. A word used mostly as a function word is left out
    even if it has a minor content use ("a" is also an interjection). These are in
-   `dropped.csv`.
+   `dropped.csv`. The exceptions are listed in `kept-function-words.txt` (alguien, otro,
+   mío and others with a clear English meaning): they stay, taught as pronouns.
 5. Vulgar, offensive and derogatory senses are never taught. A word with only such senses is
    dropped (`unsuitable` in dropped.csv); a word with some, such as coger, is kept with the
    note "has vulgar or offensive senses: leave them out", which generation follows.

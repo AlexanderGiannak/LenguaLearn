@@ -18,7 +18,8 @@ Return JSON in the given schema.
 
 **skipReason.** If the candidate is not a Spanish word worth teaching as a card (a name, an
 English word, a misspelling, an archaic word, or a word used almost only as an article,
-preposition, pronoun or conjunction), set skipReason to a short English reason and return no
+preposition, pronoun or conjunction, unless that part of speech is listed for the candidate),
+set skipReason to a short English reason and return no
 lemmas. Otherwise skipReason is null.
 
 **lemmas.** One entry per part of speech worth teaching at this word's level, from the parts of

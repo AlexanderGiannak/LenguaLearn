@@ -16,12 +16,18 @@ import {
 // what code works out: character offsets, keys, ranks, statuses. Fields are nullable rather
 // than optional because structured outputs need every field present.
 
-/** Parts of speech a candidate can be taught as (function words are dropped in step 1). */
+/**
+ * Parts of speech a candidate can be taught as. Function words are dropped in step 1,
+ * except those listed in content/kept-function-words.txt.
+ */
 export const TAUGHT_POS = [
   "noun",
   "verb",
   "adjective",
   "adverb",
+  "pronoun",
+  "preposition",
+  "conjunction",
   "interjection",
   "numeral",
   "determiner",
