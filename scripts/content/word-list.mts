@@ -26,10 +26,20 @@ console.log(`${forms.length} word forms`);
 const { index, entries } = await loadLemmaIndex();
 console.log(`${entries} Wiktionary entries, ${index.headwords.size} headwords`);
 
+// Function words the owner keeps as cards anyway (see the file's header).
+const keep = new Set(
+  (await readFile(new URL("kept-function-words.txt", outDir), "utf8"))
+    .split("\n")
+    .map((l) => l.trim().normalize("NFC"))
+    .filter((l) => l && !l.startsWith("#")),
+);
 const { candidates, dropped, unmatched } = rankLemmas(forms, index, {
   limit,
   levelBandSize: LEVEL_BAND_SIZE,
+  keep,
 });
+const missing = [...keep].filter((w) => !candidates.some((c) => c.lemma === w));
+if (missing.length > 0) console.log(`Kept function words not in the list: ${missing.join(", ")}`);
 
 writeFileSync(
   new URL("candidates.csv", outDir),

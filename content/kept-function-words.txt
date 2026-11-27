@@ -1,0 +1,19 @@
+# Function words taught as cards anyway (owner, 2026-11-27). Content pipeline step 1 drops
+# articles, prepositions, pronouns and conjunctions; the words below have a clear English
+# meaning, so content:word-list keeps them and lists "pronoun" among their parts of speech.
+# One dictionary word per line. Lines starting with # are comments.
+# Indefinites
+alguien
+nadie
+algo
+otro
+alguno
+ninguno
+ambos
+# Question words (cuánto is already kept as an adverb and determiner)
+quién
+cuál
+# Possessives (nuestro is already kept as a determiner)
+mío
+tuyo
+suyo
