@@ -3,7 +3,8 @@
 //   npm run content:images                                  # what's missing and what it costs
 //   npm run content:images -- --yes                         # find or make them for the local app
 //   npm run content:images -- https://lengualearn.com --yes # for the real site (S3 bucket)
-//   npm run content:images -- --word perro#noun --yes       # one word only
+//   npm run content:images -- --word perro#noun --yes       # one word only (tries again)
+//   npm run content:images -- --retry --yes                 # try again where none was found
 //
 // The app says which concrete senses need a picture. For each, Openverse (openly licensed
 // pictures from Wikimedia Commons, Flickr and others; CC0, public domain, CC BY and CC BY-SA
@@ -17,6 +18,8 @@
 //
 // What was chosen is kept in content/images/, so a stopped run (Ctrl-C, out of credit, the
 // budget, Openverse's daily limit) resumes without paying twice: run the same command again.
+// A sense where nothing suitable was found or made is remembered too, so later runs do not
+// pay for it again; --retry (or --word) tries those again.
 import { execFile } from "node:child_process";
 import {
   copyFileSync,
@@ -72,6 +75,7 @@ const baseUrl = (
   "http://localhost:3000"
 ).replace(/\/$/, "");
 const yes = args.includes("--yes");
+const retry = args.includes("--retry");
 const word = flag("--word");
 const budget = Number(flag("--budget") ?? "5");
 const limit = Number(flag("--limit") ?? "Infinity");
@@ -391,7 +395,7 @@ for (const [n, need] of needs.entries()) {
     saved &&
     (saved.imageDescription !== need.imageDescription ||
       (saved.picture && need.rejected.includes(saved.picture.source)) ||
-      (saved.picture === null && need.rejectedReason !== null))
+      (saved.picture === null && (retry || word !== undefined || need.rejectedReason !== null)))
   ) {
     saved = null;
   }
@@ -441,7 +445,9 @@ rmSync(work, { recursive: true, force: true });
 
 console.log(
   `\nAttached ${attached} picture(s) as drafts for review; about ${formatUsd(spent)} spent.` +
-    (none ? ` ${none} sense(s) have no suitable picture and go live without one.` : "") +
+    (none
+      ? ` ${none} sense(s) have no suitable picture and go live without one (--retry tries again).`
+      : "") +
     (stale ? ` ${stale} skipped: the sense changed meanwhile (asked again next run).` : ""),
 );
 if (stop) {
