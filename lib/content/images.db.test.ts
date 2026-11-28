@@ -149,6 +149,16 @@ describe("image needs and attaching", () => {
     expect((await rowsFor(w.senseId))[0]!.status).toBe("retired");
     expect(await imageNeeds(getDb(), { lemmaKey: w.key })).toEqual([]);
   });
+  it("drops the picture when the description changes, and asks for a new one", async () => {
+    const w = await newWord();
+    const [need] = await imageNeeds(getDb(), { lemmaKey: w.key });
+    await attachImages(getDb(), { items: [picture(w.senseId, need!.imageDescription)] });
+
+    await importContent(getDb(), payload(w.p, { description: "A small white dog running." }));
+    expect((await rowsFor(w.senseId))[0]!.status).toBe("retired");
+    const [again] = await imageNeeds(getDb(), { lemmaKey: w.key });
+    expect(again!.imageDescription).toBe("A small white dog running.");
+  });
 });
 
 describe("a reviewer rejects a picture", () => {

@@ -249,6 +249,13 @@ class Importer {
   }
 
   async importSense(lemmaId: number, s: SenseInput): Promise<void> {
+    // A picture was chosen for the old description: a new description needs a new picture.
+    const [before] = await this.tx
+      .select({ imageDescription: sense.imageDescription })
+      .from(sense)
+      .where(eq(sense.key, s.key));
+    const describedAgain =
+      before !== undefined && before.imageDescription !== (s.imageDescription ?? null);
     const senseId = await this.upsert(
       "sense",
       eq(sense.key, s.key),
@@ -338,8 +345,9 @@ class Importer {
         })),
         s.status,
       );
-    } else if (s.concreteness !== "concrete") {
-      // Only concrete senses have pictures; one that is no longer concrete loses its own.
+    } else if (s.concreteness !== "concrete" || describedAgain) {
+      // Only concrete senses have pictures; one that is no longer concrete loses its own,
+      // and one described differently gets a new one from the next content:images run.
       await this.retireWhere("image", eq(image.senseId, senseId));
     }
   }

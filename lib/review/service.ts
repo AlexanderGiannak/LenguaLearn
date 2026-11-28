@@ -377,8 +377,13 @@ export function editToSenseInput(
     hooks,
     relations: edit.relations,
     misuses,
-    // A sense edited to be abstract loses its pictures (only concrete senses have them).
-    images: (edit.concreteness === "concrete" ? current.images : []).map((i) => ({
+    // A sense edited to be abstract loses its pictures (only concrete senses have them), and
+    // so does one whose image description changed: content:images then finds a new one.
+    images: (edit.concreteness === "concrete" &&
+    (edit.imageDescription || null) === (s.imageDescription ?? null)
+      ? current.images
+      : []
+    ).map((i) => ({
       fileKey: i.fileKey,
       alt: i.alt,
       source: i.source,
