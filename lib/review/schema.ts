@@ -78,3 +78,7 @@ export const flagAudioSchema = z.strictObject({
   ]),
   reason: str(300).pipe(z.string().min(3)),
 });
+
+export const rejectImageSchema = z.strictObject({
+  reason: str(300).pipe(z.string().min(3)),
+});

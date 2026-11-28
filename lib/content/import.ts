@@ -323,20 +323,34 @@ class Importer {
       s.misuses.map((m) => ({ text: m.text, explanation: m.explanation, source: m.source })),
       s.status,
     );
-    await this.replaceChildren(
-      "image",
-      image.senseId,
-      "senseId",
-      senseId,
-      s.images.map((i) => ({
-        fileKey: i.fileKey,
-        alt: i.alt,
-        source: i.source,
-        license: i.license,
-        attribution: i.attribution,
-      })),
-      s.status,
-    );
+    if (s.images !== undefined) {
+      await this.replaceChildren(
+        "image",
+        image.senseId,
+        "senseId",
+        senseId,
+        s.images.map((i) => ({
+          fileKey: i.fileKey,
+          alt: i.alt,
+          source: i.source,
+          license: i.license,
+          attribution: i.attribution,
+        })),
+        s.status,
+      );
+    } else if (s.concreteness !== "concrete") {
+      // Only concrete senses have pictures; one that is no longer concrete loses its own.
+      await this.retireWhere("image", eq(image.senseId, senseId));
+    }
+  }
+
+  /**
+   * Attaches a picture from content:images as the sense's one picture (position 0), as a
+   * draft for review. A rejected picture's row is reused, so its revision keeps the old one.
+   */
+  async attachImage(senseId: number, values: ImageValues): Promise<number> {
+    const match = and(eq(image.senseId, senseId), eq(image.position, 0))!;
+    return this.upsert("image", match, { ...values, senseId, position: 0 }, "draft");
   }
 
   async importAudio(
@@ -468,6 +482,25 @@ export async function saveSense(tx: Tx, lemmaId: number, s: SenseInput): Promise
 }
 
 export type { Tx as ContentTx };
+
+export type ImageValues = {
+  fileKey: string;
+  alt: string;
+  source: string;
+  license: string;
+  attribution: string;
+};
+
+/** Attaches a sense's picture (lib/content/images.ts) under the import's rules. */
+export async function saveImage(
+  tx: Tx,
+  senseId: number,
+  values: ImageValues,
+): Promise<ImportRow[]> {
+  const importer = new Importer(tx);
+  await importer.attachImage(senseId, values);
+  return importer.rows;
+}
 
 /** Attaches one new recording (lib/content/audio.ts) under the import's rules. */
 export async function saveAudio(

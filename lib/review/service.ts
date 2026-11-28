@@ -377,7 +377,8 @@ export function editToSenseInput(
     hooks,
     relations: edit.relations,
     misuses,
-    images: current.images.map((i) => ({
+    // A sense edited to be abstract loses its pictures (only concrete senses have them).
+    images: (edit.concreteness === "concrete" ? current.images : []).map((i) => ({
       fileKey: i.fileKey,
       alt: i.alt,
       source: i.source,
@@ -547,6 +548,29 @@ export async function flagAudio(
       .insert(reviewLog)
       .values({ reviewerId: reviewer.id, senseId, action: "flag_audio", reason });
     return { retired: row.id };
+  });
+}
+
+/**
+ * A reviewer rejected a picture: it is retired (the word page shows none) and the next
+ * `content:images` run finds or makes a different one, which comes back here as a draft.
+ */
+export async function rejectImage(db: Db, reviewer: Reviewer, senseId: number, reason: string) {
+  return db.transaction(async (tx) => {
+    await lockSense(tx, senseId);
+    const rows = await tx
+      .select({ id: image.id })
+      .from(image)
+      .where(and(eq(image.senseId, senseId), ne(image.status, "retired")));
+    if (rows.length === 0) throw new HttpError(404, "no picture to reject");
+    await applyStatusChanges(
+      tx,
+      rows.map((r) => ({ table: "image" as const, id: r.id, to: "retired" as const })),
+    );
+    await tx
+      .insert(reviewLog)
+      .values({ reviewerId: reviewer.id, senseId, action: "reject_image", reason });
+    return { retired: rows.length };
   });
 }
 

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { hashAdminToken } from "@/lib/admin/auth";
 import { GET as audioGet, POST as audioPost } from "./audio/route";
+import { GET as imagesGet, POST as imagesPost } from "./images/route";
 import { POST as importPost } from "./import/route";
 import { POST as statusPost } from "./status/route";
 
@@ -21,6 +22,7 @@ const routes = [
   ["import", importPost, "http://localhost/api/admin/import"],
   ["status", statusPost, "http://localhost/api/admin/status"],
   ["audio", audioPost, "http://localhost/api/admin/audio"],
+  ["images", imagesPost, "http://localhost/api/admin/images"],
 ] as const;
 
 beforeEach(() => {
@@ -116,6 +118,43 @@ describe("GET /api/admin/audio", () => {
 
   it("rejects an unknown query parameter", async () => {
     expect((await get({ authorization: `Bearer ${TOKEN}` }, "?status=live")).status).toBe(400);
+  });
+});
+
+describe("GET /api/admin/images", () => {
+  const get = (headers: Record<string, string>, query = "") =>
+    imagesGet(new Request(`http://localhost/api/admin/images${query}`, { headers }));
+
+  it("rejects a request without the token, browser requests and unknown parameters", async () => {
+    expect((await get({})).status).toBe(401);
+    expect(
+      (await get({ authorization: `Bearer ${TOKEN}`, origin: "https://evil.example" })).status,
+    ).toBe(403);
+    expect((await get({ authorization: `Bearer ${TOKEN}` }, "?all=1")).status).toBe(400);
+  });
+});
+
+describe("attaching images", () => {
+  const item = {
+    senseId: 1,
+    imageDescription: "A red car.",
+    fileKey: "images/abc123.jpg",
+    alt: "A red car",
+    source: "https://example.org/photo",
+    license: "CC BY 4.0",
+    attribution: "Photo by someone",
+  };
+  const attach = (fileKey: string) =>
+    imagesPost(
+      post("http://localhost/api/admin/images", JSON.stringify({ items: [{ ...item, fileKey }] }), {
+        authorization: `Bearer ${TOKEN}`,
+      }),
+    );
+
+  it("accepts only JPEG paths under images/", async () => {
+    for (const bad of ["audio/abc.jpg", "images/../x.jpg", "images/abc.png", "images/ABC.jpg"]) {
+      expect((await attach(bad)).status).toBe(400);
+    }
   });
 });
 

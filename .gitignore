@@ -29,8 +29,10 @@ content/checked/
 content/import/
 content/voice-test/
 content/audio/
+content/images/
 # recordings the audio script copies in for the local app
 public/audio/
+public/images/
 
 # misc
 .DS_Store

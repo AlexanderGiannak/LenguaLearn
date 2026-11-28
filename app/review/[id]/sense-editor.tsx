@@ -1,8 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { PictureCredit } from "@/app/_components/picture-credit";
 import { Button, ErrorText, focusRing, link, muted } from "@/app/_components/ui";
 import {
   COGNATE_STATUSES,
@@ -51,7 +53,17 @@ export type EditorData = {
   wordParts: { kind: string; text: string; meaning: string }[];
   notes: CheckNotes | null;
   edit: Edit;
-  images: { fileKey: string; alt: string }[];
+  /** Whether the saved sense is concrete: only concrete senses get a picture. */
+  concrete: boolean;
+  images: {
+    id: number;
+    url: string;
+    alt: string;
+    status: ContentStatus;
+    source: string;
+    license: string;
+    attribution: string;
+  }[];
   /** Learners' open reports: reason, their words, where it was reported. Never who. */
   reports: { at: string; reason: string; text: string | null; questionType: string | null }[];
   /** Open flags from the nightly stats job, already put into words. */
@@ -187,6 +199,16 @@ export function SenseEditor({
       { target, reason: audioNote.trim() || "Wrong pronunciation" },
       () => {
         setAudioNote("");
+        router.refresh();
+      },
+    );
+  const [pictureNote, setPictureNote] = useState("");
+  const rejectPicture = () =>
+    run(
+      `/api/review/senses/${data.id}/image-reject`,
+      { reason: pictureNote.trim() || "Wrong picture" },
+      () => {
+        setPictureNote("");
         router.refresh();
       },
     );
@@ -659,15 +681,51 @@ export function SenseEditor({
         )}
       </Section>
 
-      {data.images.length > 0 && (
-        <Section title="Pictures">
-          <ul className="list-disc pl-5">
-            {data.images.map((img) => (
-              <li key={img.fileKey}>
-                {img.alt} <code className={`text-sm ${muted}`}>{img.fileKey}</code>
-              </li>
-            ))}
-          </ul>
+      {(data.concrete || data.images.length > 0) && (
+        <Section title="Picture">
+          <p className={`text-sm ${muted}`}>
+            Check that it shows this meaning at a glance, with no text in it. A wrong picture is
+            removed, and the next time the image script runs it finds or makes a different one,
+            which comes back here to approve.
+          </p>
+          {data.images.length === 0 ? (
+            <p className={`text-sm ${muted}`}>No picture yet.</p>
+          ) : (
+            <ul className="flex flex-col gap-4">
+              {data.images.map((img) => (
+                <li key={img.id} className="flex flex-col gap-2">
+                  <span className="text-sm font-semibold">{STATUS_LABEL[img.status]}</span>
+                  <Image
+                    src={img.url}
+                    alt={img.alt}
+                    width={320}
+                    height={256}
+                    className="h-64 w-80 max-w-full rounded-lg bg-ink-50 object-contain dark:bg-ink-900"
+                  />
+                  <span className="text-sm">Alt text: {img.alt}</span>
+                  <PictureCredit
+                    attribution={img.attribution}
+                    license={img.license}
+                    source={img.source}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+          {data.images.length > 0 && (
+            <>
+              <Text
+                label="What was wrong (optional, saved with the rejection)"
+                value={pictureNote}
+                onChange={setPictureNote}
+              />
+              <span>
+                <Button variant="secondary" disabled={busy} onClick={rejectPicture}>
+                  Wrong picture
+                </Button>
+              </span>
+            </>
+          )}
         </Section>
       )}
 
