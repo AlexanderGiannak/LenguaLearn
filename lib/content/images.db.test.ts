@@ -196,6 +196,14 @@ describe("a reviewer rejects a picture", () => {
     const [third] = await imageNeeds(getDb(), { lemmaKey: w.key });
     expect(third!.rejected).toEqual([first.source, second.source].sort());
     expect(third!.rejectedReason).toBe("too dark");
+
+    // Described differently: the note was about a picture for the old description.
+    await importContent(getDb(), payload(w.p, { description: "A small white dog running." }));
+    const [fourth] = await imageNeeds(getDb(), { lemmaKey: w.key });
+    expect(fourth).toMatchObject({
+      imageDescription: "A small white dog running.",
+      rejectedReason: null,
+    });
   });
 
   it("refuses when there is no picture", async () => {

@@ -20,7 +20,10 @@ export type ImageNeed = {
   imageDescription: string;
   /** Sources of pictures reviewers rejected for this sense: never offer them again. */
   rejected: string[];
-  /** What the reviewer said about the last rejected picture, if anything. */
+  /**
+   * What the reviewer said about the last rejected picture, if it was rejected since the
+   * sense was last described differently.
+   */
   rejectedReason: string | null;
 };
 
@@ -65,19 +68,27 @@ export async function imageNeeds(db: Db, opts: { lemmaKey?: string } = {}): Prom
           and(eq(contentRevision.tableName, "image"), inArray(contentRevision.rowId, imageIds)),
         )
     : [];
+  const withImage = rows.filter((r) => r.imageId).map((r) => r.senseId);
+  // When each sense was last described differently: a reviewer's note about a picture for
+  // an older description says nothing about the new one.
+  const senseRevisions = withImage.length
+    ? await db
+        .select({
+          rowId: contentRevision.rowId,
+          snapshot: contentRevision.snapshot,
+          at: contentRevision.createdAt,
+        })
+        .from(contentRevision)
+        .where(
+          and(eq(contentRevision.tableName, "sense"), inArray(contentRevision.rowId, withImage)),
+        )
+        .orderBy(desc(contentRevision.version))
+    : [];
   const reasons = imageIds.length
     ? await db
-        .select({ senseId: reviewLog.senseId, reason: reviewLog.reason })
+        .select({ senseId: reviewLog.senseId, reason: reviewLog.reason, at: reviewLog.at })
         .from(reviewLog)
-        .where(
-          and(
-            eq(reviewLog.action, "reject_image"),
-            inArray(
-              reviewLog.senseId,
-              rows.filter((r) => r.imageId).map((r) => r.senseId),
-            ),
-          ),
-        )
+        .where(and(eq(reviewLog.action, "reject_image"), inArray(reviewLog.senseId, withImage)))
         .orderBy(desc(reviewLog.id))
     : [];
 
@@ -88,6 +99,15 @@ export async function imageNeeds(db: Db, opts: { lemmaKey?: string } = {}): Prom
       const source = (rev.snapshot as { source?: unknown }).source;
       if (rev.rowId === r.imageId && typeof source === "string") rejected.add(source);
     }
+    // Revisions hold the row as it was before each change, newest first.
+    const describedAt = senseRevisions.find(
+      (v) =>
+        v.rowId === r.senseId &&
+        (v.snapshot as { imageDescription?: unknown }).imageDescription !== r.imageDescription,
+    )?.at;
+    const note = r.imageId
+      ? reasons.find((x) => x.senseId === r.senseId && (!describedAt || x.at > describedAt))
+      : undefined;
     return {
       senseId: r.senseId,
       key: r.key,
@@ -95,9 +115,7 @@ export async function imageNeeds(db: Db, opts: { lemmaKey?: string } = {}): Prom
       gloss: r.gloss,
       imageDescription: r.imageDescription!,
       rejected: [...rejected].sort(),
-      rejectedReason: r.imageId
-        ? (reasons.find((x) => x.senseId === r.senseId)?.reason ?? null)
-        : null,
+      rejectedReason: note?.reason ?? null,
     };
   });
 }
