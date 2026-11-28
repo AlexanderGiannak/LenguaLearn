@@ -31,7 +31,8 @@
     "content:upload": "node --env-file-if-exists=.env.local --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/content/upload.mts",
     "content:voice-test": "node --env-file-if-exists=.env.local --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/content/voice-test.mts",
     "content:pseudowords": "node --env-file-if-exists=.env.local --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/content/pseudowords.mts",
-    "content:audio": "node --env-file-if-exists=.env.local --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/content/audio.mts"
+    "content:audio": "node --env-file-if-exists=.env.local --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/content/audio.mts",
+    "content:images": "node --env-file-if-exists=.env.local --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/content/images.mts"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.2.2",

@@ -80,7 +80,16 @@ async function Sense({ params }: Pick<PageProps<"/review/[id]">, "params">) {
       })),
       misuses: v.misuses.map((m) => ({ text: m.text, explanation: m.explanation })),
     },
-    images: v.images.map((i) => ({ fileKey: i.fileKey, alt: i.alt })),
+    concrete: v.sense.concreteness === "concrete",
+    images: v.images.map((i) => ({
+      id: i.id,
+      url: mediaUrl(i.fileKey),
+      alt: i.alt,
+      status: i.status,
+      source: i.source,
+      license: i.license,
+      attribution: i.attribution,
+    })),
     reports: v.reports.map((r) => ({
       at: r.at.toISOString(),
       reason: REPORT_REASON_LABELS[r.reason],

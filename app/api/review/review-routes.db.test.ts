@@ -9,6 +9,7 @@ import { getDb, getSql } from "@/lib/db/client";
 import { adminActionLog, user } from "@/lib/db/schema";
 import * as trainReportRoute from "@/app/api/train/report/route";
 import * as audioFlagRoute from "./senses/[id]/audio-flag/route";
+import * as imageRejectRoute from "./senses/[id]/image-reject/route";
 import * as flagsRoute from "./senses/[id]/flags/route";
 import * as reportsRoute from "./senses/[id]/reports/route";
 import * as decisionRoute from "./senses/[id]/decision/route";
@@ -81,6 +82,7 @@ const routes = [
   ["edit", editRoute.POST, {}],
   ["decision", decisionRoute.POST, { action: "approve" }],
   ["audio-flag", audioFlagRoute.POST, { target: { owner: "lemma" }, reason: "wrong" }],
+  ["image-reject", imageRejectRoute.POST, { reason: "wrong" }],
   ["reports", reportsRoute.POST, { action: "resolve" }],
   ["flags", flagsRoute.POST, { action: "resolve" }],
   ["pseudowords", pseudowordsRoute.POST, { ids: [1], action: "approve" }],

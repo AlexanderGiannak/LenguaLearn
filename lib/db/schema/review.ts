@@ -21,6 +21,7 @@ export const REVIEW_ACTIONS = [
   "reject",
   "publish",
   "flag_audio",
+  "reject_image",
   "resolve_reports",
   "resolve_flags",
 ] as const;
@@ -28,7 +29,7 @@ export const reviewAction = pgEnum("review_action", REVIEW_ACTIONS);
 
 /**
  * Every action in the review tool: who edited, approved, rejected or published which sense
- * or pseudoword, or flagged a recording, and why (a rejection's or flag's reason). Content only; reviewers are adult
+ * or pseudoword, flagged a recording or rejected a picture, and why (a rejection's or flag's reason). Content only; reviewers are adult
  * volunteers or the admin, never students.
  */
 export const reviewLog = pgTable(

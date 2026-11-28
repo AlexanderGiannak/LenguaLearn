@@ -171,7 +171,9 @@ export const senseSchema = z
     hooks: z.array(hookSchema).max(3).default([]),
     relations: z.array(relationSchema).max(30).default([]),
     misuses: z.array(misuseSchema).max(6).default([]),
-    images: z.array(imageSchema).max(3).default([]),
+    // Left out, the sense keeps the pictures it has: content:images attaches them later
+    // (lib/content/images.ts), so uploading generated words again must not retire them.
+    images: z.array(imageSchema).max(3).optional(),
   })
   .superRefine((s, ctx) => {
     if ((s.register === "regional") !== (s.region !== undefined)) {
@@ -188,7 +190,7 @@ export const senseSchema = z
         message: "is required for a cognate or false friend and only allowed there",
       });
     }
-    if (s.concreteness !== "concrete" && s.images.length > 0) {
+    if (s.concreteness !== "concrete" && (s.images?.length ?? 0) > 0) {
       ctx.addIssue({
         code: "custom",
         path: ["images"],

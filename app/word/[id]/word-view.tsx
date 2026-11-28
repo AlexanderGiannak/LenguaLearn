@@ -10,6 +10,7 @@ import {
 } from "@/lib/content/display";
 import type { WordPageData } from "@/lib/content/word-page";
 import { AudioButton } from "@/app/_components/audio-button";
+import { PictureCredit } from "@/app/_components/picture-credit";
 
 // Sections in the spec's order. The first five form the intro screen; the rest sit behind
 // "More about this word". A section with no content is left out.
@@ -127,13 +128,23 @@ export function WordView({
         {/* 2–3. Picture beside the gloss, never instead of it; then the definition */}
         <section aria-label="Meaning" className="flex items-center gap-5">
           {image && (
-            <Image
-              src={mediaUrl(image.fileKey)}
-              alt={image.alt}
-              width={160}
-              height={128}
-              className="h-24 w-28 shrink-0 rounded-lg bg-ink-50 object-contain sm:h-32 sm:w-40 dark:bg-ink-900"
-            />
+            <figure className="flex w-28 shrink-0 flex-col gap-1 sm:w-40">
+              <Image
+                src={mediaUrl(image.fileKey)}
+                alt={image.alt}
+                width={160}
+                height={128}
+                className="h-24 w-28 rounded-lg bg-ink-50 object-contain sm:h-32 sm:w-40 dark:bg-ink-900"
+              />
+              <figcaption>
+                <PictureCredit
+                  attribution={image.attribution}
+                  license={image.license}
+                  source={image.source}
+                  className="break-words"
+                />
+              </figcaption>
+            </figure>
           )}
           <div>
             <p className="text-3xl font-medium">{sense.gloss}</p>
